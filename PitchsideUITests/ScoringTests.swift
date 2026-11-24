@@ -150,6 +150,73 @@ final class ScoringTests: XCTestCase {
     add(export)
   }
 
+  /// Exercise real two-finger input, one-finger pan, and physical taps on neighbours
+  /// that share a recorded cell. The navigation gestures must never score an event.
+  func testPinchPanAndScoreADrilledCluster() {
+    launch("scorer", after: 28)
+    let pitch = app.descendants(matching: .any).matching(identifier: "pitch").firstMatch
+    let overview = pitch.frame
+    pitch.pinch(withScale: 2.5, velocity: 2)
+    XCTAssertTrue(app.buttons["Fit whole pitch"].exists)
+    tap("Fit whole pitch")
+    // All three placements are still due after the pinch.
+    spot(2.24, 4.33)
+    spot(2.31, 4.48)
+    spot(2.43, 4.42)
+    let field = (0..<3).map { app.buttons["fB" + String($0)] }
+    XCTAssertTrue(field.allSatisfy { $0.exists && $0.label.contains("of 3 in this cell") })
+    func separation() -> CGFloat {
+      hypot(field[0].frame.midX - field[1].frame.midX, field[0].frame.midY - field[1].frame.midY)
+    }
+    func touch(_ x: CGFloat, _ y: CGFloat) -> XCUICoordinate {
+      app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: x, dy: y))
+    }
+    for orientation in ["Behind Team A", "Sideline", "Behind Team B"] {
+      XCTAssertEqual(app.buttons["Change view"].value as? String, orientation)
+      let before = separation()
+      pitch.pinch(withScale: 2.5, velocity: 2)
+      XCTAssertGreaterThan(separation(), before * 1.3)
+      let x = field[0].frame.midX
+      touch(overview.midX, overview.midY).press(forDuration: 0.08, thenDragTo: touch(overview.midX + 40, overview.midY + 20))
+      XCTAssertGreaterThan(field[0].frame.midX, x + 10)
+      XCTAssertTrue(field.allSatisfy { $0.value as? String == "standing" })
+      for i in [1, 2] {
+        touch(field[i].frame.midX, field[i].frame.midY).tap()
+        XCTAssertEqual(field[i].value as? String, "marked down")
+      }
+      XCTAssertEqual(field[0].value as? String, "standing")
+      if orientation == "Behind Team B" {
+        shot("Zoomed-cluster")
+        tap("2 down")
+        XCTAssertTrue(app.buttons["Fit whole pitch"].exists)
+        tap("Fit whole pitch")
+        XCTAssertEqual(app.buttons["fB0"].value as? String, "standing")
+        XCTAssertFalse(app.buttons["fB1"].exists)
+      } else {
+        touch(field[1].frame.midX, field[1].frame.midY).tap()
+        touch(field[2].frame.midX, field[2].frame.midY).tap()
+        tap("Change view")
+        XCTAssertTrue(app.buttons["Zoom in on pitch"].exists)
+      }
+    }
+  }
+
+  func testPlaceInkastOnZoomedPitch() {
+    launch("scorer", after: 28)
+    let pitch = app.descendants(matching: .any).matching(identifier: "pitch").firstMatch
+    let frame = pitch.frame
+    let unit = min((frame.width - 68) / 5, (frame.height - 68) / 8)
+    tap("Zoom in on pitch")
+    // The one-handed 2× view centres Team B's half. Three taps in cell (1, 2)
+    // must come back there after returning to the fitted pitch.
+    let point = CGVector(dx: frame.midX - 2 * unit, dy: frame.midY - unit)
+    for _ in 0..<3 { app.coordinate(withNormalizedOffset: .zero).withOffset(point).tap() }
+    tap("Fit whole pitch")
+    for i in 0..<3 {
+      XCTAssertTrue(app.buttons["fB" + String(i)].label.contains("across 1, depth 2"))
+    }
+  }
+
   func testEarlierEdit() {
     launch("scorer", after: 33)
     tap("More")

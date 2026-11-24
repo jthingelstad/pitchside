@@ -39,6 +39,8 @@ jobs:
           xcodebuild -project Pitchside.xcodeproj -scheme Pitchside
           -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.2'
           -derivedDataPath build/dd -parallel-testing-enabled NO
+          -only-testing:PitchsideUITests/ScoringTests/testPinchPanAndScoreADrilledCluster
+          -only-testing:PitchsideUITests/ScoringTests/testPlaceInkastOnZoomedPitch
           -only-testing:PitchsideUITests/ScoringTests/testWholeGame
           -only-testing:PitchsideUITests/ScoringTests/testCorrectACompletedGameWithoutUndoingTheResult
           -only-testing:PitchsideUITests/ScoringTests/testPrintableScoreSheet

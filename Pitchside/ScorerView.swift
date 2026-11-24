@@ -7,6 +7,7 @@ struct ScorerView: View {
   @Environment(\.colorScheme) private var colorScheme
   @State private var screen: ScorerScreen
   @State private var timeline = false
+  @State private var viewport = PitchFrame.Viewport()
   let close: () -> Void
 
   init(session: ScoringSession, close: @escaping () -> Void) {
@@ -28,7 +29,7 @@ struct ScorerView: View {
             batonBar
           }
           .padding(.horizontal, 12).padding(.top, 4).padding(.bottom, 8)
-          PitchCanvas(screen: screen)
+          PitchCanvas(screen: screen, viewport: $viewport)
             .frame(maxHeight: .infinity)
             .overlay(alignment: .bottom) {
               if screen.panel != .none && screen.panel != .pick {
@@ -57,7 +58,10 @@ struct ScorerView: View {
           }
         }
       }
-    }.onChange(of: screen.over) { _, over in if over { close() } }
+    }
+    .onChange(of: screen.view) { viewport = .init() }
+    .onChange(of: screen.state.turn) { viewport = .init() }
+    .onChange(of: screen.over) { _, over in if over { close() } }
   }
 
   var header: some View {
@@ -84,8 +88,22 @@ struct ScorerView: View {
           Text(screen.teamName(screen.attacker)).font(PSFont.display(26)).lineLimit(2)
         }
       }.frame(maxWidth: .infinity, alignment: .leading)
-      icon("rectangle.2.swap", "Change view", action: screen.nextView)
-        .accessibilityValue(screen.view.title)
+      HStack(spacing: 4) {
+        icon(
+          viewport.scale == 1 ? "plus.magnifyingglass" : "arrow.down.right.and.arrow.up.left",
+          viewport.scale == 1 ? "Zoom in on pitch" : "Fit whole pitch"
+        ) {
+          if viewport.scale == 1 {
+            let focus = PitchFrame.screen(.init(x: 2.5, y: screen.defender == .A ? 2 : 6), in: screen.view)
+            viewport.move(from: focus, to: .init(u: 0.5, v: 0.5), magnification: 2)
+          } else {
+            viewport = .init()
+          }
+        }
+        .accessibilityValue("\(Int((viewport.scale * 100).rounded())) percent")
+        icon("rectangle.2.swap", "Change view", action: screen.nextView)
+          .accessibilityValue(screen.view.title)
+      }
     }
     .padding(.horizontal, 10).padding(.vertical, 6).frame(minHeight: 76).psCard()
   }

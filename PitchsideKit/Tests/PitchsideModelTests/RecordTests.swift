@@ -306,6 +306,38 @@ func replay(_ f: RecordFixture, useFixtureSetup: Bool) throws -> (RecordScorer, 
 
   /// A stance is in the thrower's own half and snaps to the baseline or the advantage
   /// line.
+  @Test(arguments: PitchFrame.View.allCases)
+  func aMovingPinchKeepsTheSameKubbUnderTheFingers(view: PitchFrame.View) {
+    let fit = CGRect(x: 34, y: 21, width: 270, height: 360)
+    let kubb = PitchFrame.World(x: 2.3, y: 4.6)
+    let start = PitchFrame.screen(kubb, in: view)
+    let end = PitchFrame.Screen(u: start.u + 0.08, v: start.v - 0.1)
+    var viewport = PitchFrame.Viewport()
+    viewport.move(from: start, to: end, magnification: 3)
+    let zoom = viewport.rect(fitted: fit)
+    let tap = CGPoint(x: fit.minX + end.u * fit.width, y: fit.minY + end.v * fit.height)
+    let world = PitchFrame.world(
+      .init(u: (tap.x - zoom.minX) / zoom.width, v: (tap.y - zoom.minY) / zoom.height), in: view)
+    #expect(abs(world.x - kubb.x) < 1e-10)
+    #expect(abs(world.y - kubb.y) < 1e-10)
+  }
+
+  @Test func zoomAndPanAreBoundedAndPinchingBackFitsExactly() {
+    let fit = CGRect(x: 20, y: 80, width: 300, height: 200)
+    let center = PitchFrame.Screen(u: 0.5, v: 0.5)
+    var viewport = PitchFrame.Viewport()
+    viewport.move(from: center, to: center, magnification: 20)
+    #expect(viewport.scale == 4)
+    viewport.move(from: center, to: .init(u: -10, v: 10), magnification: 1)
+    let edge = viewport.rect(fitted: fit)
+    #expect(edge.maxX == fit.maxX)
+    #expect(edge.minY == fit.minY)
+    viewport.move(from: center, to: center, magnification: 0.05)
+    #expect(viewport.rect(fitted: fit) == fit)
+    viewport.move(from: center, to: .init(u: 0, v: 0), magnification: 1)
+    #expect(viewport == .init())
+  }
+
   @Test func stances() {
     let s = PitchFrame.stance(W(x: 2.6, y: 2.7), side: .A)!
     #expect(s == RecordPoint(across: 2.6, depth: 1.3))

@@ -11,6 +11,7 @@ import SwiftUI
 /// as a point on the pitch.
 struct PitchCanvas: View {
   @Bindable var screen: ScorerScreen
+  @Binding var viewport: PitchFrame.Viewport
 
   struct Piece: Identifiable {
     enum Kind { case field, base, owed, king }
@@ -25,13 +26,13 @@ struct PitchCanvas: View {
 
   var body: some View {
     GeometryReader { g in
-      let geo = Geo(size: g.size, view: screen.view)
+      let geo = Geo(size: g.size, view: screen.view, viewport: viewport)
       ZStack(alignment: .topLeading) {
         Color.psRough.contentShape(Rectangle())
           .accessibilityLabel("Pitch position")
           .accessibilityRepresentation { accessibleSpots }
 
-        grass(geo)
+        grass(geo).frame(width: g.size.width, height: g.size.height, alignment: .topLeading)
         ForEach(Array(screen.fallen.enumerated()), id: \.offset) { i, at in
           let group = screen.fallen.indices.filter { screen.fallen[$0] == at }
           let location = spread(at, index: group.firstIndex(of: i) ?? 0, count: group.count)
@@ -62,31 +63,39 @@ struct PitchCanvas: View {
         }
         // Overlapping 48-point hit areas in a drilled group belong to the nearest
         // centre. Each piece also has its own named VoiceOver button below this layer.
-        Color.clear.contentShape(Rectangle()).onTapGesture(coordinateSpace: .local) { location in
-          let hits = pieces.compactMap { piece -> (ScorerScreen.Target, CGFloat)? in
-            guard let target = piece.target else { return nil }
-            let centre = geo.point(piece.at)
-            let dx = abs(centre.x - location.x)
-            let dy = abs(centre.y - location.y)
-            return dx <= 24 && dy <= 24 ? (target, dx * dx + dy * dy) : nil
-          }
-          if let hit = hits.min(by: { $0.1 < $1.1 }) {
-            screen.toggle(hit.0)
-          } else {
-            screen.tap(geo.world(location))
-          }
-        }.accessibilityHidden(true)
+        PitchGestures { location in
+          score(at: location, geo: geo)
+        } move: { start, end, factor in
+          viewport.move(from: geo.fittedPoint(start), to: geo.fittedPoint(end), magnification: factor)
+        }
+        .accessibilityHidden(true)
         chip(screen.defender, geo)
         chip(screen.attacker, geo)
         if screen.advantageShown && screen.isBaton && !screen.placing && !screen.punishPending {
           advantage(geo)
         }
       }
+      .frame(width: g.size.width, height: g.size.height, alignment: .topLeading)
     }
     .clipped()
     .accessibilityElement(children: .contain)
     .accessibilityLabel(summary)
     .accessibilityIdentifier("pitch")
+  }
+
+  private func score(at location: CGPoint, geo: Geo) {
+    let hits = pieces.compactMap { piece -> (ScorerScreen.Target, CGFloat)? in
+      guard let target = piece.target else { return nil }
+      let centre = geo.point(piece.at)
+      let dx = abs(centre.x - location.x)
+      let dy = abs(centre.y - location.y)
+      return dx <= 24 && dy <= 24 ? (target, dx * dx + dy * dy) : nil
+    }
+    if let hit = hits.min(by: { $0.1 < $1.1 }) {
+      screen.toggle(hit.0)
+    } else {
+      screen.tap(geo.world(location))
+    }
   }
 
   /// VoiceOver can select the same one-metre cells a sighted scorer taps.
@@ -110,11 +119,14 @@ struct PitchCanvas: View {
 
   /// The drawn pitch's rectangle in the canvas, and the map both ways.
   struct Geo {
+    let size: CGSize
+    let fitted: CGRect
     let rect: CGRect
     let view: PitchFrame.View
     let unit: CGFloat
 
-    init(size: CGSize, view: PitchFrame.View) {
+    init(size: CGSize, view: PitchFrame.View, viewport: PitchFrame.Viewport) {
+      self.size = size
       self.view = view
       let pad: CGFloat = view.isSideways ? 20 : 34
       let room = CGSize(
@@ -126,8 +138,14 @@ struct PitchCanvas: View {
         h = room.height
         w = h * aspect
       }
-      rect = CGRect(x: (size.width - w) / 2, y: (size.height - h) / 2, width: w, height: h)
+      fitted = CGRect(x: (size.width - w) / 2, y: (size.height - h) / 2, width: w, height: h)
+      rect = viewport.rect(fitted: fitted)
+      // Markers keep their readable size as zoom separates the kubb centres.
       unit = view.isSideways ? w / 8 : w / 5
+    }
+
+    func fittedPoint(_ p: CGPoint) -> PitchFrame.Screen {
+      .init(u: (p.x - fitted.minX) / fitted.width, v: (p.y - fitted.minY) / fitted.height)
     }
 
     func point(_ p: PitchFrame.World) -> CGPoint {
@@ -203,10 +221,16 @@ struct PitchCanvas: View {
           p.addLine(to: b)
         }
         .stroke(Color.psChalk, style: StrokeStyle(lineWidth: 3, dash: [9, 6]))
-        Chip("Advantage line").fixedSize()
-          .position(
-            x: geo.view.isSideways ? a.x : geo.rect.minX + 65,
-            y: geo.view.isSideways ? geo.rect.maxY + 16 : a.y + 16)
+        let onScreen = geo.view.isSideways
+          ? (0...geo.size.width).contains(a.x) : (0...geo.size.height).contains(a.y)
+        if onScreen {
+          let x = geo.view.isSideways ? a.x : geo.rect.minX + 65
+          let y = geo.view.isSideways ? geo.rect.maxY + 16 : a.y + 16
+          Chip("Advantage line").fixedSize()
+            .position(
+              x: min(geo.size.width - 65, max(65, x)),
+              y: min(geo.size.height - 16, max(16, y)))
+        }
       } else {
         Chip("Advantage in use").fixedSize().position(x: half.midX, y: half.midY)
       }
@@ -295,6 +319,7 @@ struct PitchCanvas: View {
               && !screen.punishPending ? .field(i) : nil, mark: c.mark,
             label:
               "Field kubb in Team \(side.rawValue)'s half, across \(Int(c.across)), depth \(Int(c.depth))"
+              + (group > 1 ? ", \(k + 1) of \(group) in this cell" : "")
               + (c.mark == "p" ? ", the punishment kubb" : "")))
       }
       // kubbs whose place is owed
