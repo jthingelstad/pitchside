@@ -12,7 +12,8 @@
 --   Q  every established field kubb a toss knocked out of bounds (II.C.5a).
 --   N  every kubb that came to rest on top of another (II.D.6), at most 5
 --      per token (the grammar's limit).
---   Y  never written: a failed rescue attempt is intent the game cannot see.
+--   Y  never written by the rules engine: a failed rescue attempt is intent the game
+--      cannot see. Record mode (core/record, 1.1.0) writes it as a scorer saw it.
 --
 -- The file is Planet Kubb Notation 2 in its canonical form (pk-kubb-score's
 -- docs/notation-2.md, edition 2026.11; the grammar's CanonicalGame): one
@@ -222,13 +223,14 @@ local function count(n, code)
 	return n .. code
 end
 
--- Inkast token body from { I, R, P, Q, N, E }: "5I2R", "2IRP", "3IQ", "4IE"; "0I"
--- for none (the canonical form's only zero).
+-- Inkast token body from { I, R, P, Y, Q, N, E }: "5I2R", "2IRP", "3IQ", "4IE", "2I2Y";
+-- "0I" for none (the canonical form's only zero). Y (failed rescues, since 1.1.0) is
+-- only ever set by record mode.
 function notation.inkastBody(k)
 	local n = k.N or 0
 	if n > 5 then n = 5 end
 	local s = count(k.I or 0, "I") .. count(k.R or 0, "R") .. count(k.P or 0, "P")
-		.. count(k.Q or 0, "Q") .. count(n, "N")
+		.. count(k.Y or 0, "Y") .. count(k.Q or 0, "Q") .. count(n, "N")
 	if s == "" then s = "0I" end
 	if k.E then s = s .. "E" end
 	return s

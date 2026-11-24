@@ -76,7 +76,7 @@ func object(_ json: String) throws -> NSDictionary {
     #expect(stats.side(.B)?.zeroBaseSpot == GameRead.Figures.Spot(turn: 10, baton: 6))
   }
 
-  /// A game the engine plays now (v1.0.0, computer against computer, invented names)
+  /// A game the engine plays now (the vendored engine, computer against computer, invented names)
   /// writes a file the reader reads with no warnings and the grammar accepts.
   @Test func aGameThisEngineWritesReads() throws {
     let engine = try Engine(appVersion: "0.0-test")

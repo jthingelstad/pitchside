@@ -7,6 +7,8 @@
 -- "names.<name>" are generated names' (session/names.lua, docs/SESSION.md "Names").
 -- "neighbours.<name>" are the Tournament's neighbouring pitches (session/neighbours.lua,
 -- docs/SESSION.md "Neighbours", since 0.15.1): no session needed, and none touched.
+-- "record.<name>" is record mode (session/record.lua, docs/RECORD.md, since 1.1.0): a real
+-- game scored throw by throw, held apart from the session.
 import "core/tw"
 import "version"
 import "session/json"
@@ -16,6 +18,7 @@ import "session/replay"
 import "session/check"
 import "session/names"
 import "session/neighbours"
+import "session/record"
 import "pitch/api"
 
 local json, session, wide, replay, check = tw.web.json, tw.web.session, tw.web.wide, tw.web.replay, tw.web.check
@@ -269,6 +272,8 @@ local function call(method, arg)
 		if method:sub(1, 6) == "names." then return tw.web.names.call(method:sub(7), arg) end
 		-- the neighbouring pitches (session/neighbours.lua): their own state, no session
 		if method:sub(1, 11) == "neighbours." then return tw.web.neighbours.call(method:sub(12), arg) end
+		-- record mode (session/record.lua, docs/RECORD.md): its own game, no session
+		if method:sub(1, 7) == "record." then return tw.web.record.call(method:sub(8), arg) end
 	end
 	local f = M[method]
 	if not f then error("unknown call " .. tostring(method), 0) end

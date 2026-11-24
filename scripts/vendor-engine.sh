@@ -27,7 +27,7 @@
 set -euo pipefail
 
 # The one engine Pitchside carries.
-TAG=v1.0.0
+TAG=v1.1.0
 
 root=$(cd "$(dirname "$0")/.." && pwd)
 source_dir=${KUBB_ENGINE_SOURCE:-$root/../kubb-engine}
@@ -94,7 +94,13 @@ case "${1:-}" in
     [[ -s $engine/LICENSE ]] || fail "missing: LICENSE"
     for f in "${golden_files[@]}"; do [[ -s $golden/$f ]] || fail "missing: golden/$f"; done
     corpus=$(json_version "$golden/hashes.json" 2>/dev/null || true)
-    [[ $corpus == "$version" ]] || fail "golden corpus is ${corpus:-missing}, expected $version; run sync"
+    # A release that moves no golden hash keeps the corpus an earlier release recorded
+    # (v1.1.0 added record mode and kept 1.0.0's corpus). Accept a corpus from this
+    # major version, no newer than the engine.
+    if [[ -z $corpus || ${corpus%%.*} != "${version%%.*}" ]] ||
+      [[ $(printf '%s\n%s\n' "$corpus" "$version" | sort -V | tail -1) != "$version" ]]; then
+      fail "golden corpus is ${corpus:-missing}, expected one recorded by ${version%%.*}.x no newer than $version; run sync"
+    fi
     if [[ $status == 0 ]]; then
       echo "kubb-engine $TAG: $count files match engine.json, golden corpus recorded by $corpus"
     fi

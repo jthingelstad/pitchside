@@ -243,7 +243,7 @@ public final class Engine {
   }
 }
 
-/// What the app calls itself: `<app version> (<engine version>)`, e.g. `0.1 (1.0.0)`,
+/// What the app calls itself: `<app version> (<engine version>)`, e.g. `0.1 (1.1.0)`,
 /// built in this one place (as throwingwood-ios's `VersionLabel`). The build number is a
 /// detail line, never in the parentheses.
 public struct VersionLabel: Equatable, Sendable {
@@ -257,7 +257,7 @@ public struct VersionLabel: Equatable, Sendable {
     self.build = build
   }
 
-  /// `0.1 (1.0.0)`.
+  /// `0.1 (1.1.0)`.
   public var text: String { "\(app) (\(engine))" }
 
   /// `build 12`, under `text`.

@@ -64,7 +64,13 @@ func drivingEngine() throws -> Engine {
 @Suite struct GoldenTests {
   @Test func corpusIsForTheVendoredEngine() throws {
     let engine = try Engine(appVersion: testAppVersion)
-    #expect(Corpus.shared.version == engine.engineVersion, "run scripts/vendor-engine.sh sync")
+    // A release that moves no golden hash keeps an earlier release's corpus (v1.1.0
+    // kept 1.0.0's): the same major version, no newer than the engine.
+    let corpus = Corpus.shared.version.split(separator: ".").compactMap { Int($0) }
+    let ours = engine.engineVersion.split(separator: ".").compactMap { Int($0) }
+    #expect(corpus.count == 3 && ours.count == 3, "run scripts/vendor-engine.sh sync")
+    #expect(corpus.first == ours.first, "run scripts/vendor-engine.sh sync")
+    #expect(corpus.lexicographicallyPrecedes(ours) || corpus == ours, "run scripts/vendor-engine.sh sync")
     #expect(Corpus.shared.tune == Engine.tune)
     #expect(Corpus.shared.matches.count > 10)
   }
