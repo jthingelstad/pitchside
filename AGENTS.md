@@ -602,6 +602,10 @@ generated team names, the rules choice).
     demo screens too. By name the script prefers an already booted device, then
     the newest installed iOS runtime. A simulator UUID selects a specific version.
     DEBUG demo launches use a temporary game store.
+  - On the macOS 27.2.1 development host with Xcode 27.2, the local iOS 26.2
+    simulator exits in JavaScriptCore during reader startup, including on a fresh
+    simulator. The iOS 26.2 GitHub runner passes the scoring journeys, as does
+    the local iOS 27.2 simulator. Physical iOS 26.2 remains unverified.
   - `scripts/vendor-engine.sh check` and `scripts/vendor-notation.sh check` check
     the tagged copies. Finish simulator work with `xcrun simctl shutdown all`.
 - **The engine is never edited here.** Not the vendored copy, not the kubb-engine checkout
