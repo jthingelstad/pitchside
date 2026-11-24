@@ -381,47 +381,51 @@ struct ThisGameView: View {
   }
 }
 
-/// One row of "What to record": its notation, title and what it asks of the scorer; on
-/// rows are solid.
+/// Capture options and the two fixed rows share one layout.
 struct CaptureRowButton: View {
   let row: Capture.Row
   let on: Bool
   let toggle: () -> Void
 
+  private var editable: Bool { row != .turn && row != .lay }
+  private var status: String { row == .turn ? "Always" : row == .lay ? "Later" : on ? "On" : "Off" }
+
   var body: some View {
-    let always = row == .turn
-    let reserved = row == .lay
-    Button(action: toggle) {
-      HStack(alignment: .center, spacing: 12) {
-        Text(row.glyph)
-          .font(PSFont.mono(17, relativeTo: .headline).weight(.bold))
-          .frame(minWidth: 40, alignment: .leading)
-          .accessibilityHidden(true)
-        VStack(alignment: .leading, spacing: 2) {
-          Text(row.title).font(PSFont.body(17, .bold))
-          Text(row.detail).font(PSFont.body(15))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .multilineTextAlignment(.leading)
-        Text(always ? "Always" : reserved ? "Later" : on ? "On" : "Off")
-          .font(PSFont.body(14, .semibold))
-          .foregroundStyle(on ? Color.psOnSolid : Color.psMuted)
-          .padding(.horizontal, 8).padding(.vertical, 4)
-          .background(on ? Color.psSolid : Color.psInside, in: Capsule())
+    Group {
+      if editable {
+        Button(action: toggle) { label }.buttonStyle(.plain)
+          .accessibilityAddTraits(.isToggle)
+      } else {
+        label
       }
-      .foregroundStyle(Color.psText)
-      .padding(14)
-      .frame(maxWidth: .infinity, minHeight: 64)
-      .background(Color.psPlate, in: RoundedRectangle(cornerRadius: 8))
-      .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 1))
-      .contentShape(Rectangle())
     }
-    .buttonStyle(.plain)
-    // Not `.disabled`: that greys the always-on row below 7:1. It just takes no taps.
-    .disabled(always || reserved)
-    .accessibilityElement(children: .ignore)
+    .accessibilityElement(children: .combine)
     .accessibilityLabel("\(row.title). \(row.detail)")
-    .accessibilityValue(always ? "always recorded" : reserved ? "unavailable" : on ? "on" : "off")
-    .accessibilityAddTraits(always ? [] : [.isToggle])
+    .accessibilityValue(row == .turn ? "always recorded" : row == .lay ? "unavailable" : status)
+  }
+
+  private var label: some View {
+    HStack(spacing: 12) {
+      Text(row.glyph)
+        .font(PSFont.mono(17, relativeTo: .headline).weight(.bold))
+        .frame(minWidth: 40, alignment: .leading)
+        .accessibilityHidden(true)
+      VStack(alignment: .leading, spacing: 2) {
+        Text(row.title).font(PSFont.body(17, .semibold))
+        Text(row.detail).font(PSFont.body(15))
+      }
+      .frame(maxWidth: .infinity, alignment: .leading)
+      .multilineTextAlignment(.leading)
+      Text(status)
+        .font(PSFont.body(14, .semibold))
+        .foregroundStyle(on ? Color.psOnSolid : Color.psMuted)
+        .padding(.horizontal, 8).padding(.vertical, 4)
+        .background(on ? Color.psSolid : Color.psInside, in: Capsule())
+    }
+    .foregroundStyle(Color.psText)
+    .padding(14)
+    .frame(maxWidth: .infinity, minHeight: 64)
+    .psCard()
+    .contentShape(Rectangle())
   }
 }
