@@ -581,8 +581,10 @@ generated team names, the rules choice).
   reserved. New taps carry half, across, depth and their approximate tap provenance in the
   journal. `PitchFrame` maps the three viewing positions to a common centre-line origin.
   Record mode returns metre cells for kubbs and writes stance points to the centimetre.
-  Pieces in one cell are spread on screen so each is selectable. Stable piece ids and
-  original standing points in the returned state would let Pitchside draw a drilled
+  Pieces in one cell are spread on screen so each is selectable. Pinch around a group
+  to zoom the pitch up to 4×, then drag to pan. The header button zooms into the
+  defending half or fits the pitch. A change of turn or view fits the pitch again.
+  Stable piece ids and original standing points in the returned state would let Pitchside draw a drilled
   group at its observed spots. The observed advantage distance stays in the journal.
   On a baton with both located and unlocated hits, `knownFelled` keeps the available
   positions locally until the timeline editor can supply a complete felled word.
@@ -595,7 +597,7 @@ generated team names, the rules choice).
   - `xcodebuild -project Pitchside.xcodeproj -scheme Pitchside -destination
     'platform=iOS Simulator,name=iPhone 17' CODE_SIGNING_ALLOWED=NO build` builds
     the simulator app. Replace `build` with `-parallel-testing-enabled NO test` for
-    the ten UI journeys.
+    the twelve UI journeys.
   - `scripts/screenshots.sh --scorer "iPhone 17"` runs the UI journeys and writes their
     attachments to `docs/design/build-shots/` and checks the simulator export with the
     vendored reader. Omit `--scorer` to refresh the other
