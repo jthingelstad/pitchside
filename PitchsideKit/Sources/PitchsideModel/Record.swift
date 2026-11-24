@@ -27,6 +27,16 @@ public struct RecordPoint: Codable, Sendable, Hashable {
     if let mark { o["mark"] = .string(mark) }
     return .object(o)
   }
+
+  /// Extra provenance on observed points stays in the journal. The v1.1 writer reads
+  /// across and depth from this object and emits the supported cell or stance.
+  public func tap(in half: Side) -> JSONValue {
+    .object([
+      "across": .number(across), "depth": .number(depth),
+      "half": .string(half.rawValue.lowercased()), "approximate": true, "source": "tap",
+    ])
+  }
+
 }
 
 /// `state` (docs/RECORD.md "State").

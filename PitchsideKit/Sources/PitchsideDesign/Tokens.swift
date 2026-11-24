@@ -79,7 +79,7 @@ public enum Tokens {
   public static let kubbInk = Token(name: "kubb-ink", light: Hex(0x16130F), dark: Hex(0x16130F))
   /// Team A, marigold; Team B, violet (Throwing Wood's team colours). Same in dark.
   public static let teamA = Token(name: "team-a", light: Hex(0xF2B705), dark: Hex(0xF2B705))
-  public static let teamB = Token(name: "team-b", light: Hex(0x8E44AD), dark: Hex(0x8E44AD))
+  public static let teamB = Token(name: "team-b", light: Hex(0x80399D), dark: Hex(0x80399D))
   /// The letter on a team marker: ink on marigold, white on violet.
   public static let teamAInk = Token(name: "team-a-ink", light: Hex(0x16130F), dark: Hex(0x16130F))
   public static let teamBInk = Token(name: "team-b-ink", light: Hex(0xFFFFFF), dark: Hex(0xFFFFFF))

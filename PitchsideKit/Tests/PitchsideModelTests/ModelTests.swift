@@ -138,6 +138,27 @@ func sampleGame(_ store: GameStore) throws -> Game {
   }
 }
 
+@Suite struct ScorerTests {
+  /// The scaffold seam's original start, capture, reopen and header checks, now with
+  /// a real recorded baton and the released writer's capture words.
+  @Test func scorerKeepsTheLog() throws {
+    let store = try scratch()
+    let game = try sampleGame(store)
+    try store.save(game)
+    let factory = RecordScorer.Factory(appVersion: "0.1")
+    let scorer = try factory.scorer(for: game, store: store)
+    #expect(try store.log(game.id).events.map(\.kind) == ["start"])
+    #expect(store.game(game.id)?.status == .playing)
+    #expect(store.playing()?.id == game.id)
+    try scorer.setCapture(Capture(who: true, stand: true, lay: true))
+    try scorer.add(RecordEvent.baton())
+    let again = try factory.scorer(for: store.game(game.id)!, store: store)
+    #expect(try store.log(game.id).events.count == 3)
+    #expect(again.game.capture.lay)
+    #expect(try again.notation().contains(#"[Pitchside:capture "players pitch"]"#))
+  }
+}
+
 @Suite struct OpenFileTests {
   let sixPack = """
     [Notation "2"]
