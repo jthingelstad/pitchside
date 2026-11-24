@@ -9,8 +9,11 @@ if [[ ${1:-} == --scorer ]]; then scorer_only=true; shift; fi
 requested=${1:-iPhone 17}
 device=$(xcrun simctl list -j devices available | python3 -c '
 import json, sys
-phones = [d for devices in json.load(sys.stdin)["devices"].values() for d in devices
-          if d["name"] == sys.argv[1] or d["udid"] == sys.argv[1]]
+runtimes = json.load(sys.stdin)["devices"]
+def version(runtime):
+    return tuple(int(n) for n in runtime.split("iOS-")[-1].split("-"))
+phones = [d for r in sorted((r for r in runtimes if ".iOS-" in r), key=version, reverse=True)
+          for d in runtimes[r] if d["name"] == sys.argv[1] or d["udid"] == sys.argv[1]]
 if not phones: sys.exit("No available simulator matches " + sys.argv[1])
 print(next((d for d in phones if d["state"] == "Booted"), phones[0])["udid"])
 ' "$requested")

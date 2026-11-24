@@ -88,6 +88,16 @@ public struct Analysis: Decodable, Sendable {
     /// Kubbs thrown in the inkast (recorded or worked out).
     public let inkast: Int
     public let inkastRecorded: Bool
+    public let ink: Inkast?
+    /// The reader’s per-turn inkast totals, keyed by the notation tokens.
+    public struct Inkast: Decodable, Sendable {
+      public let R: Int
+      public let P: Int
+      public let Y: Int
+      public let Q: Int
+      public let N: Int
+      public let E: Bool
+    }
     public let advantage: Bool
     public let startField: Int
     public let startBase: Int

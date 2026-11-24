@@ -599,7 +599,9 @@ generated team names, the rules choice).
   - `scripts/screenshots.sh --scorer "iPhone 17"` runs the UI journeys and writes their
     attachments to `docs/design/build-shots/` and checks the simulator export with the
     vendored reader. Omit `--scorer` to refresh the other
-    demo screens too. DEBUG demo launches use a temporary game store.
+    demo screens too. By name the script prefers an already booted device, then
+    the newest installed iOS runtime. A simulator UUID selects a specific version.
+    DEBUG demo launches use a temporary game store.
   - `scripts/vendor-engine.sh check` and `scripts/vendor-notation.sh check` check
     the tagged copies. Finish simulator work with `xcrun simctl shutdown all`.
 - **The engine is never edited here.** Not the vendored copy, not the kubb-engine checkout
