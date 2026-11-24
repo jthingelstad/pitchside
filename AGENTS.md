@@ -319,8 +319,10 @@ The notation file is derived; the log is kept **(inferred: a recommendation)**.
 
 - **Roster and teams.** Players saved across games; teams of 1 to 6 in throwing order;
   sides A and B. Team names from the engine's name generator (`names.roll`, kind `team`,
-  e.g. "Wobbly Towers", 16 characters at most; `docs/NAMES.md`). Player names: see Open
-  questions.
+  e.g. "Wobbly Towers", 16 characters at most; `docs/NAMES.md`). **Players are typed
+  with their real names** (Jamie, 2026-11-24: "player names here should be the real
+  players names… we dont have a UGC sharing issue in Pitchside"). Throwing Wood's
+  generated-names rule does not apply here.
 - **Rules preset.** U.S. National Kubb Championship Rules V4.0 with the 2-4-6 opening.
   Built so another rule set (six from the start and the Kid rules already exist in the
   engine; others later) is a choice, not a fork.
@@ -398,8 +400,9 @@ the thing that happened: the kubb that fell, the spot a kubb landed, the MISS bu
 1. **Home / recent games.** Games in progress first, one tap to resume. Finished games
    with teams, winner, date.
 2. **Roster and team setup.** Saved players, building two teams of 1 to 6, setting the
-   throwing order, choosing sides A and B. Team names come from a generator (a name and a
-   SHUFFLE control, as Throwing Wood does), not a keyboard.
+   throwing order, choosing sides A and B. Players are real people, typed once with their
+   real names and picked from the roster after that. Team names come from a generator (a
+   name and a SHUFFLE control, as Throwing Wood does).
 3. **Match setup.** Rules (V4.0 with 2-4-6 to start), who throws first, capture level
    (Outcomes, Plus inkast, Full) said in plain words, event and place.
 4. **Live scoring on the pitch.** The main screen. Design it first and most carefully.
@@ -484,7 +487,8 @@ the thing that happened: the kubb that fell, the spot a kubb landed, the MISS bu
 1. **Separate app or a mode in throwingwood-ios?** Current lean: a separate app. Reasons
    for it: a tool and a game have different first screens and audiences, and
    throwingwood-ios has a rule that "no name is typed anywhere" because names others see
-   are user-generated content for App Store review; a scorer records real people. Reasons
+   are user-generated content for App Store review, while Pitchside types real players'
+   names and shares nothing (Jamie, 2026-11-24). Reasons
    against: two apps to carry the same engine and C targets. Bundle id, App Store name
    and whether this repo is public are Jamie's.
 2. **Where does the notation live?** It lives in pk-kubb-score today, as its own repo and
@@ -510,11 +514,11 @@ the thing that happened: the kubb that fell, the spot a kubb landed, the MISS bu
 7. **"US Nationals" (a naming difference).** The engine's rule set is "U.S. National Kubb
    Championship Rules V4.0" and the file says "U.S. Championship 4.0". Use the engine's
    words on screen.
-8. **Player names.** Team names from the generator as the brief asks. Players: generated
-   names like Throwing Wood (safe, but "Mighty Maple" is not your friend Kim), or typed
-   names kept on the device (real, but the export carries them). The engine strips quotes,
-   brackets, commas and parentheses from names (`docs/notes/rules-engine.md`). A product
-   call.
+8. **Player names: decided.** Real names, typed (Jamie, 2026-11-24: "we dont have a UGC
+   sharing issue in Pitchside"). Left open: whether team names may be typed too, or stay
+   generated as the brief asked. Note for the builder: the engine strips quotes, brackets,
+   commas and parentheses from names in the file and makes ids from them
+   (`docs/notes/rules-engine.md`), so "Kim (Jr.)" reaches the file changed.
 9. **The lay line.** One tap per kubb cannot fill `~`, which wants both ends. Do we record
    the landing at all, or only where the kubb stands after raising (the `@` line)?
 10. **Real-game levels.** Who says whether a scored game is beginner, club or pro, and in
