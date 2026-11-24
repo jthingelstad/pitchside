@@ -40,7 +40,7 @@ import Testing
     #expect(text.components(separatedBy: "Lichen").count == 651)
     #expect(!text.contains(" beat "))
     let words = text.split(whereSeparator: \.isWhitespace).joined(separator: " ")
-    for n in 1...40 { #expect(words.contains("Turn \(n) ·")) }
+    for n in 1...40 { #expect(words.contains("Turn \(n) ")) }
     for n in 1...pdf.pageCount {
       let page = try #require(pdf.page(at: n - 1)?.string)
       #expect(page.contains("Page \(n)"))

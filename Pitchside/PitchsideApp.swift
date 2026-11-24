@@ -139,9 +139,9 @@ struct RootView: View {
   @ViewBuilder func destination(_ route: Route, back: String) -> some View {
     switch route {
     case .sheet(let id):
-      ScoreSheetView(id: id, engineNotes: engineNotes[id] ?? []) { scorer in
+      ScoreSheetView(id: id, engineNotes: engineNotes[id] ?? []) { session in
         gamesPath = []
-        scoring = ScoringSession(scorer)
+        scoring = session
       }
     case .stats(let id): GameStatsView(id: id, back: back)
     }
@@ -152,7 +152,11 @@ struct RootView: View {
 final class ScoringSession: Identifiable {
   let scorer: LiveScorer
   var id: UUID { scorer.game.id }
-  init(_ scorer: LiveScorer) { self.scorer = scorer }
+  let showTimeline: Bool
+  init(_ scorer: LiveScorer, showTimeline: Bool = false) {
+    self.scorer = scorer
+    self.showTimeline = showTimeline
+  }
 }
 
 /// The design's tab bar: three words with icons; the chosen one is solid ink.

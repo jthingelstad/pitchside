@@ -2,8 +2,9 @@
 
 Pitchside is an iPhone scorekeeper for real games of kubb. Tap the kubbs that fell,
 record a miss, or mark where a throw landed. Undo a throw in one tap or correct an
-earlier turn in the timeline. Each game produces a plain-text Planet Kubb Notation
-file, a score sheet and player stats. Games and roster names stay on the phone until
+earlier turn in the timeline, even after the game finishes. Resume any game from Home.
+Each game produces a plain-text Planet Kubb Notation file, a printable PDF score sheet
+and player stats. Games and roster names stay on the phone until
 the scorer chooses to share a file.
 
 <img src="docs/design/build-shots/Baton-marked-light.png" width="260" alt="Pitchside scoring a baton that felled three field kubbs">

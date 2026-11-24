@@ -10,7 +10,7 @@ struct ScoreSheetView: View {
   @Environment(AppModel.self) private var model
   let id: UUID
   var engineNotes: [RecordWarning] = []
-  var resume: ((LiveScorer) -> Void)? = nil
+  var openSession: ((ScoringSession) -> Void)? = nil
   @State private var problem: String?
   @State private var copied = false
   @State private var pdf: URL?
@@ -28,13 +28,19 @@ struct ScoreSheetView: View {
             }
           }.padding(12).frame(minHeight: 48).psBox()
         }
-        if let resume, !game.isImported, FileManager.default.fileExists(atPath: model.store.logURL(id).path) {
+        if let openSession, !game.isImported, FileManager.default.fileExists(atPath: model.store.logURL(id).path) {
+          Button("Edit timeline") {
+            do {
+              let scorer = try model.scorer(for: game)
+              openSession(ScoringSession(scorer, showTimeline: true))
+            } catch { problem = String(describing: error) }
+          }.buttonStyle(.ps)
           Button("Undo last event") {
             do {
               let scorer = try model.scorer(for: game)
               try scorer.undo()
               model.refresh()
-              resume(scorer)
+              openSession(ScoringSession(scorer))
             } catch { problem = String(describing: error) }
           }.buttonStyle(.quiet)
         }
@@ -47,8 +53,8 @@ struct ScoreSheetView: View {
               let directory = FileManager.default.temporaryDirectory
                 .appending(path: "Score sheets").appending(path: game.id.uuidString)
               try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-              let name = String(GameFile.fileName(for: game).dropLast(4)) + ".pdf"
-              let file = directory.appending(path: name)
+              let file = directory.appending(path: GameFile.fileName(for: game))
+                .deletingPathExtension().appendingPathExtension("pdf")
               try ScoreSheetPDF.data(for: read.analysis, inProgress: game.status == .playing)
                 .write(to: file, options: .atomic)
               pdf = file

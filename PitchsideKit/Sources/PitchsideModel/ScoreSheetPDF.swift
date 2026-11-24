@@ -42,7 +42,7 @@ public enum ScoreSheetPDF {
         CGPoint(x: margin, y: page.height - 54), CGPoint(x: page.width - margin, y: page.height - 54)
       ])
       context.textPosition = CGPoint(x: margin, y: 34)
-      CTLineDraw(CTLineCreateWithAttributedString(line("Score sheet  ·  Page \(pageNumber)", size: 11)), context)
+      CTLineDraw(CTLineCreateWithAttributedString(line("Score sheet · Page \(pageNumber)", size: 11)), context)
       cursor = top
     }
 
@@ -76,8 +76,12 @@ public enum ScoreSheetPDF {
       write(inProgress ? "Draft · game in progress" : "No result in the file", size: 15)
     }
     let metadata = ["Event", "Location", "Start"].compactMap { game.headers[$0] }
-      .filter { !$0.isEmpty }.joined(separator: "  ·  ")
-    if !metadata.isEmpty { cursor -= 5; write(metadata, size: 13) }
+      .filter { !$0.isEmpty }.joined(separator: " · ")
+    if !metadata.isEmpty {
+      cursor -= 5
+      write(metadata, size: 13)
+    }
+    if cursor - 90 < bottom { beginPage() }
     cursor -= 17
     write("Turn by turn", size: 18, bold: true)
     if game.rows.isEmpty { write("No throws recorded.", size: 14) }
@@ -85,8 +89,8 @@ public enum ScoreSheetPDF {
       // Keep a normal two-line turn together when it lies at a page boundary.
       if cursor - 54 < bottom { beginPage() }
       cursor -= 7
-      write("Turn \(turn.turn)  ·  \(game.name(turn.team))", size: 15, bold: true)
-      write("\(turn.scoringSummary)  ·  \(turn.hits) of \(turn.thrown.count) batons hit", size: 14)
+      write("Turn \(turn.turn) · \(game.name(turn.team))", size: 15, bold: true)
+      write("\(turn.scoringSummary) · \(turn.hits) of \(turn.thrown.count) batons hit", size: 14)
       if let note = turn.note, !note.isEmpty { write(note, size: 13, indent: 12) }
       for warning in turn.warnings { write("Reader note · \(warning)", size: 13, indent: 12) }
     }
