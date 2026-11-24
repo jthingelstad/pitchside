@@ -7,6 +7,8 @@ import Testing
   static let pairs: [(Token, Token)] = [
     (Tokens.text, Tokens.ground), (Tokens.text, Tokens.plate), (Tokens.text, Tokens.inside),
     (Tokens.text, Tokens.field), (Tokens.text, Tokens.wood), (Tokens.muted, Tokens.ground),
+    (Tokens.solid, Tokens.plate), (Tokens.solid, Tokens.ground),
+    (Tokens.warn, Tokens.ground), (Tokens.muted, Tokens.inside),
     (Tokens.muted, Tokens.plate), (Tokens.onSolid, Tokens.solid), (Tokens.kubbInk, Tokens.kubb),
     (Tokens.teamAInk, Tokens.teamA), (Tokens.teamBInk, Tokens.teamB),
   ]
@@ -17,10 +19,9 @@ import Testing
     #expect(fg.dark.contrast(bg.dark) >= 7, "\(fg.name) on \(bg.name), dark: \(fg.dark.contrast(bg.dark))")
   }
 
-  /// Muted text is never put on wood (it is 5.6:1 there); the header's words on wood are
-  /// the text colour.
-  @Test func mutedOnWoodIsTooLow() {
-    #expect(Tokens.muted.light.contrast(Tokens.wood.light) < 7)
+  @Test func controlOutlinesRemainVisible() {
+    #expect(Tokens.line.light.contrast(Tokens.plate.light) >= 3)
+    #expect(Tokens.line.dark.contrast(Tokens.plate.dark) >= 3)
   }
 
   /// The B marker's letter: white on the scoring violet reaches 7:1; the

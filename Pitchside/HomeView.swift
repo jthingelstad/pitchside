@@ -9,25 +9,26 @@ struct HomeView: View {
   @Environment(AppModel.self) private var model
   let newGame: () -> Void
   let carryOn: (Game) -> Void
+  let openSheet: (UUID) -> Void
   @State private var importing = false
   @State private var refusal: String?
-  @State private var opened: UUID?
   @State private var showAllFinished = false
 
   var body: some View {
     VStack(spacing: 0) {
-      header
+      ScreenHeader("Games", brand: "Pitchside")
       ScrollView {
         VStack(alignment: .leading, spacing: 16) {
           if let problem = model.recoveryProblem { Text(problem).psHelp() }
-          ForEach(model.playing) { game in stillOnThePitch(game) }
-          Button("New game", action: newGame)
-            .buttonStyle(.ps)
-            .accessibilityHint("Teams, then this game's switches")
+          ViewThatFits(in: .horizontal) {
+            HStack(spacing: 10) { fileActions.fixedSize(horizontal: true, vertical: false) }
+            VStack(spacing: 8) { fileActions }
+          }
+          if !model.playing.isEmpty {
+            Text("In progress").psKick()
+            ForEach(model.playing) { game in stillOnThePitch(game) }
+          }
           recent
-          Button("Open a game file") { importing = true }
-            .buttonStyle(.quiet)
-            .accessibilityHint("A Planet Kubb Notation text file")
           footer
         }
         .padding(16)
@@ -40,7 +41,7 @@ struct HomeView: View {
       case .success(let url):
         do {
           let game = try model.open(url: url)
-          opened = game.id
+          openSheet(game.id)
         } catch let error as NotationError {
           refusal = error.description
         } catch {
@@ -52,59 +53,38 @@ struct HomeView: View {
     .alert("Not opened", isPresented: .constant(refusal != nil), presenting: refusal) { _ in
       Button("OK") { refusal = nil }
     } message: { Text($0) }
-    .navigationDestination(item: $opened) { ScoreSheetView(id: $0) }
   }
 
-  var header: some View {
-    VStack(alignment: .leading, spacing: 4) {
-      Text("Kubb")
-        .font(PSFont.body(14, .bold, relativeTo: .subheadline)).tracking(0.84).textCase(.uppercase)
-        .foregroundStyle(Color.psText)
-      Text("Pitchside")
-        .font(PSFont.display(42, relativeTo: .largeTitle))
-        .foregroundStyle(Color.psText)
-        .accessibilityAddTraits(.isHeader)
-      Text("Score a real game, throw by throw.")
-        .font(PSFont.body(16))
-        .foregroundStyle(Color.psText)
-    }
-    .accessibilityElement(children: .combine)
-    .padding(.horizontal, 16)
-    .padding(.top, 24)
-    .padding(.bottom, 14)
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .background(Color.psWood.ignoresSafeArea(edges: .top))
-    .overlay(alignment: .bottom) { Rectangle().fill(Color.psLine).frame(height: 3) }
+  @ViewBuilder var fileActions: some View {
+    Button { newGame() } label: { Label("New game", systemImage: "plus") }
+      .buttonStyle(PSButtonStyle(solid: model.playing.isEmpty))
+      .accessibilityHint("Set up teams and scoring options")
+    Button { importing = true } label: { Label("Open file", systemImage: "folder") }
+      .buttonStyle(.quiet)
+      .accessibilityHint("Open a Planet Kubb Notation text file")
   }
 
   func stillOnThePitch(_ game: Game) -> some View {
     VStack(alignment: .leading, spacing: 10) {
-      Text("Still on the pitch").psKick()
       ForEach(Side.allCases, id: \.self) { side in
         HStack {
           TeamLabel(side: side, name: game.team(side).shownName(side), display: true)
           Spacer()
           Text(game.team(side).players.count == 1 ? "1 player" : "\(game.team(side).players.count) players")
-            .font(PSFont.body(15, .bold))
-            .foregroundStyle(Color.psText)
+            .font(PSFont.body(14)).foregroundStyle(Color.psMuted)
         }
       }
-      Text("Started \(game.created.formatted(date: .abbreviated, time: .shortened)). \(firstLine(game))")
-        .font(PSFont.body(16))
-        .foregroundStyle(Color.psText)
+      Text("Started \(game.created.formatted(date: .abbreviated, time: .shortened))")
+        .font(PSFont.body(15))
+        .foregroundStyle(Color.psMuted)
         .fixedSize(horizontal: false, vertical: true)
-      Button("Carry on") { carryOn(game) }
+      Button("Resume scoring") { carryOn(game) }
         .buttonStyle(.psSolid)
-        .accessibilityLabel("Carry on, \(game.team(.A).shownName(.A)) versus \(game.team(.B).shownName(.B))")
+        .accessibilityLabel("Resume scoring, \(game.team(.A).shownName(.A)) versus \(game.team(.B).shownName(.B))")
     }
     .padding(16)
     .frame(maxWidth: .infinity, alignment: .leading)
     .psCard()
-  }
-
-  func firstLine(_ game: Game) -> String {
-    let first = game.options.first
-    return "\(game.team(first).shownName(first)) throw first."
   }
 
   @ViewBuilder var recent: some View {

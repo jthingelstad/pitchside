@@ -335,11 +335,10 @@ final class ScoringTests: XCTestCase {
     let start = app.buttons.matching(NSPredicate(format: "label ==[c] 'Start scoring'")).firstMatch
     for _ in 0..<5 where !start.isHittable { app.swipeUp() }
     tap("Start scoring")
-    tap("More")
-    tap("Home")
-    let older = app.buttons.matching(NSPredicate(format: "label ==[c] 'Carry on, Wobbly Towers versus Birch Batons'")).firstMatch
+    tap("Back to Games")
+    let older = app.buttons.matching(NSPredicate(format: "label ==[c] 'Resume scoring, Wobbly Towers versus Birch Batons'")).firstMatch
     XCTAssertTrue(older.waitForExistence(timeout: 5))
-    XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label ==[c] 'Carry on, Mossy Stakes versus Crooked Crowns'")).firstMatch.exists)
+    XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label ==[c] 'Resume scoring, Mossy Stakes versus Crooked Crowns'")).firstMatch.exists)
     for _ in 0..<4 where !older.isHittable { app.swipeUp() }
     older.tap()
     XCTAssertTrue(app.buttons["Change view"].waitForExistence(timeout: 5))
@@ -363,6 +362,48 @@ final class ScoringTests: XCTestCase {
     XCTAssertTrue(notation.contains(" = o:K"), notation)
   }
 
+  func testSectionsKeepScoringAndTimelineInPlace() {
+    launch("scorer", after: 31)
+    let field = app.buttons["fB0"]
+    tap("fB0")
+    tap("section-Stats")
+    XCTAssertTrue(app.buttons["section-Stats"].isSelected)
+    tap("section-Roster")
+    XCTAssertTrue(app.buttons["section-Roster"].isSelected)
+    tap("section-Games")
+    XCTAssertEqual(field.value as? String, "marked down")
+    tap("1 down")
+    tap("More")
+    tap("Timeline")
+    let turn = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Turn 5,'")).firstMatch
+    turn.tap()
+    tap("section-Roster")
+    tap("section-Games")
+    XCTAssertTrue(app.buttons["Baton 1 · 1 down"].exists)
+    tap("Back to Scoring")
+    XCTAssertEqual(app.buttons["fB0"].value as? String, "standing")
+    tap("Back to Games")
+    XCTAssertTrue(app.buttons["New game"].exists)
+  }
+
+  func testSectionsKeepDraftAndNameEditor() {
+    launch("teams", after: 0)
+    let name = app.textFields["Side A team name"]
+    name.tap()
+    name.typeText(" II")
+    let draft = name.value as? String
+    XCTAssertTrue(draft?.contains("II") == true)
+    tap("section-Roster")
+    let row = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Wren'")).firstMatch
+    row.tap()
+    XCTAssertTrue(app.textFields["Name"].exists)
+    tap("section-Stats")
+    tap("section-Roster")
+    XCTAssertTrue(app.textFields["Name"].exists)
+    tap("section-Games")
+    XCTAssertEqual(name.value as? String, draft)
+  }
+
   func testStepThroughAnImportedGame() {
     launch("imported", after: 0)
     tap("Play by play")
@@ -381,7 +422,11 @@ final class ScoringTests: XCTestCase {
     tap("Next")
     tap("Details")
     XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'Field ·'")).firstMatch.exists)
+    tap("section-Stats")
+    tap("section-Games")
+    XCTAssertTrue(app.staticTexts["Pitch details"].exists)
     tap("Back to Play by play")
+    XCTAssertEqual(app.buttons["Jump to turn"].value as? String, "Turn 2")
     shot("Play-by-play")
     tap("Change view")
     XCTAssertEqual(app.buttons["Change view"].value as? String, "Sideline")
@@ -393,6 +438,13 @@ final class ScoringTests: XCTestCase {
     XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'won ·'")).firstMatch.exists)
     tap("Back to Score sheet")
     XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label ==[c] 'Play by play'")).firstMatch.exists)
+    tap("Game stats")
+    XCTAssertTrue(app.buttons["section-Games"].isSelected)
+    tap("section-Stats")
+    XCTAssertTrue(app.buttons["section-Stats"].isSelected)
+    tap("section-Games")
+    tap("Back to Score sheet")
+    XCTAssertTrue(app.buttons["Game stats"].exists)
   }
 
   func testPrintableScoreSheet() {

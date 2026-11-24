@@ -3,10 +3,10 @@ import PitchsideDesign
 import PitchsideModel
 import SwiftUI
 
-/// A new game: Teams, then This game, then the scorer. No tab bar; Home is the way out.
+/// A new game: Teams, then This game, then the scorer. Both steps stay in the Games section.
 struct NewGameFlow: View {
   @Environment(AppModel.self) private var model
-  @Environment(\.dismiss) private var dismiss
+  let cancelled: () -> Void
   let started: (LiveScorer) -> Void
   @State private var game: Game?
   @State private var path: [Step] = []
@@ -37,7 +37,8 @@ struct NewGameFlow: View {
       Button("OK") { problem = nil }
     } message: { Text(problem ?? "") }
     .onAppear {
-      if game == nil { game = model.draft() }
+      guard game == nil else { return }
+      game = model.draft()
       #if DEBUG
         // Screenshots: a filled-in draft (`-PitchsideScreen teams|thisgame`).
         let args = ProcessInfo.processInfo.arguments
@@ -60,7 +61,7 @@ struct NewGameFlow: View {
 
   func cancel() {
     if let game { model.discardDraft(game) }
-    dismiss()
+    cancelled()
   }
 }
 
@@ -81,7 +82,7 @@ struct TeamsView: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      Screen(title: "Teams", back: "Home", onBack: home) {
+      Screen(title: "Teams", back: "Games", onBack: home) {
         ForEach(Side.allCases, id: \.self) { side in teamCard(side) }
         savedNames
         Button("Next: this game", action: next)
@@ -110,7 +111,7 @@ struct TeamsView: View {
             .padding(.horizontal, 10)
             .frame(minHeight: 52)
             .background(Color.psField, in: RoundedRectangle(cornerRadius: 6))
-            .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 3))
+            .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 1))
             .accessibilityLabel("Side \(side.rawValue) team name")
             .onSubmit { focus = .add(side) }
         }
@@ -151,7 +152,7 @@ struct TeamsView: View {
     .padding(.leading, 12)
     .frame(minHeight: 52)
     .background(Color.psField, in: RoundedRectangle(cornerRadius: 6))
-    .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 2))
+    .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 1))
     .accessibilityElement(children: .combine)
     .accessibilityLabel("\(i + 1), \(player.name)")
     .accessibilityActions {
@@ -182,7 +183,7 @@ struct TeamsView: View {
     .background(Color.psInside, in: RoundedRectangle(cornerRadius: 6))
     .overlay(
       RoundedRectangle(cornerRadius: 6).strokeBorder(
-        Color.psLine, style: StrokeStyle(lineWidth: 2, dash: [5, 4])))
+        Color.psLine, style: StrokeStyle(lineWidth: 1, dash: [5, 4])))
     .onTapGesture { active = side }
   }
 
@@ -217,7 +218,7 @@ struct TeamsView: View {
         .padding(.horizontal, 12)
         .frame(minHeight: 52)
         .background(Color.psField, in: RoundedRectangle(cornerRadius: 6))
-        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 3))
+        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 1))
         .onSubmit(addNew)
         .accessibilityLabel("New name")
       Button("Add", action: addNew).buttonStyle(PSButtonStyle()).frame(width: 92)
@@ -368,7 +369,7 @@ struct ThisGameView: View {
       .padding(.horizontal, 12)
       .frame(minHeight: 52)
       .background(Color.psField, in: RoundedRectangle(cornerRadius: 6))
-      .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 3))
+      .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 1))
       .foregroundStyle(Color.psText)
       .accessibilityLabel(label)
   }
@@ -403,14 +404,16 @@ struct CaptureRowButton: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .multilineTextAlignment(.leading)
         Text(always ? "Always" : reserved ? "Later" : on ? "On" : "Off")
-          .font(PSFont.body(14, .heavy)).textCase(.uppercase)
+          .font(PSFont.body(14, .semibold))
+          .foregroundStyle(on ? Color.psOnSolid : Color.psMuted)
+          .padding(.horizontal, 8).padding(.vertical, 4)
+          .background(on ? Color.psSolid : Color.psInside, in: Capsule())
       }
-      .foregroundStyle(on ? Color.psOnSolid : Color.psText)
+      .foregroundStyle(Color.psText)
       .padding(14)
       .frame(maxWidth: .infinity, minHeight: 64)
-      .background(on ? Color.psSolid : Color.psPlate, in: RoundedRectangle(cornerRadius: 6))
-      .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 3))
-      .background(RoundedRectangle(cornerRadius: 6).fill(Color.psShade).offset(x: 3, y: 3))
+      .background(Color.psPlate, in: RoundedRectangle(cornerRadius: 8))
+      .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 1))
       .contentShape(Rectangle())
     }
     .buttonStyle(.plain)

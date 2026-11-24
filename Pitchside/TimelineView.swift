@@ -55,7 +55,7 @@ struct TimelineView: View {
             }
           }
         }.padding(.horizontal, 10).padding(.vertical, 5)
-          .psCard(shadow: expanded == turn.turn ? 4 : 0)
+          .psCard()
       }
     }
     .foregroundStyle(Color.psText)

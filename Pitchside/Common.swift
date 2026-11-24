@@ -11,7 +11,7 @@ extension TeamMarker {
   init(_ side: Notation.Side, size: CGFloat = 22) { self.init(side.marker, size: size) }
 }
 
-/// A screen of the app: the wood header, then the content scrolling on the ground.
+/// The shared page header remains visible as the content scrolls.
 struct Screen<Content: View>: View {
   let title: String
   var back: String?

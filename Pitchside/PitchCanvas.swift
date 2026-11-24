@@ -10,6 +10,7 @@ import SwiftUI
 /// chip by its baseline. Taps on kubbs mark them; a tap anywhere else goes to the screen
 /// as a point on the pitch.
 struct PitchCanvas: View {
+  @Environment(\.dynamicTypeSize) private var typeSize
   @Bindable var screen: ScorerScreen
   @Binding var viewport: PitchFrame.Viewport
 
@@ -159,7 +160,7 @@ struct PitchCanvas: View {
     return HStack(spacing: 6) {
       TeamMarker(side, size: 18)
       Text(
-        geo.view.isSideways
+        typeSize.isAccessibilitySize ? "\(s.base + s.field) up" : geo.view.isSideways
           ? "\(screen.teamName(side)) · \(s.base + s.field)"
           : "\(screen.teamName(side)) · \(s.base + s.field) standing"
       )
@@ -169,7 +170,7 @@ struct PitchCanvas: View {
     .padding(.horizontal, 8)
     .padding(.vertical, 3)
     .background(Color.psPlate, in: RoundedRectangle(cornerRadius: 6))
-    .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 2))
+    .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 1))
     .fixedSize(horizontal: false, vertical: true)
     .frame(maxWidth: geo.view.isSideways ? geo.rect.width * 0.5 : geo.rect.width)
     .position(pos)

@@ -4,7 +4,6 @@ import SwiftUI
 
 /// The saved names, kept on this phone only: add, rename, forget.
 struct RosterView: View {
-  let home: () -> Void
   @Environment(AppModel.self) private var model
   @State private var newName = ""
   @State private var editing: SavedName?
@@ -13,7 +12,7 @@ struct RosterView: View {
 
   var body: some View {
     let totals = model.totals()
-    Screen(title: "Roster", back: "Games", onBack: home) {
+    Screen(title: "Roster") {
       Text("Saved names · kept on this phone only").psKick()
       Text("Names you type for a team are kept here for the next game. Nobody else sees them.").psHelp()
       if model.roster.isEmpty {
@@ -54,7 +53,7 @@ struct RosterView: View {
           .padding(.horizontal, 12)
           .frame(minHeight: 52)
           .background(Color.psField, in: RoundedRectangle(cornerRadius: 6))
-          .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 3))
+          .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 1))
           .onSubmit(add)
           .accessibilityLabel("New name")
         Button("Add", action: add)
@@ -63,15 +62,14 @@ struct RosterView: View {
           .disabled(newName.trimmingCharacters(in: .whitespaces).isEmpty)
       }
     }
-    .sheet(item: $editing) { name in
-      NameEditor(name: name, text: $editText) {
+    .navigationDestination(item: $editing) { name in
+      NameEditor(text: $editText, back: { editing = nil }) {
         model.rename(name.key, to: editText)
         editing = nil
       } forget: {
         model.forget(name.key)
         editing = nil
       }
-      .presentationDetents([.medium])
     }
   }
 
@@ -82,14 +80,14 @@ struct RosterView: View {
 }
 
 struct NameEditor: View {
-  let name: SavedName
   @Binding var text: String
+  let back: () -> Void
   let save: () -> Void
   let forget: () -> Void
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 16) {
-      Text("Rename").psKick()
+    Screen(title: "Edit name", back: "Roster", onBack: back) {
+      Text("Name").psKick()
       TextField("Name", text: $text)
         .font(PSFont.body(18, .bold))
         .textInputAutocapitalization(.words)
@@ -97,15 +95,12 @@ struct NameEditor: View {
         .padding(.horizontal, 12)
         .frame(minHeight: 52)
         .background(Color.psField, in: RoundedRectangle(cornerRadius: 6))
-        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 3))
+        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 1))
         .accessibilityLabel("Name")
       Button("Save", action: save).buttonStyle(.psSolid)
         .disabled(text.trimmingCharacters(in: .whitespaces).isEmpty)
       Text("Games already played keep the name they were played with.").psHelp()
       Button("Forget this name", role: .destructive, action: forget).buttonStyle(.quiet)
-      Spacer()
     }
-    .padding(20)
-    .background(Color.psGround)
   }
 }

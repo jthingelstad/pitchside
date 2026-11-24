@@ -6,9 +6,7 @@ import SwiftUI
   import AppKit
 #endif
 
-// Pitchside's tokens, from docs/design/canvas/ps.css (".ps" light, ".ps.dark"):
-// Throwing Wood's woodcut, tuned for a tool. Every colour has a light and a dark value
-// and follows the system's appearance.
+// Neutral surfaces, a field-green action colour and the Throwing Wood team markers.
 
 /// A colour as 0xRRGGBB.
 public struct Hex: Sendable, Equatable {
@@ -58,22 +56,22 @@ public struct Token: Sendable, Equatable {
 }
 
 public enum Tokens {
-  public static let text = Token(name: "text", light: Hex(0x16130F), dark: Hex(0xF7F0DE))
-  public static let ground = Token(name: "ground", light: Hex(0xF7F0DE), dark: Hex(0x16130F))
-  public static let plate = Token(name: "plate", light: Hex(0xF7F0DE), dark: Hex(0x262019))
-  public static let inside = Token(name: "inside", light: Hex(0xFBF6EA), dark: Hex(0x332B20))
-  public static let field = Token(name: "field", light: Hex(0xFFFFFF), dark: Hex(0x3D3426))
-  public static let line = Token(name: "line", light: Hex(0x16130F), dark: Hex(0xF7F0DE))
+  public static let text = Token(name: "text", light: Hex(0x1B2923), dark: Hex(0xF0F4EF))
+  public static let ground = Token(name: "ground", light: Hex(0xF4F5F0), dark: Hex(0x121B17))
+  public static let plate = Token(name: "plate", light: Hex(0xFFFFFF), dark: Hex(0x1C2721))
+  public static let inside = Token(name: "inside", light: Hex(0xF9FAF6), dark: Hex(0x212D26))
+  public static let field = Token(name: "field", light: Hex(0xFFFFFF), dark: Hex(0x26332A))
+  public static let line = Token(name: "line", light: Hex(0x7D8780), dark: Hex(0x77857B))
   public static let shade = Token(name: "shade", light: Hex(0x16130F), dark: Hex(0x000000))
-  public static let solid = Token(name: "solid", light: Hex(0x16130F), dark: Hex(0xF7F0DE))
-  public static let onSolid = Token(name: "on-solid", light: Hex(0xF7F0DE), dark: Hex(0x16130F))
-  public static let muted = Token(name: "muted", light: Hex(0x5B4A2C), dark: Hex(0xDCCBA4))
-  public static let warn = Token(name: "warn", light: Hex(0xCC3A30), dark: Hex(0xFF8A7D))
+  public static let solid = Token(name: "solid", light: Hex(0x204C39), dark: Hex(0xB2DDC1))
+  public static let onSolid = Token(name: "on-solid", light: Hex(0xFFFFFF), dark: Hex(0x15291C))
+  public static let muted = Token(name: "muted", light: Hex(0x444F47), dark: Hex(0xC0CEC2))
+  public static let warn = Token(name: "warn", light: Hex(0x8C3026), dark: Hex(0xFFAD9F))
   public static let wood = Token(name: "wood", light: Hex(0xECD09A), dark: Hex(0x5B4A2C))
   public static let kubb = Token(name: "kubb", light: Hex(0xECD09A), dark: Hex(0xECD09A))
   public static let kubbRest = Token(name: "kubb-rest", light: Hex(0xC79A58), dark: Hex(0xA37F48))
-  public static let grass = Token(name: "grass", light: Hex(0x4F9A3B), dark: Hex(0x2C5A22))
-  public static let rough = Token(name: "rough", light: Hex(0x3D7F2C), dark: Hex(0x1F4218))
+  public static let grass = Token(name: "grass", light: Hex(0x6E9783), dark: Hex(0x365B49))
+  public static let rough = Token(name: "rough", light: Hex(0x527764), dark: Hex(0x233E32))
   public static let chalk = Token(name: "chalk", light: Hex(0xFBF6EA), dark: Hex(0xF7F0DE))
   /// The ink a kubb or the king is outlined and lettered in: always dark, on wood.
   public static let kubbInk = Token(name: "kubb-ink", light: Hex(0x16130F), dark: Hex(0x16130F))
@@ -113,7 +111,7 @@ extension Color {
 
 // MARK: - Type
 
-/// Inter (body) and Londrina Solid Black (display), registered by the app (Info.plist
+/// Inter for tool controls and headings, registered by the app (Info.plist
 /// UIAppFonts). Every size scales with Dynamic Type from its text style; nothing is set
 /// under 14 points.
 public enum PSFont {
@@ -124,7 +122,7 @@ public enum PSFont {
   }
 
   public static func display(_ size: CGFloat, relativeTo style: Font.TextStyle = .title) -> Font {
-    .custom("LondrinaSolid-Black", size: max(size, 14), relativeTo: style)
+    body(size, .semibold, relativeTo: style)
   }
 
   public static func mono(_ size: CGFloat = 14, relativeTo style: Font.TextStyle = .callout) -> Font {
