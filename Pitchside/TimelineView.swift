@@ -11,7 +11,7 @@ struct TimelineView: View {
   @State private var problem: String?
 
   var body: some View {
-    Screen(title: "Timeline", back: "Scoring", onBack: close) {
+    Screen(title: "Timeline", back: screen.over ? "Score sheet" : "Scoring", onBack: close) {
       if let problem { Text(problem) }
       if turns.isEmpty { Text("The first observation will appear here.").psHelp() }
       ForEach(turns) { turn in

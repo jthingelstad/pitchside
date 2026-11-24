@@ -11,13 +11,16 @@ struct ScorerView: View {
 
   init(session: ScoringSession, close: @escaping () -> Void) {
     _screen = State(initialValue: ScorerScreen(scorer: session.scorer))
+    _timeline = State(initialValue: session.showTimeline)
     self.close = close
   }
 
   var body: some View {
     Group {
       if timeline {
-        TimelineView(screen: screen) { timeline = false }
+        TimelineView(screen: screen) {
+          if screen.over { close() } else { timeline = false }
+        }
       } else {
         VStack(spacing: 0) {
           VStack(spacing: 8) {

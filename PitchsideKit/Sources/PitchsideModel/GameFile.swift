@@ -129,7 +129,8 @@ public enum GameFile {
   public static func fileName(for game: Game, zone: TimeZone = .current) -> String {
     func slug(_ s: String) -> String {
       let lowered = s.lowercased().map { $0.isASCII && ($0.isLetter || $0.isNumber) ? $0 : "-" }
-      return String(lowered).split(separator: "-").joined(separator: "-")
+      let slug = String(lowered).split(separator: "-").joined(separator: "-")
+      return String(slug.prefix(80))
     }
     let when = stamp(game.created, in: zone).replacingOccurrences(of: " ", with: "-").replacingOccurrences(
       of: ":", with: "")

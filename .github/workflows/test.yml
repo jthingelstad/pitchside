@@ -34,7 +34,13 @@ jobs:
       - run: scripts/vendor-engine.sh check
       - run: scripts/vendor-notation.sh check
       - run: swift test --package-path PitchsideKit
-      - run: >
+      - name: Test scoring and the score sheet on iOS 26
+        run: >
           xcodebuild -project Pitchside.xcodeproj -scheme Pitchside
-          -destination 'generic/platform=iOS Simulator'
-          -derivedDataPath build/dd CODE_SIGNING_ALLOWED=NO build
+          -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.2'
+          -derivedDataPath build/dd -parallel-testing-enabled NO
+          -only-testing:PitchsideUITests/ScoringTests/testWholeGame
+          -only-testing:PitchsideUITests/ScoringTests/testCorrectACompletedGameWithoutUndoingTheResult
+          -only-testing:PitchsideUITests/ScoringTests/testPrintableScoreSheet
+          -only-testing:PitchsideUITests/ScoringTests/testResumeAnOlderUnfinishedGame
+          CODE_SIGNING_ALLOWED=NO test

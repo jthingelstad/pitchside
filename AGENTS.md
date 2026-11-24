@@ -545,7 +545,9 @@ generated team names, the rules choice).
 ## 10. Conventions for agents
 
 - **Status (2026-11-24).** A game can be set up, scored, reopened, corrected and
-  exported on the iPhone simulator. The live pitch, in-game timeline, score sheet,
+  exported on the iPhone simulator. Home resumes every unfinished game. A local score
+  sheet opens the timeline for corrections and previews a printable US Letter PDF.
+  Imported games support PDF export too. The live pitch, in-game timeline, score sheet,
   roster, local stats and opening other Notation 2 files are connected. The repository
   is public at `jthingelstad/pitchside`, with `main` as the default branch and an
   MIT license. Photos, lay-line entry and landscape are future work. Internal
@@ -593,7 +595,7 @@ generated team names, the rules choice).
   - `xcodebuild -project Pitchside.xcodeproj -scheme Pitchside -destination
     'platform=iOS Simulator,name=iPhone 17' CODE_SIGNING_ALLOWED=NO build` builds
     the simulator app. Replace `build` with `-parallel-testing-enabled NO test` for
-    the seven UI journeys.
+    the ten UI journeys.
   - `scripts/screenshots.sh --scorer "iPhone 17"` runs the UI journeys and writes their
     attachments to `docs/design/build-shots/` and checks the simulator export with the
     vendored reader. Omit `--scorer` to refresh the other

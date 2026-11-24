@@ -263,7 +263,6 @@ final class ScoringTests: XCTestCase {
     tap("Miss")
   }
 
-  /// Starts in setup, picks the opening, then scores every throw through the live controls.
   func testResumeAnOlderUnfinishedGame() {
     launch("thisgame", after: 28)
     let start = app.buttons.matching(NSPredicate(format: "label ==[c] 'Start scoring'")).firstMatch
@@ -271,13 +270,30 @@ final class ScoringTests: XCTestCase {
     tap("Start scoring")
     tap("More")
     tap("Home")
-    let older = app.buttons["Carry on, Wobbly Towers versus Birch Batons"]
+    let older = app.buttons.matching(NSPredicate(format: "label ==[c] 'Carry on, Wobbly Towers versus Birch Batons'")).firstMatch
     XCTAssertTrue(older.waitForExistence(timeout: 5))
-    XCTAssertTrue(app.buttons["Carry on, Mossy Stakes versus Crooked Crowns"].exists)
+    XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label ==[c] 'Carry on, Mossy Stakes versus Crooked Crowns'")).firstMatch.exists)
     for _ in 0..<4 where !older.isHittable { app.swipeUp() }
     older.tap()
     XCTAssertTrue(app.buttons["Change view"].waitForExistence(timeout: 5))
     XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label ==[c] 'Later'")).firstMatch.exists)
+  }
+
+  func testCorrectACompletedGameWithoutUndoingTheResult() {
+    launch("scorer", after: 37)
+    tap("King down")
+    tap("Edit timeline")
+    let turn = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Turn 5,'")).firstMatch
+    turn.tap()
+    tap("Baton 5 · a miss")
+    tap("More options")
+    tap("Edit thrower")
+    tap("Unknown")
+    tap("Save change")
+    tap("Back to Score sheet")
+    XCTAssertTrue(app.staticTexts["Wobbly Towers beat Birch Batons"].waitForExistence(timeout: 5))
+    let notation = app.staticTexts["The game file"].value as? String ?? ""
+    XCTAssertTrue(notation.contains(" = o:K"), notation)
   }
 
   func testPrintableScoreSheet() {
@@ -289,6 +305,7 @@ final class ScoringTests: XCTestCase {
     shot("Printable-score-sheet")
   }
 
+  /// Starts in setup, picks the opening, then scores every throw through the live controls.
   func testWholeGame() {
     launch("thisgame", after: 0)
     tap("Six batons")
