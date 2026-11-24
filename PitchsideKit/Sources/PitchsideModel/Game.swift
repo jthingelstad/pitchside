@@ -179,14 +179,14 @@ public struct Capture: Codable, Sendable, Hashable {
       stance: words.contains("stance"))
   }
 
-  /// The words for a games list: "turns, who threw".
+  /// The words for a games list: "the turn only", "who threw, where kubbs stand".
   public var summary: String {
-    var parts = ["turns"]
+    var parts: [String] = []
     if who { parts.append("who threw") }
     if stand { parts.append("where kubbs stand") }
     if lay { parts.append("how they lay") }
     if stance { parts.append("throwing spots") }
-    return parts.joined(separator: ", ")
+    return parts.isEmpty ? "the turn only" : parts.joined(separator: ", ")
   }
 }
 
