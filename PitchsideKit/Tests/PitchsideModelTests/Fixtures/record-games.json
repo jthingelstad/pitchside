@@ -1,0 +1,1993 @@
+[
+ {
+  "events": [
+   {
+    "at": [
+     {
+      "across": 1.5,
+      "depth": 4
+     }
+    ],
+    "base": 1,
+    "by": "kim",
+    "stance": {
+     "across": 2.5,
+     "depth": 4
+    },
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 4.5,
+      "depth": 4
+     }
+    ],
+    "base": 1,
+    "by": "dana",
+    "stance": {
+     "across": 2.5,
+     "depth": 4
+    },
+    "type": "baton"
+   },
+   {
+    "at": {
+     "across": 1.2,
+     "depth": 2.4
+    },
+    "by": "sam",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 3.6,
+     "depth": 1.1
+    },
+    "by": "sam",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": [
+     {
+      "across": 1.2,
+      "depth": 2.4
+     },
+     {
+      "across": 3.6,
+      "depth": 1.1
+     }
+    ],
+    "by": "sam",
+    "field": 2,
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 0.5,
+      "depth": 4
+     }
+    ],
+    "base": 1,
+    "by": "lee",
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 2.5,
+      "depth": 4
+     }
+    ],
+    "base": 1,
+    "by": "sam",
+    "type": "baton"
+   },
+   {
+    "by": "lee",
+    "type": "baton"
+   },
+   {
+    "at": {
+     "across": 0.4,
+     "depth": 1.5
+    },
+    "by": "kim",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 2.2,
+     "depth": 0.6
+    },
+    "by": "kim",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 2.8,
+     "depth": 0.9
+    },
+    "by": "kim",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 4.1,
+     "depth": 2.2
+    },
+    "by": "kim",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": [
+     {
+      "across": 2.2,
+      "depth": 0.6
+     },
+     {
+      "across": 2.8,
+      "depth": 0.9
+     }
+    ],
+    "by": "kim",
+    "field": 2,
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 0.4,
+      "depth": 1.5
+     }
+    ],
+    "by": "dana",
+    "field": 1,
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 4.1,
+      "depth": 2.2
+     }
+    ],
+    "by": "ole",
+    "field": 1,
+    "type": "baton"
+   },
+   {
+    "by": "kim",
+    "type": "baton"
+   },
+   {
+    "by": "dana",
+    "type": "baton"
+   },
+   {
+    "by": "ole",
+    "type": "baton"
+   },
+   {
+    "at": {
+     "across": 0.7,
+     "depth": 0.8
+    },
+    "by": "sam",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 1.9,
+     "depth": 1.2
+    },
+    "by": "sam",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 3.4,
+     "depth": 1.3
+    },
+    "by": "lee",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 4.4,
+     "depth": 0.5
+    },
+    "by": "lee",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": [
+     {
+      "across": 0.7,
+      "depth": 0.8
+     }
+    ],
+    "by": "sam",
+    "field": 1,
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 1.9,
+      "depth": 1.2
+     }
+    ],
+    "by": "lee",
+    "field": 1,
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 4.4,
+      "depth": 0.5
+     }
+    ],
+    "by": "sam",
+    "field": 1,
+    "type": "baton"
+   },
+   {
+    "by": "lee",
+    "type": "baton"
+   },
+   {
+    "by": "sam",
+    "type": "baton"
+   },
+   {
+    "by": "lee",
+    "type": "baton"
+   },
+   {
+    "at": {
+     "across": 1.4,
+     "depth": 1.6
+    },
+    "by": "kim",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 2.3,
+     "depth": 1.2
+    },
+    "by": "kim",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 2.6,
+     "depth": 1.7
+    },
+    "by": "kim",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "applies": true,
+    "meters": 2,
+    "type": "advantage"
+   },
+   {
+    "at": [
+     {
+      "across": 1.4,
+      "depth": 1.6
+     },
+     {
+      "across": 2.3,
+      "depth": 1.2
+     },
+     {
+      "across": 2.6,
+      "depth": 1.7
+     }
+    ],
+    "by": "kim",
+    "field": 3,
+    "stance": {
+     "across": 2.6,
+     "depth": 1.3
+    },
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 0.5,
+      "depth": 4
+     }
+    ],
+    "base": 1,
+    "by": "dana",
+    "stance": {
+     "across": 2.6,
+     "depth": 1.3
+    },
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 2.5,
+      "depth": 4
+     }
+    ],
+    "base": 1,
+    "by": "ole",
+    "stance": {
+     "across": 2.4,
+     "depth": 1.3
+    },
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 3.5,
+      "depth": 4
+     }
+    ],
+    "base": 1,
+    "by": "kim",
+    "stance": {
+     "across": 2.6,
+     "depth": 1.3
+    },
+    "type": "baton"
+   },
+   {
+    "by": "dana",
+    "stance": {
+     "across": 2.7,
+     "depth": 1.3
+    },
+    "type": "baton"
+   },
+   {
+    "by": "ole",
+    "king": true,
+    "stance": {
+     "across": 2.5,
+     "depth": 4
+    },
+    "time": {
+     "day": 24,
+     "hour": 10,
+     "min": 42,
+     "month": 11,
+     "year": 2026
+    },
+    "type": "baton"
+   }
+  ],
+  "how": "king",
+  "name": "bare",
+  "setup": {
+   "capture": {},
+   "client": "0.1 (1.1.0)",
+   "event": "Fall Open, pool 2",
+   "first": "A",
+   "location": "Riverside Park, Pitch 4",
+   "opening": "2-4-6",
+   "start": {
+    "day": 24,
+    "hour": 10,
+    "min": 0,
+    "month": 11,
+    "year": 2026
+   },
+   "surface": "grass",
+   "teams": {
+    "A": {
+     "name": "Ringers",
+     "players": [
+      {
+       "name": "Kim"
+      },
+      {
+       "name": "Dana"
+      },
+      {
+       "name": "Ole"
+      }
+     ]
+    },
+    "B": {
+     "name": "Stakes",
+     "players": [
+      {
+       "name": "Sam"
+      },
+      {
+       "name": "Lee"
+      }
+     ]
+    }
+   },
+   "wind": "light"
+  },
+  "text": "[Notation \"2\"]\n[Event \"Fall Open, pool 2\"]\n[Location \"Riverside Park, Pitch 4\"]\n[Start \"2026-11-24 10:00\"]\n[End \"2026-11-24 10:42\"]\n[Duration \"42m\"]\n[Surface \"Grass\"]\n[Rules \"U.S. Championship 4.0, 2-4-6\"]\n[Base kubbs \"5\"]\n[Batons \"6\"]\n[Opening \"2-4-6\"]\n[Team A \"Ringers\"]\n[Team A Players \"Kim (k), Dana (d), Ole (o)\"]\n[Team B \"Stakes\"]\n[Team B Players \"Sam (s), Lee (l)\"]\n[First \"Team A\"]\n[Win \"Team A\"]\n[Scored by \"Kubb: Pitchside 0.1 (1.1.0)\"]\n[Pitchside:capture \"turns\"]\n[Pitchside:wind \"light\"]\n\n1. B B\n2. 2I 2F B B -\n3. 4I 2F F F - - -\n4. 4I F F F - - -\n5. 3I A 3F B B B = K\n",
+  "warnings": [],
+  "winner": "A"
+ },
+ {
+  "events": [
+   {
+    "base": 3,
+    "by": "kim",
+    "type": "baton"
+   },
+   {
+    "by": "kim",
+    "type": "baton"
+   },
+   {
+    "by": "kim",
+    "type": "baton"
+   },
+   {
+    "by": "dana",
+    "type": "baton"
+   },
+   {
+    "by": "ole",
+    "type": "baton"
+   },
+   {
+    "by": "kim",
+    "type": "baton"
+   },
+   {
+    "by": "sam",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "by": "sam",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "by": "lee",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "applies": true,
+    "type": "advantage"
+   },
+   {
+    "by": "sam",
+    "field": 1,
+    "type": "baton"
+   },
+   {
+    "base": 1,
+    "by": "lee",
+    "field": 1,
+    "type": "baton"
+   },
+   {
+    "by": "sam",
+    "field": 4,
+    "type": "baton"
+   },
+   {
+    "by": "lee",
+    "type": "baton"
+   },
+   {
+    "by": "sam",
+    "type": "baton"
+   },
+   {
+    "by": "lee",
+    "type": "baton"
+   },
+   {
+    "by": "kim",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "by": "kim",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "by": "kim",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "by": "kim",
+    "king": true,
+    "type": "baton"
+   }
+  ],
+  "how": "king toppled early",
+  "name": "breach",
+  "setup": {
+   "capture": {
+    "players": true
+   },
+   "opening": "six",
+   "teams": {
+    "A": {
+     "name": "Ringers",
+     "players": [
+      {
+       "name": "Kim"
+      },
+      {
+       "name": "Dana"
+      },
+      {
+       "name": "Ole"
+      }
+     ]
+    },
+    "B": {
+     "name": "Stakes",
+     "players": [
+      {
+       "name": "Sam"
+      },
+      {
+       "name": "Lee"
+      }
+     ]
+    }
+   }
+  },
+  "text": "[Notation \"2\"]\n[Surface \"Grass\"]\n[Rules \"U.S. Championship 4.0, six from the start\"]\n[Base kubbs \"5\"]\n[Batons \"6\"]\n[Opening \"6\"]\n[Team A \"Ringers\"]\n[Team A Players \"Kim (k), Dana (d), Ole (o)\"]\n[Team B \"Stakes\"]\n[Team B Players \"Sam (s), Lee (l)\"]\n[First \"Team A\"]\n[Win \"Team B\"]\n[Scored by \"Kubb: Pitchside\"]\n[Pitchside:capture \"players\"]\n\n1. k:3B k:- k:- d:- o:- k:-\n2. s:2I l:I s:F l:F s:F l:- s:- l:- # advantage line observed in use; b2 toppled a base kubb early; raised (II.B.4a)\n3. k:3I k:E X X X X X\n",
+  "warnings": [
+   "order",
+   "advantage",
+   "rule",
+   "count",
+   "rule"
+  ],
+  "winner": "B"
+ },
+ {
+  "events": [
+   {
+    "base": 3,
+    "type": "baton"
+   },
+   {
+    "type": "baton"
+   },
+   {
+    "type": "baton"
+   },
+   {
+    "type": "baton"
+   },
+   {
+    "type": "baton"
+   },
+   {
+    "type": "baton"
+   },
+   {
+    "at": {
+     "across": 1.5,
+     "depth": 1.5
+    },
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "result": "out",
+    "type": "toss"
+   },
+   {
+    "result": "out",
+    "type": "toss"
+   },
+   {
+    "result": "out",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 3.5,
+     "depth": 0.5
+    },
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 2.5,
+     "depth": 3.5
+    },
+    "type": "punish"
+   },
+   {
+    "at": [
+     {
+      "across": 1.5,
+      "depth": 1.5
+     },
+     {
+      "across": 3.5,
+      "depth": 0.5
+     }
+    ],
+    "field": 2,
+    "type": "baton"
+   },
+   {
+    "type": "baton"
+   },
+   {
+    "type": "baton"
+   },
+   {
+    "type": "baton"
+   },
+   {
+    "type": "baton"
+   },
+   {
+    "type": "baton"
+   },
+   {
+    "at": {
+     "across": 1.2,
+     "depth": 0.5
+    },
+    "onTop": true,
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 3.2,
+     "depth": 0.5
+    },
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "field": 2,
+    "type": "baton"
+   },
+   {
+    "base": 1,
+    "type": "baton"
+   },
+   {
+    "type": "baton"
+   },
+   {
+    "type": "baton"
+   },
+   {
+    "type": "baton"
+   },
+   {
+    "type": "baton"
+   },
+   {
+    "rescueAttempt": true,
+    "rescued": 1,
+    "rescuedAt": [
+     {
+      "across": 2.5,
+      "depth": 3.5
+     }
+    ],
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "rescueAttempt": true,
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "field": 1,
+    "type": "baton"
+   },
+   {
+    "type": "baton"
+   },
+   {
+    "time": {
+     "day": 24,
+     "hour": 11,
+     "min": 15,
+     "month": 11,
+     "year": 2026
+    },
+    "type": "call",
+    "winner": "B"
+   }
+  ],
+  "how": "called",
+  "name": "called",
+  "setup": {
+   "capture": {
+    "pitch": true
+   },
+   "opening": "six",
+   "start": {
+    "day": 24,
+    "hour": 10,
+    "min": 30,
+    "month": 11,
+    "year": 2026
+   },
+   "surface": "sand",
+   "teams": {
+    "A": {
+     "name": "North",
+     "players": [
+      "Alex"
+     ]
+    },
+    "B": {
+     "name": "South",
+     "players": [
+      "Robin"
+     ]
+    }
+   }
+  },
+  "text": "[Notation \"2\"]\n[Start \"2026-11-24 10:30\"]\n[End \"2026-11-24 11:15\"]\n[Duration \"45m\"]\n[Surface \"Sand\"]\n[Rules \"U.S. Championship 4.0, six from the start\"]\n[Base kubbs \"5\"]\n[Batons \"6\"]\n[Opening \"6\"]\n[Team A \"North\"]\n[Team A Players \"Alex (alex)\"]\n[Team B \"South\"]\n[Team B Players \"Robin (robin)\"]\n[First \"Team A\"]\n[Win \"Team B\"]\n[Scored by \"Kubb: Pitchside\"]\n[Pitchside:capture \"pitch\"]\n\n1. 3B - - - - -\n2. 3I2RP 2F - - - - -\n@a 1,1 3,0 2,3p\n*a 1,1+3,0 - - - - -\n3. 2IN A 2F B - - - -\n@a 2,3s\n@b 1,0 3,0\n4. 3IYQ F - W X X X\n",
+  "warnings": [],
+  "winner": "B"
+ },
+ {
+  "events": [
+   {
+    "base": 1,
+    "type": "baton"
+   },
+   {
+    "type": "baton"
+   },
+   {
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "type": "baton"
+   },
+   {
+    "type": "call",
+    "winner": "A"
+   }
+  ],
+  "how": "called",
+  "name": "calledOther",
+  "setup": {
+   "teams": {
+    "A": {
+     "name": "Ringers",
+     "players": [
+      {
+       "name": "Kim"
+      },
+      {
+       "name": "Dana"
+      },
+      {
+       "name": "Ole"
+      }
+     ]
+    },
+    "B": {
+     "name": "Stakes",
+     "players": [
+      {
+       "name": "Sam"
+      },
+      {
+       "name": "Lee"
+      }
+     ]
+    }
+   }
+  },
+  "text": "[Notation \"2\"]\n[Surface \"Grass\"]\n[Rules \"U.S. Championship 4.0, 2-4-6\"]\n[Base kubbs \"5\"]\n[Batons \"6\"]\n[Opening \"2-4-6\"]\n[Team A \"Ringers\"]\n[Team A Players \"Kim (k), Dana (d), Ole (o)\"]\n[Team B \"Stakes\"]\n[Team B Players \"Sam (s), Lee (l)\"]\n[First \"Team A\"]\n[Win \"Team A\"]\n[Scored by \"Kubb: Pitchside\"]\n[Pitchside:capture \"turns\"]\n\n1. B -\n2. I -\n3. A W X X X X X\n",
+  "warnings": [],
+  "winner": "A"
+ },
+ {
+  "events": [
+   {
+    "at": [
+     {
+      "across": 1.5,
+      "depth": 4
+     }
+    ],
+    "base": 1,
+    "by": "kim",
+    "stance": {
+     "across": 2.5,
+     "depth": 4
+    },
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 4.5,
+      "depth": 4
+     }
+    ],
+    "base": 1,
+    "by": "dana",
+    "stance": {
+     "across": 2.5,
+     "depth": 4
+    },
+    "type": "baton"
+   },
+   {
+    "at": {
+     "across": 1.2,
+     "depth": 2.4
+    },
+    "by": "sam",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 3.6,
+     "depth": 1.1
+    },
+    "by": "sam",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": [
+     {
+      "across": 1.2,
+      "depth": 2.4
+     },
+     {
+      "across": 3.6,
+      "depth": 1.1
+     }
+    ],
+    "by": "sam",
+    "field": 2,
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 0.5,
+      "depth": 4
+     }
+    ],
+    "base": 1,
+    "by": "lee",
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 2.5,
+      "depth": 4
+     }
+    ],
+    "base": 1,
+    "by": "sam",
+    "type": "baton"
+   },
+   {
+    "by": "lee",
+    "type": "baton"
+   },
+   {
+    "at": {
+     "across": 0.4,
+     "depth": 1.5
+    },
+    "by": "kim",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 2.2,
+     "depth": 0.6
+    },
+    "by": "kim",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 2.8,
+     "depth": 0.9
+    },
+    "by": "kim",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 4.1,
+     "depth": 2.2
+    },
+    "by": "kim",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": [
+     {
+      "across": 2.2,
+      "depth": 0.6
+     },
+     {
+      "across": 2.8,
+      "depth": 0.9
+     }
+    ],
+    "by": "kim",
+    "field": 2,
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 0.4,
+      "depth": 1.5
+     }
+    ],
+    "by": "dana",
+    "field": 1,
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 4.1,
+      "depth": 2.2
+     }
+    ],
+    "by": "ole",
+    "field": 1,
+    "type": "baton"
+   },
+   {
+    "by": "kim",
+    "type": "baton"
+   },
+   {
+    "by": "dana",
+    "type": "baton"
+   },
+   {
+    "by": "ole",
+    "type": "baton"
+   },
+   {
+    "at": {
+     "across": 0.7,
+     "depth": 0.8
+    },
+    "by": "sam",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 1.9,
+     "depth": 1.2
+    },
+    "by": "sam",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 3.4,
+     "depth": 1.3
+    },
+    "by": "lee",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 4.4,
+     "depth": 0.5
+    },
+    "by": "lee",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": [
+     {
+      "across": 0.7,
+      "depth": 0.8
+     }
+    ],
+    "by": "sam",
+    "field": 1,
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 1.9,
+      "depth": 1.2
+     }
+    ],
+    "by": "lee",
+    "field": 1,
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 4.4,
+      "depth": 0.5
+     }
+    ],
+    "by": "sam",
+    "field": 1,
+    "type": "baton"
+   },
+   {
+    "by": "lee",
+    "type": "baton"
+   },
+   {
+    "by": "sam",
+    "type": "baton"
+   },
+   {
+    "by": "lee",
+    "type": "baton"
+   },
+   {
+    "at": {
+     "across": 1.4,
+     "depth": 1.6
+    },
+    "by": "kim",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 2.3,
+     "depth": 1.2
+    },
+    "by": "kim",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 2.6,
+     "depth": 1.7
+    },
+    "by": "kim",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "applies": true,
+    "meters": 2,
+    "type": "advantage"
+   },
+   {
+    "at": [
+     {
+      "across": 1.4,
+      "depth": 1.6
+     },
+     {
+      "across": 2.3,
+      "depth": 1.2
+     },
+     {
+      "across": 2.6,
+      "depth": 1.7
+     }
+    ],
+    "by": "kim",
+    "field": 3,
+    "stance": {
+     "across": 2.6,
+     "depth": 1.3
+    },
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 0.5,
+      "depth": 4
+     }
+    ],
+    "base": 1,
+    "by": "dana",
+    "stance": {
+     "across": 2.6,
+     "depth": 1.3
+    },
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 2.5,
+      "depth": 4
+     }
+    ],
+    "base": 1,
+    "by": "ole",
+    "stance": {
+     "across": 2.4,
+     "depth": 1.3
+    },
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 3.5,
+      "depth": 4
+     }
+    ],
+    "base": 1,
+    "by": "kim",
+    "stance": {
+     "across": 2.6,
+     "depth": 1.3
+    },
+    "type": "baton"
+   },
+   {
+    "by": "dana",
+    "stance": {
+     "across": 2.7,
+     "depth": 1.3
+    },
+    "type": "baton"
+   },
+   {
+    "by": "ole",
+    "king": true,
+    "stance": {
+     "across": 2.5,
+     "depth": 4
+    },
+    "time": {
+     "day": 24,
+     "hour": 10,
+     "min": 42,
+     "month": 11,
+     "year": 2026
+    },
+    "type": "baton"
+   }
+  ],
+  "how": "king",
+  "name": "example",
+  "setup": {
+   "capture": {
+    "pitch": true,
+    "players": true,
+    "stance": true
+   },
+   "client": "0.1 (1.1.0)",
+   "event": "Fall Open, pool 2",
+   "first": "A",
+   "location": "Riverside Park, Pitch 4",
+   "opening": "2-4-6",
+   "start": {
+    "day": 24,
+    "hour": 10,
+    "min": 0,
+    "month": 11,
+    "year": 2026
+   },
+   "surface": "grass",
+   "teams": {
+    "A": {
+     "name": "Ringers",
+     "players": [
+      {
+       "name": "Kim"
+      },
+      {
+       "name": "Dana"
+      },
+      {
+       "name": "Ole"
+      }
+     ]
+    },
+    "B": {
+     "name": "Stakes",
+     "players": [
+      {
+       "name": "Sam"
+      },
+      {
+       "name": "Lee"
+      }
+     ]
+    }
+   },
+   "wind": "light"
+  },
+  "text": "[Notation \"2\"]\n[Event \"Fall Open, pool 2\"]\n[Location \"Riverside Park, Pitch 4\"]\n[Start \"2026-11-24 10:00\"]\n[End \"2026-11-24 10:42\"]\n[Duration \"42m\"]\n[Surface \"Grass\"]\n[Rules \"U.S. Championship 4.0, 2-4-6\"]\n[Base kubbs \"5\"]\n[Batons \"6\"]\n[Opening \"2-4-6\"]\n[Team A \"Ringers\"]\n[Team A Players \"Kim (k), Dana (d), Ole (o)\"]\n[Team B \"Stakes\"]\n[Team B Players \"Sam (s), Lee (l)\"]\n[First \"Team A\"]\n[Win \"Team A\"]\n[Scored by \"Kubb: Pitchside 0.1 (1.1.0)\"]\n[Pitchside:capture \"players pitch stance\"]\n[Pitchside:wind \"light\"]\n\n1. k:B d:B\n^a 2.50,4.00 2.50,4.00\n*b 1,3 4,3\n2. s:2I s:2F l:B s:B l:-\n@a 1,2 3,1\n*a 1,2+3,1 0,3 2,3 -\n3. k:4I k:2F d:F o:F k:- d:- o:-\n@b 0,1 2x2,0 4,2\n*b 2x2,0 0,1 4,2 - - -\n4. s:2I l:2I s:F l:F s:F l:- s:- l:-\n@a 0,0 1,1 3,1 4,0\n*a 0,0 1,1 4,0 - - -\n5. k:3I A k:3F d:B o:B k:B d:= o:K\n@a 3,1s\n@b 1,1 2x2,1\n^a 2.60,1.30 2.60,1.30 2.40,1.30 2.60,1.30 2.70,1.30 2.50,4.00\n*b 1,1+2x2,1 0,3 2,3 3,3 - -\n",
+  "warnings": [],
+  "winner": "A"
+ },
+ {
+  "events": [
+   {
+    "base": 1,
+    "field": 0,
+    "type": "baton"
+   },
+   {
+    "type": "baton"
+   },
+   {
+    "king": true,
+    "result": "in",
+    "type": "toss"
+   }
+  ],
+  "how": "king toppled by a thrown kubb",
+  "name": "inkastKing",
+  "setup": {
+   "teams": {
+    "A": {
+     "name": "Ringers",
+     "players": [
+      {
+       "name": "Kim"
+      },
+      {
+       "name": "Dana"
+      },
+      {
+       "name": "Ole"
+      }
+     ]
+    },
+    "B": {
+     "name": "Stakes",
+     "players": [
+      {
+       "name": "Sam"
+      },
+      {
+       "name": "Lee"
+      }
+     ]
+    }
+   }
+  },
+  "text": "[Notation \"2\"]\n[Surface \"Grass\"]\n[Rules \"U.S. Championship 4.0, 2-4-6\"]\n[Base kubbs \"5\"]\n[Batons \"6\"]\n[Opening \"2-4-6\"]\n[Team A \"Ringers\"]\n[Team A Players \"Kim (k), Dana (d), Ole (o)\"]\n[Team B \"Stakes\"]\n[Team B Players \"Sam (s), Lee (l)\"]\n[First \"Team A\"]\n[Win \"Team A\"]\n[Scored by \"Kubb: Pitchside\"]\n[Pitchside:capture \"turns\"]\n\n1. B -\n2. IE X X X X # king toppled by a thrown kubb\n",
+  "warnings": [],
+  "winner": "A"
+ },
+ {
+  "events": [
+   {
+    "type": "baton"
+   },
+   {
+    "type": "baton"
+   },
+   {
+    "type": "baton"
+   },
+   {
+    "type": "baton"
+   },
+   {
+    "side": "B",
+    "type": "resign"
+   }
+  ],
+  "how": "resigned",
+  "name": "resign",
+  "setup": {
+   "teams": {
+    "A": {
+     "name": "Ringers",
+     "players": [
+      {
+       "name": "Kim"
+      },
+      {
+       "name": "Dana"
+      },
+      {
+       "name": "Ole"
+      }
+     ]
+    },
+    "B": {
+     "name": "Stakes",
+     "players": [
+      {
+       "name": "Sam"
+      },
+      {
+       "name": "Lee"
+      }
+     ]
+    }
+   }
+  },
+  "text": "[Notation \"2\"]\n[Surface \"Grass\"]\n[Rules \"U.S. Championship 4.0, 2-4-6\"]\n[Base kubbs \"5\"]\n[Batons \"6\"]\n[Opening \"2-4-6\"]\n[Team A \"Ringers\"]\n[Team A Players \"Kim (k), Dana (d), Ole (o)\"]\n[Team B \"Stakes\"]\n[Team B Players \"Sam (s), Lee (l)\"]\n[First \"Team A\"]\n[Win \"Team A\"]\n[Scored by \"Kubb: Pitchside\"]\n[Pitchside:capture \"turns\"]\n\n1. - -\n2. - - G X\n",
+  "warnings": [],
+  "winner": "A"
+ },
+ {
+  "events": [
+   {
+    "base": 1,
+    "type": "baton"
+   },
+   {
+    "type": "baton"
+   },
+   {
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "field": 1,
+    "type": "baton"
+   },
+   {
+    "side": "A",
+    "type": "resign"
+   }
+  ],
+  "how": "resigned",
+  "name": "resignOther",
+  "setup": {
+   "teams": {
+    "A": {
+     "name": "Ringers",
+     "players": [
+      {
+       "name": "Kim"
+      },
+      {
+       "name": "Dana"
+      },
+      {
+       "name": "Ole"
+      }
+     ]
+    },
+    "B": {
+     "name": "Stakes",
+     "players": [
+      {
+       "name": "Sam"
+      },
+      {
+       "name": "Lee"
+      }
+     ]
+    }
+   }
+  },
+  "text": "[Notation \"2\"]\n[Surface \"Grass\"]\n[Rules \"U.S. Championship 4.0, 2-4-6\"]\n[Base kubbs \"5\"]\n[Batons \"6\"]\n[Opening \"2-4-6\"]\n[Team A \"Ringers\"]\n[Team A Players \"Kim (k), Dana (d), Ole (o)\"]\n[Team B \"Stakes\"]\n[Team B Players \"Sam (s), Lee (l)\"]\n[First \"Team A\"]\n[Win \"Team B\"]\n[Scored by \"Kubb: Pitchside\"]\n[Pitchside:capture \"turns\"]\n\n1. B -\n2. I F\n3. G X X X X X\n",
+  "warnings": [],
+  "winner": "B"
+ },
+ {
+  "events": [
+   {
+    "type": "baton"
+   },
+   {
+    "type": "baton"
+   },
+   {
+    "side": "A",
+    "type": "resign"
+   }
+  ],
+  "how": "resigned",
+  "name": "resignWaiting",
+  "setup": {
+   "teams": {
+    "A": {
+     "name": "Ringers",
+     "players": [
+      {
+       "name": "Kim"
+      },
+      {
+       "name": "Dana"
+      },
+      {
+       "name": "Ole"
+      }
+     ]
+    },
+    "B": {
+     "name": "Stakes",
+     "players": [
+      {
+       "name": "Sam"
+      },
+      {
+       "name": "Lee"
+      }
+     ]
+    }
+   }
+  },
+  "text": "[Notation \"2\"]\n[Surface \"Grass\"]\n[Rules \"U.S. Championship 4.0, 2-4-6\"]\n[Base kubbs \"5\"]\n[Batons \"6\"]\n[Opening \"2-4-6\"]\n[Team A \"Ringers\"]\n[Team A Players \"Kim (k), Dana (d), Ole (o)\"]\n[Team B \"Stakes\"]\n[Team B Players \"Sam (s), Lee (l)\"]\n[First \"Team A\"]\n[Win \"Team B\"]\n[Scored by \"Kubb: Pitchside\"]\n[Pitchside:capture \"turns\"]\n\n1. - - G\n",
+  "warnings": [],
+  "winner": "B"
+ },
+ {
+  "events": [
+   {
+    "base": 2,
+    "type": "baton"
+   },
+   {
+    "type": "baton"
+   },
+   {
+    "field": 1,
+    "type": "baton"
+   },
+   {
+    "field": 1,
+    "type": "baton"
+   },
+   {
+    "base": 1,
+    "type": "baton"
+   },
+   {
+    "type": "baton"
+   },
+   {
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "king": true,
+    "type": "baton"
+   }
+  ],
+  "how": "king toppled early",
+  "name": "skipped",
+  "setup": {
+   "teams": {
+    "A": {
+     "name": "Ringers",
+     "players": [
+      {
+       "name": "Kim"
+      },
+      {
+       "name": "Dana"
+      },
+      {
+       "name": "Ole"
+      }
+     ]
+    },
+    "B": {
+     "name": "Stakes",
+     "players": [
+      {
+       "name": "Sam"
+      },
+      {
+       "name": "Lee"
+      }
+     ]
+    }
+   }
+  },
+  "text": "[Notation \"2\"]\n[Surface \"Grass\"]\n[Rules \"U.S. Championship 4.0, 2-4-6\"]\n[Base kubbs \"5\"]\n[Batons \"6\"]\n[Opening \"2-4-6\"]\n[Team A \"Ringers\"]\n[Team A Players \"Kim (k), Dana (d), Ole (o)\"]\n[Team B \"Stakes\"]\n[Team B Players \"Sam (s), Lee (l)\"]\n[First \"Team A\"]\n[Win \"Team B\"]\n[Scored by \"Kubb: Pitchside\"]\n[Pitchside:capture \"turns\"]\n\n1. 2B -\n2. F F B -\n3. 3I E X X X X X\n",
+  "warnings": [
+   "inkast",
+   "inkast",
+   "rule"
+  ],
+  "winner": "B"
+ },
+ {
+  "events": [
+   {
+    "at": [
+     {
+      "across": 1.5,
+      "depth": 4
+     }
+    ],
+    "base": 1,
+    "by": "kim",
+    "stance": {
+     "across": 2.5,
+     "depth": 4
+    },
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 4.5,
+      "depth": 4
+     }
+    ],
+    "base": 1,
+    "by": "dana",
+    "stance": {
+     "across": 2.5,
+     "depth": 4
+    },
+    "type": "baton"
+   },
+   {
+    "at": {
+     "across": 1.2,
+     "depth": 2.4
+    },
+    "by": "sam",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 3.6,
+     "depth": 1.1
+    },
+    "by": "sam",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": [
+     {
+      "across": 1.2,
+      "depth": 2.4
+     },
+     {
+      "across": 3.6,
+      "depth": 1.1
+     }
+    ],
+    "by": "sam",
+    "field": 2,
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 0.5,
+      "depth": 4
+     }
+    ],
+    "base": 1,
+    "by": "lee",
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 2.5,
+      "depth": 4
+     }
+    ],
+    "base": 1,
+    "by": "sam",
+    "type": "baton"
+   },
+   {
+    "by": "lee",
+    "type": "baton"
+   },
+   {
+    "lay": true,
+    "type": "capture"
+   },
+   {
+    "at": {
+     "across": 0.4,
+     "depth": 1.5
+    },
+    "by": "kim",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 2.2,
+     "depth": 0.6
+    },
+    "by": "kim",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 2.8,
+     "depth": 0.9
+    },
+    "by": "kim",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 4.1,
+     "depth": 2.2
+    },
+    "by": "kim",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": [
+     {
+      "across": 2.2,
+      "depth": 0.6
+     },
+     {
+      "across": 2.8,
+      "depth": 0.9
+     }
+    ],
+    "by": "kim",
+    "field": 2,
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 0.4,
+      "depth": 1.5
+     }
+    ],
+    "by": "dana",
+    "field": 1,
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 4.1,
+      "depth": 2.2
+     }
+    ],
+    "by": "ole",
+    "field": 1,
+    "type": "baton"
+   },
+   {
+    "by": "kim",
+    "type": "baton"
+   },
+   {
+    "by": "dana",
+    "type": "baton"
+   },
+   {
+    "pitch": false,
+    "players": false,
+    "stance": true,
+    "type": "capture"
+   },
+   {
+    "by": "ole",
+    "type": "baton"
+   },
+   {
+    "at": {
+     "across": 0.7,
+     "depth": 0.8
+    },
+    "by": "sam",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 1.9,
+     "depth": 1.2
+    },
+    "by": "sam",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 3.4,
+     "depth": 1.3
+    },
+    "by": "lee",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 4.4,
+     "depth": 0.5
+    },
+    "by": "lee",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": [
+     {
+      "across": 0.7,
+      "depth": 0.8
+     }
+    ],
+    "by": "sam",
+    "field": 1,
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 1.9,
+      "depth": 1.2
+     }
+    ],
+    "by": "lee",
+    "field": 1,
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 4.4,
+      "depth": 0.5
+     }
+    ],
+    "by": "sam",
+    "field": 1,
+    "type": "baton"
+   },
+   {
+    "by": "lee",
+    "type": "baton"
+   },
+   {
+    "by": "sam",
+    "type": "baton"
+   },
+   {
+    "by": "lee",
+    "type": "baton"
+   },
+   {
+    "at": {
+     "across": 1.4,
+     "depth": 1.6
+    },
+    "by": "kim",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 2.3,
+     "depth": 1.2
+    },
+    "by": "kim",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "at": {
+     "across": 2.6,
+     "depth": 1.7
+    },
+    "by": "kim",
+    "result": "in",
+    "type": "toss"
+   },
+   {
+    "applies": true,
+    "meters": 2,
+    "type": "advantage"
+   },
+   {
+    "at": [
+     {
+      "across": 1.4,
+      "depth": 1.6
+     },
+     {
+      "across": 2.3,
+      "depth": 1.2
+     },
+     {
+      "across": 2.6,
+      "depth": 1.7
+     }
+    ],
+    "by": "kim",
+    "field": 3,
+    "stance": {
+     "across": 2.6,
+     "depth": 1.3
+    },
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 0.5,
+      "depth": 4
+     }
+    ],
+    "base": 1,
+    "by": "dana",
+    "stance": {
+     "across": 2.6,
+     "depth": 1.3
+    },
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 2.5,
+      "depth": 4
+     }
+    ],
+    "base": 1,
+    "by": "ole",
+    "stance": {
+     "across": 2.4,
+     "depth": 1.3
+    },
+    "type": "baton"
+   },
+   {
+    "at": [
+     {
+      "across": 3.5,
+      "depth": 4
+     }
+    ],
+    "base": 1,
+    "by": "kim",
+    "stance": {
+     "across": 2.6,
+     "depth": 1.3
+    },
+    "type": "baton"
+   },
+   {
+    "by": "dana",
+    "stance": {
+     "across": 2.7,
+     "depth": 1.3
+    },
+    "type": "baton"
+   },
+   {
+    "by": "ole",
+    "king": true,
+    "stance": {
+     "across": 2.5,
+     "depth": 4
+    },
+    "time": {
+     "day": 24,
+     "hour": 10,
+     "min": 42,
+     "month": 11,
+     "year": 2026
+    },
+    "type": "baton"
+   }
+  ],
+  "how": "king",
+  "name": "switching",
+  "setup": {
+   "capture": {
+    "pitch": true,
+    "players": true
+   },
+   "client": "0.1 (1.1.0)",
+   "event": "Fall Open, pool 2",
+   "first": "A",
+   "location": "Riverside Park, Pitch 4",
+   "opening": "2-4-6",
+   "start": {
+    "day": 24,
+    "hour": 10,
+    "min": 0,
+    "month": 11,
+    "year": 2026
+   },
+   "surface": "grass",
+   "teams": {
+    "A": {
+     "name": "Ringers",
+     "players": [
+      {
+       "name": "Kim"
+      },
+      {
+       "name": "Dana"
+      },
+      {
+       "name": "Ole"
+      }
+     ]
+    },
+    "B": {
+     "name": "Stakes",
+     "players": [
+      {
+       "name": "Sam"
+      },
+      {
+       "name": "Lee"
+      }
+     ]
+    }
+   },
+   "wind": "light"
+  },
+  "text": "[Notation \"2\"]\n[Event \"Fall Open, pool 2\"]\n[Location \"Riverside Park, Pitch 4\"]\n[Start \"2026-11-24 10:00\"]\n[End \"2026-11-24 10:42\"]\n[Duration \"42m\"]\n[Surface \"Grass\"]\n[Rules \"U.S. Championship 4.0, 2-4-6\"]\n[Base kubbs \"5\"]\n[Batons \"6\"]\n[Opening \"2-4-6\"]\n[Team A \"Ringers\"]\n[Team A Players \"Kim (k), Dana (d), Ole (o)\"]\n[Team B \"Stakes\"]\n[Team B Players \"Sam (s), Lee (l)\"]\n[First \"Team A\"]\n[Win \"Team A\"]\n[Scored by \"Kubb: Pitchside 0.1 (1.1.0)\"]\n[Pitchside:capture \"players pitch stance\"]\n[Pitchside:wind \"light\"]\n\n1. k:B d:B\n*b 1,3 4,3\n2. s:2I s:2F l:B s:B l:-\n@a 1,2 3,1\n*a 1,2+3,1 0,3 2,3 -\n3. k:4I k:2F d:F o:F k:- d:- o:-\n@b 0,1 2x2,0 4,2\n*b 2x2,0 0,1 4,2 - - -\n4. 4I F F F - - -\n5. 3I A 3F B B B = K\n^a 2.60,1.30 2.60,1.30 2.40,1.30 2.60,1.30 2.70,1.30 2.50,4.00\n",
+  "warnings": [],
+  "winner": "A"
+ }
+]

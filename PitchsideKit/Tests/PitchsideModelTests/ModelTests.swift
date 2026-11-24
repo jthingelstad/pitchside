@@ -138,28 +138,6 @@ func sampleGame(_ store: GameStore) throws -> Game {
   }
 }
 
-@Suite struct ScorerTests {
-  /// The placeholder scorer starts the log, keeps capture changes, rebuilds from the log
-  /// and writes the headers.
-  @Test func thePlaceholderKeepsTheLog() throws {
-    let store = try scratch()
-    let game = try sampleGame(store)
-    try store.save(game)
-    let factory = PlaceholderScorer.Factory(appVersion: "0.1")
-    let scorer = try factory.scorer(for: game, store: store)
-    #expect(scorer.events.map(\.kind) == ["start"])
-    #expect(store.game(game.id)?.status == .playing)
-    #expect(store.playing()?.id == game.id)
-    try scorer.setCapture(Capture(who: true, stand: true, lay: true))
-    try scorer.record(kind: GameEvent.Kind.placeholder, payload: .object(["tap": .string("kubb")]))
-    let again = try factory.scorer(for: store.game(game.id)!, store: store)
-    #expect(again.events.count == 3)
-    #expect(again.game.capture.lay)
-    let text = try again.notation()
-    #expect(text.contains(#"[Pitchside:capture "turn who stand lay"]"#))
-  }
-}
-
 @Suite struct OpenFileTests {
   let sixPack = """
     [Notation "2"]

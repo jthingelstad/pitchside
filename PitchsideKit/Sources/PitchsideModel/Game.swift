@@ -137,7 +137,7 @@ public struct Capture: Codable, Sendable, Hashable {
       case .turn: "Kubbs thrown in and what each baton felled."
       case .who: "Names fill in by order. Tap only to change one."
       case .stand: "Tap where each kubb lands. Felled kubbs come free."
-      case .lay: "Drag along each kubb before it is raised."
+      case .lay: "Kept, not written yet: the notation has no lay line beside cells."
       case .stance: "Tap the thrower's spot. It sticks until they move."
       }
     }
@@ -171,11 +171,13 @@ public struct Capture: Codable, Sendable, Hashable {
   /// The file header's value: `turn who stand`.
   public var headerValue: String { words.joined(separator: " ") }
 
-  /// Reads a header value back; unknown words are ignored.
+  /// Reads a header value back, in this app's words (`turn who stand`) or record mode's
+  /// (`players pitch stance`, `turns`); unknown words are ignored.
   public init(headerValue: String) {
     let words = Set(headerValue.split(separator: " ").map(String.init))
     self.init(
-      who: words.contains("who"), stand: words.contains("stand"), lay: words.contains("lay"),
+      who: words.contains("who") || words.contains("players"),
+      stand: words.contains("stand") || words.contains("pitch"), lay: words.contains("lay"),
       stance: words.contains("stance"))
   }
 
@@ -219,11 +221,16 @@ public struct Game: Codable, Sendable, Hashable, Identifiable {
   /// The file's player ids to saved-name keys, for stats across games. Filled when a
   /// Pitchside game writes its file.
   public var playerKeys: [String: UUID]
+  /// The event (`[Event "..."]`), if one was typed: "Fall Open, pool 2".
+  public var event: String?
+  /// Where it was played (`[Location "..."]`), if typed: "Riverside Park, Pitch 4".
+  public var location: String?
 
   public init(
     id: UUID = UUID(), created: Date = .now, origin: Origin = .pitchside, status: Status = .setup,
     teams: [Side: Team] = [.A: Team(), .B: Team()], options: GameOptions = GameOptions(),
-    capture: Capture = Capture(), playerKeys: [String: UUID] = [:]
+    capture: Capture = Capture(), playerKeys: [String: UUID] = [:], event: String? = nil,
+    location: String? = nil
   ) {
     self.id = id
     self.created = created
@@ -234,6 +241,8 @@ public struct Game: Codable, Sendable, Hashable, Identifiable {
     self.options = options
     self.capture = capture
     self.playerKeys = playerKeys
+    self.event = event
+    self.location = location
   }
 
   public func team(_ side: Side) -> Team { teams[side] ?? Team() }

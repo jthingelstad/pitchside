@@ -90,6 +90,34 @@ public enum EventLogError: Error, Equatable {
 public final class EventLog {
   public let url: URL
   public private(set) var events: [GameEvent]
+  private var committedBytes: UInt64 = 0
+  private var fileBytes: UInt64 = 0
+
+  /// A recorded throw is the door's JSON object, with journal metadata alongside it.
+  /// Start and correction entries retain the original scaffold envelope.
+  private struct Metadata: Codable {
+    let seq: Int
+    let at: Date
+    let capture: String
+  }
+
+  private static func decodeLine(_ data: Data) throws -> GameEvent {
+    var object = try decoder.decode([String: JSONValue].self, from: data)
+    if let metadata = object.removeValue(forKey: "_log") {
+      let m = try decoder.decode(Metadata.self, from: encoder.encode(metadata))
+      return GameEvent(seq: m.seq, at: m.at, kind: "record", capture: m.capture, payload: .object(object))
+    }
+    return try decoder.decode(GameEvent.self, from: data)
+  }
+
+  private static func encodeLine(_ event: GameEvent) throws -> Data {
+    if event.kind == "record", var object = event.payload.object {
+      let m = Metadata(seq: event.seq, at: event.at, capture: event.capture)
+      object["_log"] = try decoder.decode(JSONValue.self, from: encoder.encode(m))
+      return try encoder.encode(object)
+    }
+    return try encoder.encode(event)
+  }
 
   private static let encoder: JSONEncoder = {
     let e = JSONEncoder()
@@ -109,17 +137,19 @@ public final class EventLog {
     self.url = url
     events = []
     guard FileManager.default.fileExists(atPath: url.path) else { return }
-    let text = try String(contentsOf: url, encoding: .utf8)
-    let lines = text.split(separator: "\n", omittingEmptySubsequences: false)
-    for (i, line) in lines.enumerated() where !line.isEmpty {
-      guard let event = try? Self.decoder.decode(GameEvent.self, from: Data(line.utf8)) else {
-        // Only the very last line can be a torn write (no newline after it).
-        if i == lines.count - 1 && !text.hasSuffix("\n") { break }
-        throw EventLogError.damaged(line: i + 1)
+    let bytes = try Data(contentsOf: url)
+    fileBytes = UInt64(bytes.count)
+    var start = bytes.startIndex
+    while let newline = bytes[start...].firstIndex(of: 0x0A) {
+      let number = events.count + 1
+      guard let event = try? Self.decodeLine(bytes[start..<newline]) else {
+        throw EventLogError.damaged(line: number)
       }
-      guard event.seq == events.count + 1 else { throw EventLogError.outOfOrder(line: i + 1) }
+      guard event.seq == number else { throw EventLogError.outOfOrder(line: number) }
       events.append(event)
+      start = newline + 1
     }
+    committedBytes = UInt64(start)
   }
 
   /// The next event's sequence number.
@@ -131,7 +161,7 @@ public final class EventLog {
     -> GameEvent
   {
     let event = GameEvent(seq: nextSeq, at: at, kind: kind, capture: capture.headerValue, payload: payload)
-    var line = try Self.encoder.encode(event)
+    var line = try Self.encodeLine(event)
     line.append(0x0A)
     let fm = FileManager.default
     if !fm.fileExists(atPath: url.path) {
@@ -140,28 +170,21 @@ public final class EventLog {
     }
     let handle = try FileHandle(forWritingTo: url)
     defer { try? handle.close() }
-    // A torn last line from an earlier crash: start on a fresh line.
     let end = try handle.seekToEnd()
-    if end > 0 {
-      let read = try FileHandle(forReadingFrom: url)
-      try read.seek(toOffset: end - 1)
-      let last = try read.read(upToCount: 1)
-      try read.close()
-      if last != Data([0x0A]) {
-        try handle.truncate(atOffset: Self.lastGoodEnd(url))
-        try handle.seekToEnd()
-      }
+    guard end == fileBytes else { throw EventLogError.outOfOrder(line: nextSeq) }
+    if end != committedBytes { try handle.truncate(atOffset: committedBytes) }
+    do {
+      try handle.write(contentsOf: line)
+      try handle.synchronize()
+    } catch {
+      try handle.truncate(atOffset: committedBytes)
+      try handle.synchronize()
+      fileBytes = committedBytes
+      throw error
     }
-    try handle.write(contentsOf: line)
-    try handle.synchronize()
+    committedBytes += UInt64(line.count)
+    fileBytes = committedBytes
     events.append(event)
     return event
-  }
-
-  /// The byte offset just past the last newline.
-  private static func lastGoodEnd(_ url: URL) throws -> UInt64 {
-    let data = try Data(contentsOf: url)
-    guard let i = data.lastIndex(of: 0x0A) else { return 0 }
-    return UInt64(i + 1)
   }
 }

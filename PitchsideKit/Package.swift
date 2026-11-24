@@ -65,7 +65,7 @@ let package = Package(
     ),
     // Pitchside's own model: the roster, teams, a game and its event log, the files on
     // this phone, the score sheet and the stats.
-    .target(name: "PitchsideModel", dependencies: ["Notation"]),
+    .target(name: "PitchsideModel", dependencies: ["Notation", "KubbEngine"]),
     // The design system from docs/design/canvas/ps.css, light and dark.
     .target(name: "PitchsideDesign"),
     .testTarget(
@@ -73,7 +73,9 @@ let package = Package(
     .testTarget(
       name: "NotationTests", dependencies: ["Notation", "PitchsideModel", "KubbEngine"],
       resources: [.copy("Fixtures")]),
-    .testTarget(name: "PitchsideModelTests", dependencies: ["PitchsideModel", "Notation"]),
+    .testTarget(
+      name: "PitchsideModelTests", dependencies: ["PitchsideModel", "Notation", "KubbEngine"],
+      resources: [.copy("Fixtures")]),
     .testTarget(name: "PitchsideDesignTests", dependencies: ["PitchsideDesign"]),
   ]
 )
