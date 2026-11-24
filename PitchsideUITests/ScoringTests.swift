@@ -363,6 +363,38 @@ final class ScoringTests: XCTestCase {
     XCTAssertTrue(notation.contains(" = o:K"), notation)
   }
 
+  func testStepThroughAnImportedGame() {
+    launch("imported", after: 0)
+    tap("Play by play")
+    let previous = app.buttons.matching(NSPredicate(format: "label ==[c] 'Previous'")).firstMatch
+    XCTAssertFalse(previous.isEnabled)
+    let pitch = app.descendants(matching: .any).matching(identifier: "replayPitch").firstMatch
+    let start = pitch.label
+    tap("Next")
+    tap("Next")
+    XCTAssertNotEqual(pitch.label, start)
+    tap("Previous")
+    tap("Previous")
+    XCTAssertEqual(pitch.label, start)
+    tap("Jump to turn")
+    tap("Turn 2")
+    tap("Next")
+    tap("Details")
+    XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'Field ·'")).firstMatch.exists)
+    tap("Back to Play by play")
+    shot("Play-by-play")
+    tap("Change view")
+    XCTAssertEqual(app.buttons["Change view"].value as? String, "Sideline")
+    tap("Zoom in on pitch")
+    tap("Fit whole pitch")
+    tap("Jump to turn")
+    tap("Last play")
+    XCTAssertFalse(app.buttons.matching(NSPredicate(format: "label ==[c] 'Next'")).firstMatch.isEnabled)
+    XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'won ·'")).firstMatch.exists)
+    tap("Back to Score sheet")
+    XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label ==[c] 'Play by play'")).firstMatch.exists)
+  }
+
   func testPrintableScoreSheet() {
     launch("sheet", after: 0)
     let export = app.buttons.matching(NSPredicate(format: "label ==[c] 'Score sheet PDF'")).firstMatch
