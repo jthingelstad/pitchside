@@ -219,7 +219,7 @@ private struct ObservationEditor: View {
       if details && entry.before.capture.pitch {
         let total = number("field") + number("base")
         ForEach(0..<total, id: \.self) { i in
-          let values = event["at"]?.array ?? []
+          let values = event["at"]?.array ?? event["knownFelled"]?.array ?? []
           let title = i < number("field") ? "Felled field kubb" : "Felled base kubb"
           positionEditor(
             "\(title) · \(i + 1)", half: entry.side.other,
@@ -228,7 +228,10 @@ private struct ObservationEditor: View {
             var updated = values
             while updated.count < total { updated.append(.null) }
             updated[i] = point ?? .null
-            event["at"] = updated.allSatisfy { $0 == .null } ? nil : .array(updated)
+            let complete = !updated.contains(.null)
+            event["at"] = complete ? .array(updated) : nil
+            event["knownFelled"] =
+              !complete && updated.contains(where: { $0 != .null }) ? .array(updated) : nil
           }
         }
       }
@@ -352,7 +355,10 @@ private struct ObservationEditor: View {
   }
 
   func outcome(field: Int, base: Int) {
-    if field != number("field") || base != number("base") { event["at"] = nil }
+    if field != number("field") || base != number("base") {
+      event["at"] = nil
+      event["knownFelled"] = nil
+    }
     event["field"] = field == 0 ? nil : .number(Double(field))
     event["base"] = base == 0 ? nil : .number(Double(base))
     event["illegal"] = nil

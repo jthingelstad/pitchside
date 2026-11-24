@@ -33,10 +33,12 @@ struct PitchCanvas: View {
 
         grass(geo)
         ForEach(Array(screen.fallen.enumerated()), id: \.offset) { i, at in
+          let group = screen.fallen.indices.filter { screen.fallen[$0] == at }
+          let location = spread(at, index: group.firstIndex(of: i) ?? 0, count: group.count)
           RoundedRectangle(cornerRadius: 3).fill(Color.psKubbRest)
             .overlay(RoundedRectangle(cornerRadius: 3).strokeBorder(Color.psKubbInk, lineWidth: 2))
             .frame(width: 26, height: 12).rotationEffect(.degrees(screen.view.isSideways ? 62 : 28))
-            .position(geo.point(at)).accessibilityHidden(true).allowsHitTesting(false)
+            .position(geo.point(location)).accessibilityHidden(true).allowsHitTesting(false)
         }
         ForEach(pieces) { piece in kubb(piece, geo) }
         if screen.isInkast && !screen.placing && !screen.punishPending, screen.positionsOn {
@@ -242,6 +244,13 @@ struct PitchCanvas: View {
     .allowsHitTesting(false)
   }
 
+  /// Separate pieces sharing a metre cell, including pieces this baton just felled.
+  private func spread(_ at: PitchFrame.World, index: Int, count: Int) -> PitchFrame.World {
+    guard count > 1 else { return at }
+    let angle = Double.pi / 3 + 2 * Double.pi * Double(index) / Double(count)
+    return .init(x: at.x + 0.34 * cos(angle), y: at.y + 0.34 * sin(angle))
+  }
+
   /// Every kubb to draw.
   var pieces: [Piece] {
     var out: [Piece] = []
@@ -256,7 +265,7 @@ struct PitchCanvas: View {
           out.append(
             Piece(
               id: "b\(side)\(i)", kind: .base, side: side, at: w,
-              target: isTarget && screen.marksKubbs && screen.isBaton && !screen.placing
+              target: isTarget && screen.positionsOn && screen.isBaton && !screen.placing
                 && !screen.punishPending ? .base(i) : nil, mark: nil,
               label: "Team \(side.rawValue) base kubb at across \(Int(c.across))"))
         }
@@ -276,17 +285,13 @@ struct PitchCanvas: View {
         let key = "\(c.across),\(c.depth)"
         let k = seen[key, default: 0]
         seen[key] = k + 1
-        var w = PitchFrame.cellMiddle(c, half: side)
+        let middle = PitchFrame.cellMiddle(c, half: side)
         let group = s.fieldPositions.filter { $0.across == c.across && $0.depth == c.depth }.count
-        if group > 1 {
-          let angle = 2 * Double.pi * Double(k) / Double(group)
-          w.x += 0.34 * cos(angle)
-          w.y += 0.34 * sin(angle)
-        }
+        let w = spread(middle, index: k, count: group)
         out.append(
           Piece(
             id: "f\(side)\(i)", kind: .field, side: side, at: w,
-            target: isTarget && screen.marksKubbs && screen.isBaton && !screen.placing
+            target: isTarget && screen.positionsOn && screen.isBaton && !screen.placing
               && !screen.punishPending ? .field(i) : nil, mark: c.mark,
             label:
               "Field kubb in Team \(side.rawValue)'s half, across \(Int(c.across)), depth \(Int(c.depth))"
@@ -331,7 +336,7 @@ struct PitchCanvas: View {
     let isTarget =
       piece.target != nil
       && (piece.kind != .base || screen.state.next.targets == "base"
-        || screen.markedField >= (screen.state.next.field ?? 0))
+        || screen.markedField + screen.countField >= (screen.state.next.field ?? 0))
     let shape = RoundedRectangle(cornerRadius: 4)
     let drawn = Group {
       switch piece.kind {

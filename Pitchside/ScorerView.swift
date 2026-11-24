@@ -141,13 +141,15 @@ struct ScorerView: View {
             }.buttonStyle(.plain).accessibilityLabel("Read engine warning")
           }
         }
-        if screen.isBaton && !screen.marksKubbs && !screen.punishPending && !screen.placing {
+        if screen.isBaton && (screen.unplacedFields > 0 || screen.unplacedBases > 0)
+          && !screen.punishPending && !screen.placing
+        {
           HStack {
-            if (screen.state.next.field ?? 0) > 0 {
-              countButton("field", count: $screen.countField, total: screen.state.next.field ?? 0)
+            if screen.unplacedFields > 0 {
+              countButton("field", count: $screen.countField, total: screen.unplacedFields)
             }
-            if (screen.state.next.base ?? 0) > 0 {
-              countButton("base", count: $screen.countBase, total: screen.state.next.base ?? 0)
+            if screen.unplacedBases > 0 {
+              countButton("base", count: $screen.countBase, total: screen.unplacedBases)
             }
           }
         }

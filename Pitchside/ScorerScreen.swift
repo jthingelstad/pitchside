@@ -90,10 +90,14 @@ final class ScorerScreen {
 
   func teamName(_ side: Side) -> String { game.team(side).shownName(side) }
 
-  /// The defending half's kubbs can be tapped (their places are known).
-  var marksKubbs: Bool {
-    let d = state.side(defender)
-    return positionsOn && d.fieldComplete && d.baseComplete
+  /// Only kubbs without a recorded spot need the count buttons.
+  var unplacedFields: Int {
+    let side = state.side(defender)
+    return positionsOn ? max(0, side.field - side.fieldPositions.count) : side.field
+  }
+  var unplacedBases: Int {
+    let side = state.side(defender)
+    return positionsOn && side.baseComplete ? 0 : side.base
   }
 
   var players: [RecordState.Player] { state.side(attacker).players }
@@ -114,7 +118,7 @@ final class ScorerScreen {
 
   var markedField: Int { marked.filter { if case .field = $0 { true } else { false } }.count }
   var markedBase: Int { marked.filter { if case .base = $0 { true } else { false } }.count }
-  var downCount: Int { marksKubbs ? marked.filter { $0 != .king }.count : countField + countBase }
+  var downCount: Int { markedField + markedBase + countField + countBase }
 
   /// The line through the field kubb nearest the centre line in the thrower's own half:
   /// its depth (a cell's middle), when the places are known.
@@ -204,7 +208,10 @@ final class ScorerScreen {
     if stanceOn && stance == nil && downCount == 0 {
       return "Tap where the thrower stands, on your side. Then tap what fell."
     }
-    if !marksKubbs {
+    if positionsOn && downCount == 0 && (unplacedFields > 0 || unplacedBases > 0) {
+      return "Tap kubbs with a known spot. Count the others below."
+    }
+    if !positionsOn {
       return downCount > 0
         ? "\(n(downCount, "kubb")) down. Tap \(downCount) DOWN when that is all of them."
         : "Count what this baton knocked over: field kubbs, then base kubbs."
@@ -380,7 +387,7 @@ final class ScorerScreen {
       marked.remove(at: i)
       return
     }
-    if case .base = t, state.side(defender).field > markedField {
+    if case .base = t, state.side(defender).field > markedField + countField {
       flash = "Field kubbs first"
     }
     marked.append(t)
@@ -475,35 +482,33 @@ final class ScorerScreen {
   }
 
   func baton(illegal: Bool = false, king: Bool = false) {
-    var field = 0
-    var base = 0
-    var at: [RecordPoint]? = nil
-    let d = state.side(defender)
-    if marksKubbs {
-      var f: [RecordPoint] = []
-      var b: [RecordPoint] = []
-      for t in marked {
-        switch t {
-        case .field(let i) where i < d.fieldPositions.count:
-          let c = d.fieldPositions[i]
-          f.append(RecordPoint(across: c.across + 0.5, depth: c.depth + 0.5))
-        case .base(let i) where i < d.basePositions.count:
-          let c = d.basePositions[i]
-          b.append(RecordPoint(across: c.across + 0.5, depth: 4))
-        default: break
-        }
+    let side = state.side(defender)
+    var fields: [RecordPoint] = []
+    var bases: [RecordPoint] = []
+    for target in marked {
+      switch target {
+      case .field(let i) where side.fieldPositions.indices.contains(i):
+        let c = side.fieldPositions[i]
+        fields.append(RecordPoint(across: c.across + 0.5, depth: c.depth + 0.5))
+      case .base(let i) where side.basePositions.indices.contains(i):
+        bases.append(RecordPoint(across: side.basePositions[i].across + 0.5, depth: 4))
+      default: break
       }
-      field = f.count
-      base = b.count
-      at = f + b
-    } else {
-      field = countField
-      base = countBase
     }
-    add(
-      RecordEvent.baton(
-        field: field, base: base, king: king, illegal: illegal, at: at,
-        stance: stanceOn ? stance : nil))
+    let spots = fields + bases
+    let allLocated = countField + countBase == 0
+    var event = RecordEvent.baton(
+      field: fields.count + countField, base: bases.count + countBase, king: king, illegal: illegal,
+      at: positionsOn && allLocated ? spots : nil, stance: stanceOn ? stance : nil)
+    if !allLocated && !spots.isEmpty {
+      // The writer needs a whole felled word. Keep the observed part locally for correction.
+      let observedFields =
+        fields.map { $0.tap(in: defender) } + Array(repeating: .null, count: countField)
+      let observedBases =
+        bases.map { $0.tap(in: defender) } + Array(repeating: .null, count: countBase)
+      event["knownFelled"] = .array(observedFields + observedBases)
+    }
+    add(event)
   }
 
   func kingDown() {
