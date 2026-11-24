@@ -12,6 +12,7 @@ struct HomeView: View {
   @State private var importing = false
   @State private var refusal: String?
   @State private var opened: UUID?
+  @State private var showAllFinished = false
 
   var body: some View {
     VStack(spacing: 0) {
@@ -19,7 +20,7 @@ struct HomeView: View {
       ScrollView {
         VStack(alignment: .leading, spacing: 16) {
           if let problem = model.recoveryProblem { Text(problem).psHelp() }
-          if let game = model.playing { stillOnThePitch(game) }
+          ForEach(model.playing) { game in stillOnThePitch(game) }
           Button("New game", action: newGame)
             .buttonStyle(.ps)
             .accessibilityHint("Teams, then this game's switches")
@@ -88,13 +89,13 @@ struct HomeView: View {
             .foregroundStyle(Color.psText)
         }
       }
-      Text("Started \(game.created.formatted(date: .omitted, time: .shortened)). \(firstLine(game))")
+      Text("Started \(game.created.formatted(date: .abbreviated, time: .shortened)). \(firstLine(game))")
         .font(PSFont.body(16))
         .foregroundStyle(Color.psText)
         .fixedSize(horizontal: false, vertical: true)
       Button("Carry on") { carryOn(game) }
         .buttonStyle(.psSolid)
-        .accessibilityHint("Back to the scorer")
+        .accessibilityLabel("Carry on, \(game.team(.A).shownName(.A)) versus \(game.team(.B).shownName(.B))")
     }
     .padding(16)
     .frame(maxWidth: .infinity, alignment: .leading)
@@ -111,7 +112,7 @@ struct HomeView: View {
     if model.finished.isEmpty {
       Text("Games you score or open show up here.").psHelp()
     }
-    ForEach(model.finished.prefix(12)) { game in
+    ForEach(showAllFinished ? model.finished[...] : model.finished.prefix(12)) { game in
       let read = model.read(game)
       NavigationLink(value: Route.sheet(game.id)) {
         HStack(spacing: 8) {
@@ -140,6 +141,10 @@ struct HomeView: View {
       .contextMenu {
         Button("Delete this game", role: .destructive) { model.delete(game) }
       }
+    }
+    if !showAllFinished && model.finished.count > 12 {
+      Button("Show all \(model.finished.count) games") { showAllFinished = true }
+        .buttonStyle(.quiet)
     }
   }
 

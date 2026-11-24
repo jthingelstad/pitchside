@@ -56,8 +56,8 @@ final class AppModel {
     roster = store.roster().sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
   }
 
-  /// The game still on the pitch.
-  var playing: Game? { games.first { $0.status == .playing } }
+  /// Every unfinished game, newest first.
+  var playing: [Game] { games.filter { $0.status == .playing } }
   /// Finished games, newest first.
   var finished: [Game] { games.filter { $0.status == .finished } }
 
