@@ -16,6 +16,7 @@
 /* Begin PBXFileReference section */
 		5C1D00000000000000000001 /* Pitchside.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Pitchside.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5C1D00000000000000000040 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Signing.xcconfig; path = Config/Signing.xcconfig; sourceTree = "<group>"; };
+		5C1D000000000000000000D1 = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PitchsideUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -24,6 +25,7 @@
 			path = Pitchside;
 			sourceTree = "<group>";
 		};
+		5C1D000000000000000000D2 = {isa = PBXFileSystemSynchronizedRootGroup; path = PitchsideUITests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -44,6 +46,7 @@
 		5C1D00000000000000000003 = {
 			isa = PBXGroup;
 			children = (
+				5C1D000000000000000000D2,
 				5C1D00000000000000000002 /* Pitchside */,
 				5C1D00000000000000000040 /* Signing.xcconfig */,
 				5C1D00000000000000000004 /* Products */,
@@ -53,6 +56,7 @@
 		5C1D00000000000000000004 /* Products */ = {
 			isa = PBXGroup;
 			children = (
+				5C1D000000000000000000D1,
 				5C1D00000000000000000001 /* Pitchside.app */,
 			);
 			name = Products;
@@ -88,7 +92,27 @@
 			productReference = 5C1D00000000000000000001 /* Pitchside.app */;
 			productType = "com.apple.product-type.application";
 		};
+		5C1D000000000000000000D3 /* PitchsideUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5C1D000000000000000000D4;
+			buildPhases = (5C1D000000000000000000D5,);
+			buildRules = ();
+			dependencies = (5C1D000000000000000000D6,);
+			fileSystemSynchronizedGroups = (5C1D000000000000000000D2,);
+			name = PitchsideUITests;
+			productName = PitchsideUITests;
+			productReference = 5C1D000000000000000000D1;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
+
+/* Begin PBXContainerItemProxy section */
+		5C1D000000000000000000D7 = {isa = PBXContainerItemProxy; containerPortal = 5C1D00000000000000000009; proxyType = 1; remoteGlobalIDString = 5C1D00000000000000000005; remoteInfo = Pitchside; };
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXTargetDependency section */
+		5C1D000000000000000000D6 = {isa = PBXTargetDependency; target = 5C1D00000000000000000005; targetProxy = 5C1D000000000000000000D7; };
+/* End PBXTargetDependency section */
 
 /* Begin PBXProject section */
 		5C1D00000000000000000009 /* Project object */ = {
@@ -120,6 +144,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				5C1D000000000000000000D3,
 				5C1D00000000000000000005 /* Pitchside */,
 			);
 		};
@@ -166,6 +191,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		5C1D000000000000000000D5 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
@@ -234,7 +260,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Config/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Throwing Wood";
+				INFOPLIST_KEY_CFBundleDisplayName = "Kubb: Pitchside";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = NO;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -258,7 +284,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Config/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Throwing Wood";
+				INFOPLIST_KEY_CFBundleDisplayName = "Kubb: Pitchside";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = NO;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -271,6 +297,8 @@
 			};
 			name = Release;
 		};
+		5C1D000000000000000000D8 = {isa = XCBuildConfiguration; buildSettings = { GENERATE_INFOPLIST_FILE = YES; PRODUCT_BUNDLE_IDENTIFIER = com.throwingwood.pitchside.uitests; PRODUCT_NAME = "$(TARGET_NAME)"; TARGETED_DEVICE_FAMILY = 1; TEST_TARGET_NAME = Pitchside; }; name = Debug; };
+		5C1D000000000000000000D9 = {isa = XCBuildConfiguration; buildSettings = { GENERATE_INFOPLIST_FILE = YES; PRODUCT_BUNDLE_IDENTIFIER = com.throwingwood.pitchside.uitests; PRODUCT_NAME = "$(TARGET_NAME)"; TARGETED_DEVICE_FAMILY = 1; TEST_TARGET_NAME = Pitchside; }; name = Release; };
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -292,6 +320,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		5C1D000000000000000000D4 = {isa = XCConfigurationList; buildConfigurations = (5C1D000000000000000000D8, 5C1D000000000000000000D9,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
