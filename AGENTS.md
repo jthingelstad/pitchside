@@ -544,41 +544,63 @@ generated team names, the rules choice).
 
 ## 10. Conventions for agents
 
-- **Status** (2026-11-24): scaffold on branch `scaffold`, local only, no remote. Jamie
-  decides where the repository lives and whether it is public. Built: the Xcode project and
-  `PitchsideKit`, the design system, the model and storage, Home, Roster, Teams, This game,
-  the score sheet, Stats (per game and per saved name), opening a Notation 2 file, and a
-  **placeholder scorer** that draws the static pitch. Not built: record mode and the real
-  scorer, the timeline, the view switch (sideline/baseline), photos, the lay-line drag,
-  landscape, the app icon, drag to reorder (a menu does it for now).
-- **Layout.** `Pitchside/` the app target (SwiftUI; `Demo.swift` is DEBUG only).
-  `PitchsideKit/` the Swift package: `CMusl`, `CLua`, `KubbEngine` (kubb-engine v1.0.0,
-  vendored, behind `kubbCall`), `Notation` (pk-kubb-score v2-2026.11's parser, `canonical.js`
-  and `kubb.js`, vendored and run in JavaScriptCore), `PitchsideModel` (games, roster,
-  event log, the game file's headers and ids, stats, the scorer seam) and `PitchsideDesign`
-  (tokens from the design's `ps.css`, light and dark, and the components). `Config/`
-  (Info.plist, signing kept out of the repo), `scripts/` (vendoring, `version.sh`,
-  `screenshots.sh`), `docs/design/` (the design and `build-shots/`).
-- **The seam for the live scorer** is `PitchsideKit/Sources/PitchsideModel/Scorer.swift`:
-  `protocol LiveScorer` (the game, its events, the prompt, the winner, `record`, `undo`,
-  `setCapture`, `notation()`) and `protocol ScorerFactory`. The app asks
-  `AppModel.scorers` for one; today that is `PlaceholderScorer.Factory`. Record mode lands
-  as a new `LiveScorer` over the engine; no screen talks to the engine directly.
-- **Storage.** Application Support `Pitchside/`: `roster.json`, and per game
-  `games/<uuid>/game.json`, `events.jsonl` (append-only JSON Lines, fsynced after each
-  event; a torn last line is dropped) and `game.txt` (the notation). Offline and local:
-  no network, no analytics.
+- **Status (2026-11-24).** A game can be set up, scored, reopened, corrected and
+  exported on the iPhone simulator. The live pitch, in-game timeline, score sheet,
+  roster, local stats and opening other Notation 2 files are connected. The repository
+  stays local on `scaffold`. Photos, lay-line entry, landscape and an app icon are
+  future work. The team-order menu moves players. Apple has registered the explicit
+  identifier `com.throwingwood.pitchside` as “Kubb Pitchside” on Throwing Wood's
+  developer team. The owner creates the app record in App Store Connect.
+- **Layout.** `Pitchside/` contains the SwiftUI app. `ScorerView.swift` and
+  `PitchCanvas.swift` draw the live screen. `ScorerScreen.swift` interprets gestures
+  using the engine's next action and allowed events. `TimelineView.swift` previews
+  corrections. `Demo.swift` supplies invented games for DEBUG builds.
+  `PitchsideKit/` contains the Lua interpreter and musl maths, `KubbEngine`
+  (kubb-engine v1.1.0), `Notation` (the pk-kubb-score v2-2026.11 reader running in
+  JavaScriptCore), `PitchsideModel` and `PitchsideDesign`. The Xcode UI tests live in
+  `PitchsideUITests/`. The working reference and simulator screenshots are under
+  `docs/design/`.
+- **Scorer seam.** `PitchsideModel/Scorer.swift` declares `LiveScorer` and
+  `ScorerFactory`. `AppModel` uses `RecordScorer.Factory`. The scorer calls
+  `record.rebuild` on open, `record.add` for observations and `record.build` for an edit
+  preview. The engine returns the state, warnings, sheet and notation. See kubb-engine
+  `docs/RECORD.md` at v1.1.0 for the record contract that implements section 5's proposal.
+- **Storage.** Under Application Support `Pitchside/`, the roster is `roster.json` and
+  each game has a `games/<uuid>/` directory. In `events.jsonl` the start entry pins
+  setup, including typed names and explicit player ids. Each observation has its record
+  fields and id at the top level. The reserved `_log` object carries journal metadata.
+  Undo drops the last effective observation. A correction replaces, inserts or removes
+  an observation by id. Both append journal lines and replay the effective history.
+  A newline terminates each synced entry. The next append truncates a torn tail.
+  `game.json` keeps the game summary and `game.txt` is the engine's current notation,
+  a draft until `state.over`. Opening the app repairs stale exports from the journal.
+- **Capture and coordinates.** New games record the turn and standing positions.
+  The writer's released capture header names `players`, `pitch` and `stance` if used,
+  or `turns` when only outcomes are recorded. A switch applies per turn. The lay row is
+  reserved. New taps carry half, across, depth and their approximate tap provenance in the
+  journal. `PitchFrame` maps the three viewing positions to a common centre-line origin.
+  Record mode returns metre cells for kubbs and writes stance points to the centimetre.
+  Pieces in one cell are spread on screen so each is selectable. Stable piece ids and
+  original standing points in the returned state would let Pitchside draw a drilled
+  group at its observed spots. The observed advantage distance stays in the journal.
+  On a baton with both located and unlocated hits, `knownFelled` keeps the available
+  positions locally until the timeline editor can supply a complete felled word.
 - **Build and test.**
-  - `swift test --package-path PitchsideKit` (model, design contrast, the reader against
-    node's `kubb.js` on archived games read in place from `../pk-kubb-score/games`, and the
-    engine's golden hashes). Needs node on the PATH for the reader comparison.
+  - `swift test --package-path PitchsideKit` runs model, frame, contrast, reader and
+    engine tests. Node is needed to compare the reader with archived games read in
+    place from `../pk-kubb-score/games`. The Swift scorer replays all eleven tagged
+    record fixtures and compares their output bytes with the tagged desktop engine.
+    `scripts/record-fixtures.sh` regenerates the test input and reference output.
   - `xcodebuild -project Pitchside.xcodeproj -scheme Pitchside -destination
-    'platform=iOS Simulator,name=iPhone 17' build`. Simulator only; for a phone put
-    `DEVELOPMENT_TEAM` in `Config/Signing.local.xcconfig` (ignored by git).
-  - `scripts/screenshots.sh` builds the demo (`-PitchsideDemo`, invented games in a temp
-    folder) and writes `docs/design/build-shots/`.
-  - `scripts/vendor-engine.sh check` and `scripts/vendor-notation.sh check` verify the
-    vendored copies against their tags.
+    'platform=iOS Simulator,name=iPhone 17' CODE_SIGNING_ALLOWED=NO build` builds
+    the simulator app. Replace `build` with `-parallel-testing-enabled NO test` for
+    the seven UI journeys.
+  - `scripts/screenshots.sh --scorer "iPhone 17"` runs the UI journeys and writes their
+    attachments to `docs/design/build-shots/` and checks the simulator export with the
+    vendored reader. Omit `--scorer` to refresh the other
+    demo screens too. DEBUG demo launches use a temporary game store.
+  - `scripts/vendor-engine.sh check` and `scripts/vendor-notation.sh check` check
+    the tagged copies. Finish simulator work with `xcrun simctl shutdown all`.
 - **The engine is never edited here.** Not the vendored copy, not the kubb-engine checkout
   from here. A change to the rules, record mode or the writer is a kubb-engine pull
   request and a tag, then a sync here. The same for the notation: a pk-kubb-score pull
