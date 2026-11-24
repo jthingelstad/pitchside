@@ -213,6 +213,7 @@ public final class RecordScorer: LiveScorer {
     records = Self.fold(log.events)
     try rebuild()
     lastWarnings = []
+    try settle()
   }
 
   public func preview(_ edit: RecordEdit) throws -> RecordResult {
@@ -239,8 +240,7 @@ public final class RecordScorer: LiveScorer {
   }
 
   public var captureAppliesNow: Bool {
-    guard !state.over, let i = state.inkast, let b = state.batons else { return false }
-    return i.left == i.dueAtStart && i.rethrows == 0 && i.punish == 0 && b.thrown == 0
+    !state.over && rows.last?.turn != state.turn
   }
 
   public func notation() throws -> String { text }
@@ -290,7 +290,6 @@ public final class RecordScorer: LiveScorer {
         engine.call(
           "record.rebuild",
           json: Self.args(["game": setup, "events": .array(records.map(JSONValue.object)), "want": Self.want]))))
-    try settle()
   }
 
   private func take(_ r: RecordResult) {

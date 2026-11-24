@@ -137,7 +137,7 @@ public struct Capture: Codable, Sendable, Hashable {
       case .turn: "Kubbs thrown in and what each baton felled."
       case .who: "Names fill in by order. Tap only to change one."
       case .stand: "Tap where each kubb lands. Felled kubbs come free."
-      case .lay: "Kept, not written yet: the notation has no lay line beside cells."
+      case .lay: "Lay capture will be available in a later version."
       case .stance: "Tap the thrower's spot. It sticks until they move."
       }
     }
@@ -229,7 +229,7 @@ public struct Game: Codable, Sendable, Hashable, Identifiable {
   public init(
     id: UUID = UUID(), created: Date = .now, origin: Origin = .pitchside, status: Status = .setup,
     teams: [Side: Team] = [.A: Team(), .B: Team()], options: GameOptions = GameOptions(),
-    capture: Capture = Capture(), playerKeys: [String: UUID] = [:], event: String? = nil,
+    capture: Capture = Capture(stand: true), playerKeys: [String: UUID] = [:], event: String? = nil,
     location: String? = nil
   ) {
     self.id = id

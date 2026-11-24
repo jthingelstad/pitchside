@@ -337,3 +337,34 @@ func replay(_ f: RecordFixture, useFixtureSetup: Bool) throws -> (RecordScorer, 
     #expect(reopened.setup == scorer.setup)
   }
 }
+
+extension JournalRecoveryTests {
+  @Test func staleScorerCannotOverwriteNewerThrowOrFile() throws {
+    let store = try scratch()
+    let game = try sampleGame(store)
+    let current = try RecordScorer(game: game, store: store, appVersion: "0.1")
+    let stale = try RecordScorer(game: game, store: store, appVersion: "0.1")
+    try current.add(RecordEvent.baton(base: 1))
+    #expect(throws: EventLogError.self) { try stale.add(RecordEvent.baton()) }
+    #expect(store.fileText(game.id) == current.text)
+    #expect(try store.log(game.id).events.count == 2)
+    #expect(stale.records.isEmpty)
+  }
+
+  @Test func latestLogRecoversMissingExport() throws {
+    let store = try scratch()
+    let game = try sampleGame(store)
+    let scorer = try RecordScorer(game: game, store: store, appVersion: "0.1")
+    try scorer.add(RecordEvent.baton(king: true))
+    try FileManager.default.removeItem(at: store.fileURL(game.id))
+    #expect(store.needsReplay(game))
+    let reopened = try RecordScorer(game: game, store: store, appVersion: "0.1")
+    #expect(reopened.winner == scorer.winner)
+    #expect(store.fileText(game.id) == scorer.text)
+    #expect(!store.needsReplay(game))
+  }
+
+  @Test func newGameDefaults() {
+    #expect(Game().capture.words == ["turn", "stand"])
+  }
+}

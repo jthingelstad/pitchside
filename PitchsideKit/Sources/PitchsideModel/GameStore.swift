@@ -7,7 +7,7 @@ import Notation
 ///     roster.json              the saved names
 ///     games/<uuid>/game.json   a game: teams, options, capture, status
 ///     games/<uuid>/events.jsonl  its append-only event log (EventLog)
-///     games/<uuid>/game.txt    its Planet Kubb Notation file (opened, or written at the end)
+///     games/<uuid>/game.txt    its Planet Kubb Notation file (opened, or regenerated after every action)
 ///
 /// Not thread safe: use one from one place (the app's main actor).
 public final class GameStore {
@@ -94,6 +94,17 @@ public final class GameStore {
   public func game(_ id: UUID) -> Game? {
     guard let data = try? Data(contentsOf: folder(id).appending(path: "game.json")) else { return nil }
     return try? Self.decoder.decode(Game.self, from: data)
+  }
+
+  /// A crash after syncing an observation can leave one or both derived files behind it.
+  public func needsReplay(_ game: Game) -> Bool {
+    guard !game.isImported else { return false }
+    func changed(_ url: URL) -> Date? {
+      try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
+    }
+    guard let logged = changed(logURL(game.id)) else { return false }
+    let files = [fileURL(game.id), folder(game.id).appending(path: "game.json")]
+    return files.contains { (changed($0) ?? .distantPast) < logged }
   }
 
   /// Writes the game's own file (teams, options, capture, status).
