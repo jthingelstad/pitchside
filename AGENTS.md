@@ -54,8 +54,9 @@ keeping up with a pro.
 - **Speed over completeness.** A turn can always be finished with the fewest taps the
   rules allow. Detail is something the scorer adds when there is time, never something the
   app waits for.
-- **Detail is optional.** Each game has a capture level (section 7). A higher level adds
-  taps and never changes the meaning of the lower level's data.
+- **Detail is optional.** Each game has a set of things to record (section 7), each a row
+  the scorer turns on or off, between turns too. A row adds taps and never changes the
+  meaning of the others' data.
 - **Never lose data.** The game is an append-only event log, saved after every event.
   State and notation are always rebuilt from the log. Undo and edits are new events, never
   changes to the state. (A 2013 Android scoring app for Planet Kubb broke this way: its
@@ -75,7 +76,7 @@ wraps a rules game, `tw.rules.new{ teams, surface, opening, first, rules, ... }`
 (`core/rules.lua`; `docs/notes/rules-engine.md` "Rules engine"). The engine has no idea of
 a set or series of games (best of three, a pool) **(inferred** from the absence of any
 such structure in `core/` and `session/`). Pitchside adds a match's own fields: its
-capture level, its event log, its photos, its event name and place.
+capture rows, its event log, its photos, its event name and place.
 
 **Rules.** The engine plays U.S. National Kubb Championship Rules V4.0 (`core/rules.lua`
 line 1), written into the file as `[Rules "U.S. Championship 4.0, 2-4-6"]` or `"..., six
@@ -203,8 +204,9 @@ throwingwood-ios `AGENTS.md`, "The engine must match the web's, bit for bit":
 A rules-only scorer does not strictly need musl's maths: the rules engine does no physics
 **(inferred)**. Pitchside should carry it anyway, so a scored game can later be shown or
 replayed on the same engine with the same numbers, and because one way of carrying the
-engine is easier to keep right than two. How to share the C targets without writing in
-throwingwood-ios's checkout is an open question.
+engine is easier to keep right than two. Pitchside carries its own copy of the C targets
+and its own vendor scripts (`scripts/vendor-c.sh`, `scripts/vendor-engine.sh`,
+`scripts/check-libm.sh`), copied from throwingwood-ios, never linked into it.
 
 ### What the engine offers today
 
@@ -233,7 +235,7 @@ host supplies what happened and gets back what the engine needs next, the state,
 file. The gaps found so far, without designing the change:
 
 - **Outcomes without positions.** A toss outcome needs a `rest` pose and a baton outcome
-  needs `moved` poses. At capture level 1 the scorer gives neither. The engine uses poses
+  needs `moved` poses. With "where kubbs stand" off the scorer gives neither. The engine uses poses
   to judge in or out and to place the advantage line. Record mode needs an in/out verdict
   per kubb and an advantage line given as observed (or approximate), not computed from
   poses.
@@ -244,13 +246,16 @@ file. The gaps found so far, without designing the change:
   and the rules raise an error on an action out of phase. A real game may break a rule;
   the scorer records what happened. Record mode needs to accept it and warn.
 - **Unknown thrower.** The engine always names a thrower (it defaults to the team's first
-  player and deals the order). At levels 1 and 2 the thrower is not recorded, and the file
-  must not claim one. The notation allows a token with no prefix.
+  player and deals the order). With "who threw" off the thrower is not recorded, and the
+  file must not claim one. The notation allows a token with no prefix.
 - **Events the engine never writes.** `Y` (a failed rescue), `W` (a game called, as under a
   tournament clock) and substitutions (I.B lets registered players substitute) are in the
   notation or the rules but not in the engine's writer **(inferred** from
   `docs/notes/rules-engine.md`, which says `Y` is never written, and no `W` in its token
   list).
+- **Typed names.** session `restore` refuses names that are not generated (`names.check`,
+  kubb-engine `docs/SESSION.md`). Pitchside's team and player names are typed, so record
+  mode must not run that check on them.
 - **The file's labels.** `setClient` writes `[Scored by "Throwing Wood <label>"]`
   (`notation.scorer = "Throwing Wood"`) and `[Event "Throwing Wood"]` by default. A
   Pitchside file must say Pitchside and the real event. `location` takes only letters,
@@ -317,21 +322,26 @@ The notation file is derived; the log is kept **(inferred: a recommendation)**.
 
 ### v1
 
-- **Roster and teams.** Players saved across games; teams of 1 to 6 in throwing order;
-  sides A and B. Team names from the engine's name generator (`names.roll`, kind `team`,
-  e.g. "Wobbly Towers", 16 characters at most; `docs/NAMES.md`). **Players are typed
-  with their real names** (Jamie, 2026-11-24: "player names here should be the real
-  players names… we dont have a UGC sharing issue in Pitchside"). Throwing Wood's
-  generated-names rule does not apply here.
-- **Rules preset.** U.S. National Kubb Championship Rules V4.0 with the 2-4-6 opening.
-  Built so another rule set (six from the start and the Kid rules already exist in the
-  engine; others later) is a choice, not a fork.
-- **Three capture levels per game.**
-  1. Outcomes: for each baton, a miss or which kubbs fell; for each inkast, how many went
-     in and how many out.
-  2. Plus the inkast: where each tossed kubb landed (tap N spots; the engine says N),
-     rethrows, punishment kubbs placed.
-  3. Full: who threw each baton, positions for everything, the king shot.
+- **Roster and teams.** Players saved across games, kept on this phone only; teams of 1
+  to 6 in throwing order; sides A and B. **Team names and player names are typed** by the
+  scorer, with no generator and no Shuffle (design review, 2026-11-24; Jamie the same day:
+  "we dont have a UGC sharing issue in Pitchside"). Throwing Wood's generated-names rule
+  does not apply here.
+- **Match options are Throwing Wood's switches** (design review): opening 2-4-6 or six
+  batons, surface grass, sand or snow, wind today off, light or strong, and who throws
+  first. The rules are U.S. National Kubb Championship Rules V4.0. There are no rules
+  presets and no Kid game: a Kid rules file is refused with a plain message.
+- **What to record: independent rows, each mapped to notation**, changeable between turns
+  (design review; replaces the three capture levels):
+  - the turn, always (kubbs thrown in and what each baton felled);
+  - who threw (the `k:` player prefix);
+  - where kubbs stand (the `@` pitch line and the `*` felled line);
+  - how kubbs lay (the `~` lay line);
+  - where batons are thrown from (the `^` stance line).
+  The file states what was captured in a writer's header, `[Pitchside:capture "..."]`,
+  whose value is the words `turn`, `who`, `stand`, `lay`, `stance` for the rows that were
+  on at any point in the game (the grammar takes a key with a colon; it sorts after the
+  defined headers and the file stays canonical).
 - **Position by tap**, in the notation frame (section 4), stored as approximate. Sideline
   and behind-the-baseline views.
 - **Catch-up.** Record outcomes live, add positions between turns. Positions owed are
@@ -349,17 +359,20 @@ The notation file is derived; the log is kept **(inferred: a recommendation)**.
   plays a match again from its options, seed and action log, through the physics. A real
   game has none of those, so this needs a new viewer that stands pieces where the file
   says, turn by turn. pk-kubb-score lists "a pitch replay" as an idea not built. It is
-  only as good as the positions captured, which argues for level 2 and up.
+  only as good as the positions captured, which argues for "where kubbs stand".
 - **Real games for the computer players.** The engine already measures itself against
   the 150 archived real games, which it treats as pro play, and keeps a play reference by
   level (`docs/reference/PLAY.md`, `play-levels.json`). Pitchside files would feed the
   same tools. A game would need to say its level (beginner, club, pro), which no header
   does today. Recorded games are private data: the engine's rule is to pass their folder
   to a tool, never copy them into a repository.
-- **Player stats across games**: 8 m hit rate (batons at base kubbs from the baseline),
-  inkast efficiency, turns to clear. `kubb.js` already computes hit rate and efficiency
-  per game. Stats across games need a player identity across files, which pk-kubb-score
-  lists as an open question ("Cross-game player ids").
+- **Player stats across games.** Built (design review): Stats follow the Planet Kubb
+  scoresheet, hit %, 1st baton efficiency and Zero B @ T#, then rethrows, batons to clear
+  the field, from 8 metres and hit % by player. The numbers come from pk-kubb-score's
+  vendored reader (`kubb.js`) run in JavaScriptCore; Pitchside adds only Zero B's turn and
+  baton and "from 8 metres" over the reader's turns. Across games, a saved name is the
+  identity, on this phone only (the game keeps a map from file ids to saved names). Files
+  opened from elsewhere count in their own stats, not under a saved name.
 
 ### Later
 
@@ -394,6 +407,10 @@ the thing that happened: the kubb that fell, the spot a kubb landed, the MISS bu
 - When all of the other side's kubbs are down, the next baton is at the king, from the
   baseline: down is a win, a miss is just a miss. Knocking the king over any earlier loses
   the game.
+
+The design that answered this brief is in `docs/design/` (canvas and shots). Its review
+decisions are in section 7 and win over this brief where they differ (capture levels,
+generated team names, the rules choice).
 
 ### Screens and states to frame
 
@@ -500,10 +517,8 @@ the thing that happened: the kubb that fell, the spot a kubb landed, the MISS bu
    calls on the existing session? Does it take one event at a time, or the whole log for a
    rebuild? What are its outcome records without poses? kubb-engine's call, as the first
    engine work.
-4. **Per-thrower tracking at every level?** Level 3 records it. At levels 1 and 2 the file
-   should carry no prefix, but `core/order` deals throwers and the engine names one for
-   every throw. Should levels 1 and 2 track the thrower when it costs nothing (a team of
-   one)?
+4. **Per-thrower tracking: settled.** It is the "who threw" row. With it off the file
+   carries no prefix, so record mode must take a throw with no thrower (section 5).
 5. **Photo storage and export.** The photos sit beside the log. How does a game export
    with them (a folder, a zip, the notation alone with ids that dangle)? What does the
    notation's photo reference look like (section 6)?
@@ -514,29 +529,56 @@ the thing that happened: the kubb that fell, the spot a kubb landed, the MISS bu
 7. **"US Nationals" (a naming difference).** The engine's rule set is "U.S. National Kubb
    Championship Rules V4.0" and the file says "U.S. Championship 4.0". Use the engine's
    words on screen.
-8. **Player names: decided.** Real names, typed (Jamie, 2026-11-24: "we dont have a UGC
-   sharing issue in Pitchside"). Left open: whether team names may be typed too, or stay
-   generated as the brief asked. Note for the builder: the engine strips quotes, brackets,
+8. **Names: settled.** Player and team names are typed (Jamie, 2026-11-24: "we dont have
+   a UGC sharing issue in Pitchside"; the design review dropped Shuffle). Note for the builder: the engine strips quotes, brackets,
    commas and parentheses from names in the file and makes ids from them
    (`docs/notes/rules-engine.md`), so "Kim (Jr.)" reaches the file changed.
-9. **The lay line.** One tap per kubb cannot fill `~`, which wants both ends. Do we record
-   the landing at all, or only where the kubb stands after raising (the `@` line)?
+9. **The lay line.** It is the "how kubbs lay" row, entered by a drag along each kubb
+   (the design's answer to "one tap gives one point"). The drag is not designed in detail
+   or built.
 10. **Real-game levels.** Who says whether a scored game is beginner, club or pro, and in
     which header?
-11. **Sharing the C targets.** Copy `CLua`/`CMusl` and `vendor-engine.sh` from
-    throwingwood-ios, or extract a shared package both depend on? The workstream rule is
-    never to write in one checkout from another's work.
+11. **Sharing the C targets: settled.** Copied, with Pitchside's own vendor scripts.
 12. **The 2013 Android app.** Known only from the brief. If its source or store page
     exists, it is worth reading for what scorers asked of it.
 
 ## 10. Conventions for agents
 
-- **Status**: framing only. No code, no Xcode project, no remote yet. Jamie decides where
-  the repository lives and whether it is public.
-- **Layout to come (inferred**, mirroring throwingwood-ios): `Pitchside/` the app target;
-  `PitchsideKit/` a Swift package with the engine's C targets, `KubbEngine` (the vendored
-  release behind `kubbCall`), and Pitchside's own model (the event log, the rebuild, the
-  roster) and pitch renderer; `scripts/vendor-engine.sh` with one `TAG`; `docs/`.
+- **Status** (2026-11-24): scaffold on branch `scaffold`, local only, no remote. Jamie
+  decides where the repository lives and whether it is public. Built: the Xcode project and
+  `PitchsideKit`, the design system, the model and storage, Home, Roster, Teams, This game,
+  the score sheet, Stats (per game and per saved name), opening a Notation 2 file, and a
+  **placeholder scorer** that draws the static pitch. Not built: record mode and the real
+  scorer, the timeline, the view switch (sideline/baseline), photos, the lay-line drag,
+  landscape, the app icon, drag to reorder (a menu does it for now).
+- **Layout.** `Pitchside/` the app target (SwiftUI; `Demo.swift` is DEBUG only).
+  `PitchsideKit/` the Swift package: `CMusl`, `CLua`, `KubbEngine` (kubb-engine v1.0.0,
+  vendored, behind `kubbCall`), `Notation` (pk-kubb-score v2-2026.11's parser, `canonical.js`
+  and `kubb.js`, vendored and run in JavaScriptCore), `PitchsideModel` (games, roster,
+  event log, the game file's headers and ids, stats, the scorer seam) and `PitchsideDesign`
+  (tokens from the design's `ps.css`, light and dark, and the components). `Config/`
+  (Info.plist, signing kept out of the repo), `scripts/` (vendoring, `version.sh`,
+  `screenshots.sh`), `docs/design/` (the design and `build-shots/`).
+- **The seam for the live scorer** is `PitchsideKit/Sources/PitchsideModel/Scorer.swift`:
+  `protocol LiveScorer` (the game, its events, the prompt, the winner, `record`, `undo`,
+  `setCapture`, `notation()`) and `protocol ScorerFactory`. The app asks
+  `AppModel.scorers` for one; today that is `PlaceholderScorer.Factory`. Record mode lands
+  as a new `LiveScorer` over the engine; no screen talks to the engine directly.
+- **Storage.** Application Support `Pitchside/`: `roster.json`, and per game
+  `games/<uuid>/game.json`, `events.jsonl` (append-only JSON Lines, fsynced after each
+  event; a torn last line is dropped) and `game.txt` (the notation). Offline and local:
+  no network, no analytics.
+- **Build and test.**
+  - `swift test --package-path PitchsideKit` (model, design contrast, the reader against
+    node's `kubb.js` on archived games read in place from `../pk-kubb-score/games`, and the
+    engine's golden hashes). Needs node on the PATH for the reader comparison.
+  - `xcodebuild -project Pitchside.xcodeproj -scheme Pitchside -destination
+    'platform=iOS Simulator,name=iPhone 17' build`. Simulator only; for a phone put
+    `DEVELOPMENT_TEAM` in `Config/Signing.local.xcconfig` (ignored by git).
+  - `scripts/screenshots.sh` builds the demo (`-PitchsideDemo`, invented games in a temp
+    folder) and writes `docs/design/build-shots/`.
+  - `scripts/vendor-engine.sh check` and `scripts/vendor-notation.sh check` verify the
+    vendored copies against their tags.
 - **The engine is never edited here.** Not the vendored copy, not the kubb-engine checkout
   from here. A change to the rules, record mode or the writer is a kubb-engine pull
   request and a tag, then a sync here. The same for the notation: a pk-kubb-score pull
