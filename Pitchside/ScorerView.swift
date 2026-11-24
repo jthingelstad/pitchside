@@ -4,7 +4,6 @@ import SwiftUI
 
 /// The band, pitch and thumb controls stay in place through every turn.
 struct ScorerView: View {
-  @Environment(\.colorScheme) private var colorScheme
   @State private var screen: ScorerScreen
   @State private var timeline = false
   @State private var viewport = PitchFrame.Viewport()
@@ -24,11 +23,12 @@ struct ScorerView: View {
         }
       } else {
         VStack(spacing: 0) {
-          VStack(spacing: 8) {
+          VStack(spacing: 0) {
             header
             batonBar
           }
-          .padding(.horizontal, 12).padding(.top, 4).padding(.bottom, 8)
+          .padding(.horizontal, 12).padding(.bottom, 4)
+          .background(Color.psPlate.ignoresSafeArea(edges: .top))
           PitchCanvas(screen: screen, viewport: $viewport)
             .frame(maxHeight: .infinity)
             .overlay(alignment: .bottom) {
@@ -50,13 +50,7 @@ struct ScorerView: View {
           bottomBar
         }
         .foregroundStyle(Color.psText)
-        .background {
-          GeometryReader { geo in
-            let team = TeamMarker.fill(screen.attacker.marker)
-            (colorScheme == .dark ? Color.psGround : team).ignoresSafeArea()
-            team.frame(height: geo.safeAreaInsets.top).offset(y: -geo.safeAreaInsets.top)
-          }
-        }
+        .background(Color.psGround)
       }
     }
     .onChange(of: screen.view) { viewport = .init() }
@@ -65,10 +59,13 @@ struct ScorerView: View {
   }
 
   var header: some View {
-    HStack(spacing: 10) {
-      TeamMarker(screen.attacker, size: 44)
+    HStack(spacing: 6) {
+      icon("chevron.backward", "Back to Games", action: close)
       VStack(alignment: .leading, spacing: 1) {
-        Text(screen.header).font(PSFont.body(14, .bold))
+        HStack(spacing: 5) {
+          TeamMarker(screen.attacker, size: 18)
+          Text(screen.header).font(PSFont.body(14, .semibold)).foregroundStyle(Color.psMuted)
+        }
         if screen.playersOn, let player = screen.thrower, !screen.over {
           HStack(spacing: 8) {
             Button {
@@ -105,7 +102,7 @@ struct ScorerView: View {
           .accessibilityValue(screen.view.title)
       }
     }
-    .padding(.horizontal, 10).padding(.vertical, 6).frame(minHeight: 76).psCard()
+    .padding(.vertical, 4).frame(minHeight: 60)
   }
 
   var batonBar: some View {
@@ -120,7 +117,7 @@ struct ScorerView: View {
       }
       Text("\(screen.batonsLeft) left").font(PSFont.body(14, .bold))
     }
-    .padding(.horizontal, 10).frame(minHeight: 36).psBox()
+    .frame(minHeight: 32)
     .accessibilityElement(children: .ignore)
     .accessibilityLabel(
       "Turn \(screen.state.turn), \(screen.tokens), \(screen.batonsLeft) batons left")
@@ -178,7 +175,7 @@ struct ScorerView: View {
     }
     .padding(.horizontal, 12).padding(.vertical, 8).frame(maxWidth: .infinity, minHeight: 72)
     .background(Color.psGround)
-    .overlay(alignment: .top) { Rectangle().fill(Color.psLine).frame(height: 2) }
+    .overlay(alignment: .top) { Divider() }
   }
 
   func countButton(_ kind: String, count: Binding<Int>, total: Int) -> some View {
@@ -195,32 +192,32 @@ struct ScorerView: View {
       Button("Undo") {
         screen.panel = .none
         screen.undo()
-      }.buttonStyle(PSButtonStyle(minHeight: 62)).frame(width: 96)
+      }.buttonStyle(.quiet).fixedSize(horizontal: true, vertical: false)
       Button(screen.primaryTitle) {
         screen.panel = .none
         if screen.over { close() } else { screen.primary() }
       }.buttonStyle(
         PSButtonStyle(
-          solid: !(screen.positionsOn && screen.isInkast) && !screen.placing, minHeight: 62))
+          solid: !(screen.positionsOn && screen.isInkast) && !screen.placing, minHeight: 52))
       if let second = screen.secondTitle {
         Button(second) {
           screen.panel = .none
           screen.second()
         }
-        .buttonStyle(PSButtonStyle(minHeight: 62)).fixedSize(horizontal: true, vertical: false)
+        .buttonStyle(PSButtonStyle(minHeight: 52)).fixedSize(horizontal: true, vertical: false)
       }
-      icon("ellipsis", "More", height: 62) {
+      icon("ellipsis", "More", height: 52) {
         screen.panel = screen.panel == .none ? .rare : .none
       }
-    }.padding(.horizontal, 12).padding(.top, 9).padding(.bottom, 6)
+    }.padding(.horizontal, 12).padding(.top, 3).padding(.bottom, 8)
   }
 
   private func icon(
     _ symbol: String, _ label: String, height: CGFloat = 48, action: @escaping () -> Void
   ) -> some View {
     Button(action: action) {
-      Image(systemName: symbol).font(.system(size: 22, weight: .bold))
-        .frame(width: 48, height: height).psCard(shadow: 3)
+      Image(systemName: symbol).font(.system(size: 20, weight: .medium))
+        .frame(width: 48, height: height).contentShape(Rectangle())
     }.buttonStyle(.plain).accessibilityLabel(label)
   }
 
@@ -258,7 +255,6 @@ struct ScorerView: View {
             screen.panel = .none
             timeline = true
           }
-          Button("Home", action: close)
         }
       case .capture:
         Text("What to record · turn \(screen.state.turn)").psKick()

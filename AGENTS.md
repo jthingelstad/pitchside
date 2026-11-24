@@ -545,13 +545,21 @@ generated team names, the rules choice).
 ## 10. Conventions for agents
 
 - **Status (2026-11-24).** A game can be set up, scored, reopened, corrected and
-  exported on the iPhone simulator. Home resumes every unfinished game. A local score
+  exported on the iPhone simulator. Games resumes every unfinished game. A local score
   sheet opens the timeline for corrections and previews a printable US Letter PDF.
-  Every readable score sheet opens a read-only play-by-play viewer for its recorded\n  inkasts, advantage, batons and result. Imported games support PDF export too. The live pitch, in-game timeline, score sheet,
+  Every readable score sheet opens a read-only play-by-play viewer for its recorded
+  inkasts, advantage, batons and result. Imported games support PDF export too. The live pitch, in-game timeline, score sheet,
   roster, local stats and opening other Notation 2 files are connected. The repository
   is public at `jthingelstad/pitchside`, with `main` as the default branch and an
   MIT license. Photos, lay-line entry and landscape are future work. Internal
   TestFlight builds use `com.throwingwood.pitchside` and the Dev tester group.
+- **Navigation and appearance.** Games, Roster and Stats stay at the bottom of every
+  app page, including setup, live scoring, timeline edits, play by play and pitch
+  details. Switching sections preserves the current throw, draft and reading position.
+  The file picker, PDF preview and share sheet use the system presentation.
+  Inter, sentence-case labels, flat surfaces and a field-green action colour carry the
+  tool interface. The pitch, lettered team markers and Pitchside wordmark carry the
+  family look. The original canvas remains the reference for scoring interactions.
 - **Layout.** `Pitchside/` contains the SwiftUI app. `ScorerView.swift` and
   `PitchCanvas.swift` draw the live screen. `ScorerScreen.swift` interprets gestures
   using the engine's next action and allowed events. `TimelineView.swift` previews
@@ -603,7 +611,7 @@ generated team names, the rules choice).
   - `xcodebuild -project Pitchside.xcodeproj -scheme Pitchside -destination
     'platform=iOS Simulator,name=iPhone 17' CODE_SIGNING_ALLOWED=NO build` builds
     the simulator app. Replace `build` with `-parallel-testing-enabled NO test` for
-    the thirteen UI journeys.
+    the UI journeys.
   - `scripts/screenshots.sh --scorer "iPhone 17"` runs the UI journeys and writes their
     attachments to `docs/design/build-shots/` and checks the simulator export with the
     vendored reader. Omit `--scorer` to refresh the other

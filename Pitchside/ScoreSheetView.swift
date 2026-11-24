@@ -17,15 +17,16 @@ struct ScoreSheetView: View {
   @State private var replay: GameReplay?
 
   var body: some View {
-    PushedScreen(title: "Score sheet", back: "Home") {
+    PushedScreen(title: "Score sheet", back: "Games") {
       if let game = model.game(id) {
         let text = model.text(game)
         let read = model.read(game)
         result(game, read)
         if let read {
-          Button("Play by play") { replay = GameReplay(read.analysis) }
-            .buttonStyle(.ps)
-            .accessibilityHint("Step through the game on the pitch")
+          ViewThatFits(in: .horizontal) {
+            HStack(spacing: 8) { reviewActions(read).fixedSize(horizontal: true, vertical: false) }
+            VStack(spacing: 8) { reviewActions(read) }
+          }
         }
         if !engineNotes.isEmpty {
           DisclosureGroup("Scorer notes (\(engineNotes.count))") {
@@ -79,15 +80,19 @@ struct ScoreSheetView: View {
           .fixedSize(horizontal: false, vertical: true)
           .padding(14)
           .frame(maxWidth: .infinity, alignment: .leading)
-          .psCard(fill: .psInside, shadow: 0)
+          .psCard(fill: .psInside)
           .accessibilityLabel("The game file").accessibilityValue(text)
-        actions(game, text, read)
+        actions(game, text)
       } else {
         Text("This game is gone.").font(PSFont.body(16))
       }
     }
+    .navigationDestination(isPresented: Binding(
+      get: { replay != nil }, set: { if !$0 { replay = nil } }
+    )) {
+      if let replay { ReplayView(replay: replay) }
+    }
     .quickLookPreview($pdf)
-    .fullScreenCover(item: $replay) { ReplayView(replay: $0) }
   }
 
   @ViewBuilder func result(_ game: Game, _ read: GameRead?) -> some View {
@@ -160,7 +165,19 @@ struct ScoreSheetView: View {
     .psBox()
   }
 
-  @ViewBuilder func actions(_ game: Game, _ text: String, _ read: GameRead?) -> some View {
+  @ViewBuilder private func reviewActions(_ read: GameRead) -> some View {
+    Button { replay = GameReplay(read.analysis) } label: {
+      Label("Play by play", systemImage: "rectangle.stack")
+    }
+    .buttonStyle(.ps)
+    .accessibilityHint("Step through the game on the pitch")
+    NavigationLink(value: Route.stats(id)) {
+      Label("Game stats", systemImage: "chart.bar")
+    }
+    .buttonStyle(.ps)
+  }
+
+  @ViewBuilder func actions(_ game: Game, _ text: String) -> some View {
     VStack(alignment: .leading, spacing: 4) {
       Button("Watch in Throwing Wood") {}
         .buttonStyle(.ps)
@@ -178,10 +195,6 @@ struct ScoreSheetView: View {
       .accessibilityHint("Copies the game file's text")
       ShareLink(item: shareFile(game, text)) { Text("Share the .txt") }
         .buttonStyle(.psSolid)
-      NavigationLink(value: Route.stats(game.id)) { Text("Stats") }
-        .buttonStyle(.ps)
-        .frame(maxWidth: 96)
-        .disabled(read == nil)
     }
   }
 

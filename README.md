@@ -3,8 +3,11 @@
 Pitchside is an iPhone scorekeeper for real games of kubb. Tap the kubbs that fell,
 record a miss, or mark where a throw landed. Pinch to zoom into a drilled group
 and drag to bring another kubb into reach. Undo a throw in one tap or correct an
-earlier turn in the timeline, even after the game finishes. Resume any game from Home.
-Open **Play by play** on a score sheet to step through the pitch in either direction\nor jump to a turn, including games imported from Throwing Wood.\nEach game produces a plain-text Planet Kubb Notation file, a printable PDF score sheet
+earlier turn in the timeline, even after the game finishes. Switch between Games,
+Roster and Stats while scoring, then return to the throw you were marking.
+Open **Play by play** on a score sheet to step through the pitch in either direction
+or jump to a turn, including games imported from Throwing Wood.
+Each game produces a plain-text Planet Kubb Notation file, a printable PDF score sheet
 and player stats. Games and roster names stay on the phone until
 the scorer chooses to share a file.
 

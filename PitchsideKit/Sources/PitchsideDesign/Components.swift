@@ -1,45 +1,25 @@
 import SwiftUI
 
-// The shared primitives of ps.css: card, button (plain and solid), quiet button, chip,
-// segmented control, kicker, and the team marker. Touch targets are 48 points at least.
-
-// MARK: Card
-
-/// `.card`: a 3-point line, radius 8, a hard 5-point shadow, plate fill.
-public struct CardStyle: ViewModifier {
-  var fill: Color
-  var shadow: CGFloat
-  public func body(content: Content) -> some View {
-    content
-      .background(fill, in: RoundedRectangle(cornerRadius: 8))
-      .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.psLine, lineWidth: 3))
-      .background(
-        RoundedRectangle(cornerRadius: 8).fill(Color.psShade).offset(x: shadow, y: shadow))
-  }
-}
-
-/// A thin box (2-point line, radius 6, no shadow): the lists inside a screen.
-public struct BoxStyle: ViewModifier {
-  public func body(content: Content) -> some View {
-    content
-      .background(Color.psInside, in: RoundedRectangle(cornerRadius: 6))
-      .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 2))
-  }
-}
+// MARK: Surfaces
 
 extension View {
-  public func psCard(fill: Color = .psPlate, shadow: CGFloat = 5) -> some View {
-    modifier(CardStyle(fill: fill, shadow: shadow))
+  public func psCard(fill: Color = .psPlate) -> some View {
+    background(fill, in: RoundedRectangle(cornerRadius: 12))
+      .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.psLine.opacity(0.38)))
   }
-  public func psBox() -> some View { modifier(BoxStyle()) }
+
+  public func psBox() -> some View {
+    background(Color.psInside, in: RoundedRectangle(cornerRadius: 8))
+      .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.psLine.opacity(0.45)))
+  }
 }
 
 // MARK: Text styles
 
 extension Text {
-  /// `.kick`: Inter bold 14, uppercase, tracked .06em, muted.
+  /// A short label for a group of related controls.
   public func psKick() -> some View {
-    font(PSFont.body(14, .bold, relativeTo: .subheadline)).tracking(14 * 0.06).textCase(.uppercase)
+    font(PSFont.body(15, .semibold, relativeTo: .subheadline))
       .foregroundStyle(Color.psMuted)
   }
   /// Help under a control: Inter 14, muted.
@@ -50,14 +30,12 @@ extension Text {
 
 // MARK: Buttons
 
-/// `.btn` (plain) and `.btn.solid`: Londrina 20 uppercase, 3-point line, radius 6, a
-/// 3-point shadow that the press takes away.
 public struct PSButtonStyle: ButtonStyle {
   public var solid: Bool
   public var minHeight: CGFloat
   @Environment(\.isEnabled) private var isEnabled
 
-  public init(solid: Bool = false, minHeight: CGFloat = 56) {
+  public init(solid: Bool = false, minHeight: CGFloat = 50) {
     self.solid = solid
     self.minHeight = minHeight
   }
@@ -65,36 +43,30 @@ public struct PSButtonStyle: ButtonStyle {
   public func makeBody(configuration: Configuration) -> some View {
     let pressed = configuration.isPressed
     configuration.label
-      .font(PSFont.display(20, relativeTo: .headline))
-      .tracking(0.6)
-      .textCase(.uppercase)
+      .font(PSFont.body(17, .semibold, relativeTo: .headline))
       .multilineTextAlignment(.center)
       .foregroundStyle(solid ? Color.psOnSolid : Color.psText)
       .padding(.horizontal, 14)
       .padding(.vertical, 6)
       .frame(maxWidth: .infinity, minHeight: minHeight)
-      .background(solid ? Color.psSolid : Color.psPlate, in: RoundedRectangle(cornerRadius: 6))
-      .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 3))
-      .background(
-        RoundedRectangle(cornerRadius: 6).fill(Color.psShade).offset(x: pressed ? 0 : 3, y: pressed ? 0 : 3))
-      .offset(x: pressed ? 3 : 0, y: pressed ? 3 : 0)
-      .opacity(isEnabled ? 1 : 0.55)
+      .background(solid ? Color.psSolid : Color.psPlate, in: RoundedRectangle(cornerRadius: 9))
+      .overlay {
+        if !solid { RoundedRectangle(cornerRadius: 9).strokeBorder(Color.psLine) }
+      }
+      .opacity(isEnabled ? (pressed ? 0.78 : 1) : 0.52)
       .contentShape(Rectangle())
   }
 }
 
-/// `.quiet`: an underlined Londrina 18 word, 48 points tall.
+/// A text action with the same minimum target as a filled button.
 public struct QuietButtonStyle: ButtonStyle {
   public init() {}
   public func makeBody(configuration: Configuration) -> some View {
     configuration.label
-      .font(PSFont.display(18, relativeTo: .headline))
-      .tracking(0.5)
-      .textCase(.uppercase)
-      .underline()
-      .foregroundStyle(Color.psText)
+      .font(PSFont.body(16, .semibold, relativeTo: .headline))
+      .foregroundStyle(Color.psSolid)
       .padding(.horizontal, 6)
-      .frame(minHeight: 48)
+      .frame(minWidth: 48, minHeight: 48)
       .contentShape(Rectangle())
       .opacity(configuration.isPressed ? 0.6 : 1)
   }
@@ -111,7 +83,7 @@ extension ButtonStyle where Self == QuietButtonStyle {
 
 // MARK: Chip
 
-/// `.chip`: Inter bold 14 in a 2-point box.
+/// A short status on its own surface.
 public struct Chip: View {
   let text: String
   public init(_ text: String) { self.text = text }
@@ -144,7 +116,7 @@ public struct Segmented<Value: Hashable>: View {
 
   public var body: some View {
     let stacked = typeSize >= .accessibility2
-    let layout = stacked ? AnyLayout(VStackLayout(spacing: 0)) : AnyLayout(HStackLayout(spacing: 0))
+    let layout = stacked ? AnyLayout(VStackLayout(spacing: 3)) : AnyLayout(HStackLayout(spacing: 3))
     layout {
       ForEach(Array(options.enumerated()), id: \.offset) { i, option in
         let on = option.0 == selection
@@ -154,28 +126,24 @@ public struct Segmented<Value: Hashable>: View {
           Text(option.1)
             .font(PSFont.body(15, .bold, relativeTo: .subheadline))
             .multilineTextAlignment(.center)
-            .foregroundStyle(on ? Color.psOnSolid : Color.psText)
+            .foregroundStyle(on ? Color.psSolid : Color.psMuted)
             .padding(.horizontal, 6)
             .padding(.vertical, 4)
             .frame(maxWidth: .infinity, minHeight: 48)
-            .background(on ? Color.psSolid : Color.psField)
+            .background(on ? Color.psPlate : .clear, in: RoundedRectangle(cornerRadius: 7))
+            .overlay { if on { RoundedRectangle(cornerRadius: 7).strokeBorder(Color.psSolid) } }
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .overlay(alignment: stacked ? .top : .leading) {
-          if i > 0 {
-            Rectangle().fill(Color.psLine).frame(width: stacked ? nil : 3, height: stacked ? 3 : nil)
-          }
-        }
         .accessibilityLabel(option.1)
         .accessibilityValue(on ? "selected, \(i + 1) of \(options.count)" : "\(i + 1) of \(options.count)")
         .accessibilityHint(label)
         .accessibilityAddTraits(on ? [.isSelected] : [])
       }
     }
-    .clipShape(RoundedRectangle(cornerRadius: 6))
-    .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 3))
-    .background(RoundedRectangle(cornerRadius: 6).fill(Color.psShade).offset(x: 3, y: 3))
+    .padding(3)
+    .background(Color.psInside, in: RoundedRectangle(cornerRadius: 9))
+    .overlay(RoundedRectangle(cornerRadius: 9).strokeBorder(Color.psLine.opacity(0.5)))
   }
 }
 
@@ -201,7 +169,7 @@ public struct TeamMarker: View {
   public var body: some View {
     RoundedRectangle(cornerRadius: max(3, size / 6))
       .fill(Self.fill(side))
-      .overlay(RoundedRectangle(cornerRadius: max(3, size / 6)).strokeBorder(Color.psLine, lineWidth: size >= 30 ? 3 : 2))
+      .overlay(RoundedRectangle(cornerRadius: max(3, size / 6)).strokeBorder(Color.psKubbInk.opacity(0.45), lineWidth: 1))
       .overlay {
         if letter {
           Text(side.rawValue)
@@ -216,37 +184,47 @@ public struct TeamMarker: View {
 
 // MARK: Screen header
 
-/// The wood header of a screen: a quiet back word on the left, the title on the right
-/// (Teams, This game, Score sheet, Stats). Home has its own.
 public struct ScreenHeader: View {
   let title: String
   let back: String?
+  let brand: String?
   let action: (() -> Void)?
 
-  public init(_ title: String, back: String? = nil, action: (() -> Void)? = nil) {
+  public init(_ title: String, back: String? = nil, brand: String? = nil, action: (() -> Void)? = nil) {
     self.title = title
     self.back = back
+    self.brand = brand
     self.action = action
   }
 
   public var body: some View {
-    HStack(alignment: .lastTextBaseline) {
+    HStack(spacing: 4) {
       if let back, let action {
-        Button(back, action: action).buttonStyle(.quiet)
-          .accessibilityLabel("Back to \(back)")
+        Button(action: action) {
+          Image(systemName: "chevron.backward")
+            .font(.system(size: 19, weight: .semibold))
+            .frame(width: 48, height: 48)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Back to \(back)")
       }
-      Spacer(minLength: 8)
       Text(title)
-        .font(PSFont.display(34, relativeTo: .largeTitle))
-        .foregroundStyle(Color.psText)
-        .multilineTextAlignment(.trailing)
+        .font(PSFont.display(back == nil ? 32 : 24, relativeTo: back == nil ? .largeTitle : .title2))
         .accessibilityAddTraits(.isHeader)
+      Spacer(minLength: 4)
+      if let brand {
+        Text(brand)
+          .font(.custom("LondrinaSolid-Black", size: 22, relativeTo: .headline))
+          .foregroundStyle(Color.psSolid)
+      }
     }
-    .padding(.horizontal, 16)
-    .padding(.top, 8)
-    .padding(.bottom, 12)
-    .frame(maxWidth: .infinity)
-    .background(Color.psWood.ignoresSafeArea(edges: .top))
-    .overlay(alignment: .bottom) { Rectangle().fill(Color.psLine).frame(height: 3) }
+    .foregroundStyle(Color.psText)
+    .padding(.leading, back == nil ? 16 : 2)
+    .padding(.trailing, 16)
+    .padding(.vertical, 4)
+    .frame(minHeight: 56)
+    .background(Color.psPlate.ignoresSafeArea(edges: .top))
+    .overlay(alignment: .bottom) { Divider() }
   }
 }

@@ -10,7 +10,7 @@ import PitchsideModel
 final class AppModel {
   let store: GameStore
   let version: VersionLabel
-  /// Why the engine did not start, if it did not (shown on Home).
+  /// Why the engine did not start, if it did not (shown in Games).
   let engineProblem: String?
   @ObservationIgnored private let reader: NotationReader?
   @ObservationIgnored let scorers: ScorerFactory

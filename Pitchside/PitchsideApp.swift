@@ -32,15 +32,15 @@ struct PitchsideApp: App {
 
 // MARK: - Root and the tab bar
 
-enum Tab: String, CaseIterable {
+enum AppSection: String, CaseIterable {
   case games = "Games"
   case roster = "Roster"
   case stats = "Stats"
 
   var symbol: String {
     switch self {
-    case .games: "line.3.horizontal"
-    case .roster: "person"
+    case .games: "list.bullet.rectangle"
+    case .roster: "person.2"
     case .stats: "chart.bar.xaxis"
     }
   }
@@ -52,10 +52,10 @@ enum Route: Hashable {
   case stats(UUID)
 }
 
-/// The tab bar is available on Games, the score sheet and Stats. Roster has its own back button.
+/// Each section keeps its navigation and unfinished work when the scorer switches tabs.
 struct RootView: View {
   @Environment(AppModel.self) private var model
-  @State private var tab: Tab = .games
+  @State private var tab: AppSection = .games
   @State private var gamesPath: [Route] = []
   @State private var statsPath: [Route] = []
   @State private var newGame = false
@@ -65,29 +65,21 @@ struct RootView: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      Group {
-        switch tab {
-        case .games:
-          NavigationStack(path: $gamesPath) {
-            HomeView(
-              newGame: { newGame = true },
-              carryOn: { game in
-                do { scoring = try ScoringSession(model.scorer(for: game)) }
-                catch { resumeProblem = String(describing: error) }
-              }
-            )
-            .navigationDestination(for: Route.self) { destination($0, back: "Score sheet") }
-          }
-        case .roster:
-          NavigationStack { RosterView { tab = .games } }
-        case .stats:
+      TabView(selection: $tab) {
+        SwiftUI.Tab("Games", systemImage: AppSection.games.symbol, value: AppSection.games) {
+          games.toolbarVisibility(.hidden, for: .tabBar)
+        }
+        SwiftUI.Tab("Roster", systemImage: AppSection.roster.symbol, value: AppSection.roster) {
+          NavigationStack { RosterView() }.toolbarVisibility(.hidden, for: .tabBar)
+        }
+        SwiftUI.Tab("Stats", systemImage: AppSection.stats.symbol, value: AppSection.stats) {
           NavigationStack(path: $statsPath) {
             StatsTabView().navigationDestination(for: Route.self) { destination($0, back: "Stats") }
           }
+          .toolbarVisibility(.hidden, for: .tabBar)
         }
       }
-      .frame(maxHeight: .infinity)
-      if tab != .roster { TabBar(tab: $tab) }
+      TabBar(tab: $tab)
     }
     .background(Color.psGround)
     #if DEBUG
@@ -96,24 +88,31 @@ struct RootView: View {
     .alert("Could not reopen the game", isPresented: .constant(resumeProblem != nil)) {
       Button("OK") { resumeProblem = nil }
     } message: { Text(resumeProblem ?? "") }
-    .fullScreenCover(isPresented: $newGame) {
-      NewGameFlow { scorer in
-        newGame = false
-        scoring = ScoringSession(scorer)
-      }
-      .environment(model)
-    }
-    .fullScreenCover(item: $scoring) { session in
+  }
+
+  @ViewBuilder private var games: some View {
+    if let session = scoring {
       ScorerView(session: session) {
         model.refresh()
         if session.scorer.state.over {
           engineNotes[session.id] = session.scorer.warnings
-          tab = .games
           gamesPath = [.sheet(session.id)]
         }
         scoring = nil
+      }.id(session.id)
+    } else if newGame {
+      NewGameFlow(cancelled: { newGame = false }) { scorer in
+        newGame = false
+        scoring = ScoringSession(scorer)
       }
-      .environment(model)
+    } else {
+      NavigationStack(path: $gamesPath) {
+        HomeView(newGame: { newGame = true }, carryOn: { game in
+          do { scoring = try ScoringSession(model.scorer(for: game)) }
+          catch { resumeProblem = String(describing: error) }
+        }, openSheet: { gamesPath.append(.sheet($0)) })
+        .navigationDestination(for: Route.self) { destination($0, back: "Score sheet") }
+      }
     }
   }
 
@@ -148,7 +147,7 @@ struct RootView: View {
   }
 }
 
-/// The scorer in a cover: identified so it can be presented as an item.
+/// The live game or finished timeline currently open in Games.
 final class ScoringSession: Identifiable {
   let scorer: LiveScorer
   var id: UUID { scorer.game.id }
@@ -159,36 +158,39 @@ final class ScoringSession: Identifiable {
   }
 }
 
-/// The design's tab bar: three words with icons; the chosen one is solid ink.
+/// A fixed section switcher with scalable labels and a full-width touch target per tab.
 struct TabBar: View {
-  @Binding var tab: Tab
+  @Binding var tab: AppSection
 
   var body: some View {
-    HStack(spacing: 8) {
-      ForEach(Array(Tab.allCases.enumerated()), id: \.element) { i, t in
-        let on = t == tab
+    HStack(spacing: 0) {
+      ForEach(AppSection.allCases, id: \.self) { section in
+        let selected = tab == section
         Button {
-          tab = t
+          tab = section
         } label: {
-          VStack(spacing: 2) {
-            Image(systemName: t.symbol).font(.system(size: 18, weight: .bold))
-            Text(t.rawValue).font(PSFont.body(14, .bold, relativeTo: .footnote))
+          VStack(spacing: 3) {
+            Image(systemName: section.symbol)
+              .symbolVariant(selected ? .fill : .none)
+              .font(.system(size: 19, weight: selected ? .semibold : .regular))
+            Text(section.rawValue).font(PSFont.body(14, selected ? .bold : .regular, relativeTo: .footnote))
           }
-          .foregroundStyle(on ? Color.psOnSolid : Color.psText)
+          .foregroundStyle(selected ? Color.psSolid : Color.psMuted)
           .frame(maxWidth: .infinity, minHeight: 52)
-          .background(on ? Color.psSolid : .clear, in: RoundedRectangle(cornerRadius: 6))
+          .overlay(alignment: .top) {
+            if selected { Capsule().fill(Color.psSolid).frame(width: 24, height: 2) }
+          }
           .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(t.rawValue)
-        .accessibilityValue("tab, \(i + 1) of \(Tab.allCases.count)")
-        .accessibilityAddTraits(on ? [.isSelected] : [])
+        .accessibilityIdentifier("section-\(section.rawValue)")
+        .accessibilityLabel(section.rawValue)
+        .accessibilityValue("Tab")
+        .accessibilityAddTraits(selected ? [.isSelected] : [])
       }
     }
-    .padding(.horizontal, 10)
-    .padding(.top, 6)
-    .padding(.bottom, 4)
-    .background(Color.psGround)
-    .overlay(alignment: .top) { Rectangle().fill(Color.psLine).frame(height: 3) }
+    .padding(.top, 3)
+    .background(Color.psPlate.ignoresSafeArea(edges: .bottom))
+    .overlay(alignment: .top) { Divider() }
   }
 }

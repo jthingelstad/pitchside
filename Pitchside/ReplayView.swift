@@ -90,7 +90,8 @@ struct ReplayView: View {
     }
     .background(Color.psGround).foregroundStyle(Color.psText)
     .onChange(of: step.turn) { viewport = .init() }
-    .sheet(isPresented: $details) {
+    .toolbar(.hidden, for: .navigationBar)
+    .navigationDestination(isPresented: $details) {
       Screen(title: "Pitch details", back: "Play by play", onBack: { details = false }) {
         Text("Turn \(step.turn) · \(step.phase)").psKick()
         Text(step.title).font(PSFont.display(24))
@@ -119,7 +120,7 @@ struct ReplayView: View {
         }
         Text(step.kingStanding ? "King standing" : "King down")
         Text("Coordinates are across the pitch and depth from the centre line, in metres.").psHelp()
-      }.font(PSFont.body(16)).presentationDragIndicator(.visible)
+      }.font(PSFont.body(16))
     }
   }
 

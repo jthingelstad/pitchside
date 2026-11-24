@@ -11,7 +11,7 @@ struct GameStatsView: View {
   var back = "Score sheet"
 
   var body: some View {
-    PushedScreen(title: "Stats", back: back) {
+    PushedScreen(title: "Game stats", back: back) {
       if let game = model.game(id), let read = model.read(game) {
         let stats = GameStats(read)
         let a = read.analysis
@@ -144,7 +144,7 @@ struct GameStatsView: View {
     }
     .frame(height: 18)
     .clipShape(RoundedRectangle(cornerRadius: 4))
-    .overlay(RoundedRectangle(cornerRadius: 4).strokeBorder(Color.psLine, lineWidth: 2))
+    .overlay(RoundedRectangle(cornerRadius: 4).strokeBorder(Color.psLine, lineWidth: 1))
   }
 
   @ViewBuilder func playerBoxes(_ stats: GameStats, _ a: Analysis) -> some View {
