@@ -1,0 +1,39 @@
+/* Pitchside: Throwing Wood's woodcut, tuned for a tool. Tokens and the few shared primitives. */
+.ps{
+  --text:#16130f; --ground:#f7f0de; --plate:#f7f0de; --inside:#fbf6ea; --field:#ffffff;
+  --line:#16130f; --shade:#16130f; --solid:#16130f; --on-solid:#f7f0de;
+  --muted:#5b4a2c; --warn:#cc3a30; --wood:#ecd09a;
+  --kubb:#ecd09a; --kubb-rest:#c79a58; --grass:#4f9a3b; --rough:#3d7f2c; --chalk:#fbf6ea;
+  --team:#ecd09a; --chrome:var(--team);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  font-size:16px; line-height:1.35; color:var(--text);
+}
+.ps.tA{--team:#f2b705}
+.ps.tB{--team:#8e44ad}
+.ps.dark{
+  --text:#f7f0de; --ground:#16130f; --plate:#262019; --inside:#332b20; --field:#3d3426;
+  --line:#f7f0de; --shade:#000000; --solid:#f7f0de; --on-solid:#16130f;
+  --muted:#dccba4; --warn:#ff8a7d; --wood:#5b4a2c;
+  --kubb:#ecd09a; --kubb-rest:#a37f48; --grass:#2c5a22; --rough:#1f4218; --chalk:#f7f0de;
+  --chrome:#16130f;
+}
+.ps *{box-sizing:border-box}
+.ps button{font:inherit;color:inherit;margin:0}
+.ps a{color:inherit}
+.ps .disp{font-family:"Londrina Solid","Inter Tight",system-ui,sans-serif;font-weight:900;line-height:1}
+.ps .kick{font:700 14px/1.3 Inter,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.ps .card{border:3px solid var(--line);border-radius:8px;box-shadow:5px 5px 0 var(--shade);background:var(--plate)}
+.ps .chip{border:2px solid var(--line);border-radius:6px;background:var(--inside);padding:1px 8px;font:700 14px/18px Inter,system-ui,sans-serif;color:var(--text)}
+.ps .btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 14px;
+  border:3px solid var(--line);border-radius:6px;box-shadow:3px 3px 0 var(--shade);background:var(--plate);color:var(--text);
+  font:900 20px/1 "Londrina Solid","Inter Tight",system-ui,sans-serif;letter-spacing:.03em;text-transform:uppercase;text-decoration:none;cursor:pointer}
+.ps .btn:active{transform:translate(3px,3px);box-shadow:none}
+.ps .btn.solid{background:var(--solid);color:var(--on-solid)}
+.ps .quiet{display:inline-flex;align-items:center;min-height:48px;padding:0 6px;border:0;background:none;color:var(--text);
+  font:900 18px/1 "Londrina Solid","Inter Tight",system-ui,sans-serif;letter-spacing:.03em;text-transform:uppercase;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.ps .seg{display:flex;border:3px solid var(--line);border-radius:6px;box-shadow:3px 3px 0 var(--shade);overflow:hidden;background:var(--field)}
+.ps .seg>*{flex:1;min-height:42px;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 6px;
+  border:0;border-left:3px solid var(--line);background:transparent;color:var(--text);font:700 15px/1.2 Inter,system-ui,sans-serif;cursor:pointer}
+.ps .seg>*:first-child{border-left:0}
+.ps .seg>.on{background:var(--solid);color:var(--on-solid)}
+.ps .mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Roster and teams</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ps.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Londrina+Solid:wght@900&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="ps" style="width: 390px; height: 980px; display: flex; flex-direction: column; background: var(--ground); overflow: hidden">
+  <div style="padding: 50px 16px 8px; background: var(--wood); border-bottom: 3px solid var(--line); display: flex; align-items: center; gap: 8px">
+    <a class="quiet" href="Home.dc.html">Home</a>
+    <h1 class="disp" style="margin: 0 0 0 auto; font-size: 34px">Teams</h1>
+  </div>
+
+  <div style="flex: 1; padding: 14px 16px 0; display: flex; flex-direction: column; gap: 14px">
+
+    <div class="card" style="padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <span aria-hidden="true" style="width: 30px; height: 30px; flex: none; border: 3px solid var(--line); border-radius: 5px; background: #f2b705"></span>
+        <label style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span class="kick">Side A · team name</span><input class="disp" type="text" value="Wobbly Towers" style="width: 100%; box-sizing: border-box; height: 48px; padding: 0 8px; border: 3px solid var(--line); border-radius: 6px; background: var(--field); color: var(--text); font-size: 24px"></label>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <div style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 10px; border: 2px solid var(--line); border-radius: 6px; background: var(--field)"><span style="font-weight: 800; width: 14px">1</span><input type="text" value="Kim" aria-label="Player 1 name" style="flex: 1; min-width: 0; height: 44px; border: 0; background: transparent; color: var(--text); font: 700 17px Inter, system-ui, sans-serif"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" role="img" aria-label="Drag to change the order"><path d="M5 9h14M5 15h14"/></svg></div>
+        <div style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 10px; border: 2px solid var(--line); border-radius: 6px; background: var(--field)"><span style="font-weight: 800; width: 14px">2</span><input type="text" value="Dana" aria-label="Player 2 name" style="flex: 1; min-width: 0; height: 44px; border: 0; background: transparent; color: var(--text); font: 700 17px Inter, system-ui, sans-serif"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" role="img" aria-label="Drag to change the order"><path d="M5 9h14M5 15h14"/></svg></div>
+        <div style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 10px; border: 2px solid var(--line); border-radius: 6px; background: var(--field)"><span style="font-weight: 800; width: 14px">3</span><input type="text" value="Ole" aria-label="Player 3 name" style="flex: 1; min-width: 0; height: 44px; border: 0; background: transparent; color: var(--text); font: 700 17px Inter, system-ui, sans-serif"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" role="img" aria-label="Drag to change the order"><path d="M5 9h14M5 15h14"/></svg></div>
+      </div>
+    </div>
+
+    <div class="card" style="padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <span aria-hidden="true" style="width: 30px; height: 30px; flex: none; border: 3px solid var(--line); border-radius: 5px; background: #8e44ad"></span>
+        <label style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span class="kick">Side B · team name</span><input class="disp" type="text" value="Birch Batons" style="width: 100%; box-sizing: border-box; height: 48px; padding: 0 8px; border: 3px solid var(--line); border-radius: 6px; background: var(--field); color: var(--text); font-size: 24px"></label>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <div style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 10px; border: 2px solid var(--line); border-radius: 6px; background: var(--field)"><span style="font-weight: 800; width: 14px">1</span><input type="text" value="Priya" aria-label="Player 1 name" style="flex: 1; min-width: 0; height: 44px; border: 0; background: transparent; color: var(--text); font: 700 17px Inter, system-ui, sans-serif"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" role="img" aria-label="Drag to change the order"><path d="M5 9h14M5 15h14"/></svg></div>
+        <div style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 10px; border: 2px solid var(--line); border-radius: 6px; background: var(--field)"><span style="font-weight: 800; width: 14px">2</span><input type="text" value="Sam" aria-label="Player 2 name" style="flex: 1; min-width: 0; height: 44px; border: 0; background: transparent; color: var(--text); font: 700 17px Inter, system-ui, sans-serif"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" role="img" aria-label="Drag to change the order"><path d="M5 9h14M5 15h14"/></svg></div>
+        <div style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 10px; border: 2px dashed var(--line); border-radius: 6px"><span style="font-weight: 800; width: 14px">3</span><input type="text" placeholder="Type a name, or tap one below" aria-label="Player 3 name" style="flex: 1; min-width: 0; height: 44px; border: 0; background: transparent; color: var(--text); font: 700 16px Inter, system-ui, sans-serif"></div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div class="kick">Saved names · kept on this phone only</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <button class="btn" style="padding: 0 12px; text-transform: none; letter-spacing: 0">Lee</button>
+        <button class="btn" style="padding: 0 12px; text-transform: none; letter-spacing: 0">Noor</button>
+        <button class="btn" style="padding: 0 12px; text-transform: none; letter-spacing: 0">Tove</button>
+        <span class="chip" style="display: flex; align-items: center; height: 48px">Kim, Dana, Ole, Priya, Sam are playing</span>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: flex-end">
+        <label style="flex: 1; display: flex; flex-direction: column; gap: 2px; font-size: 14px; font-weight: 700">New name
+          <input type="text" placeholder="First name" style="height: 48px; padding: 0 10px; border: 3px solid var(--line); border-radius: 6px; background: var(--field); color: var(--text); font: 600 17px Inter, system-ui, sans-serif">
+        </label>
+        <button class="btn">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding: 12px 16px 30px">
+    <a class="btn solid" href="Setup.dc.html" style="height: 56px; font-size: 24px">Next: the rules</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":980}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

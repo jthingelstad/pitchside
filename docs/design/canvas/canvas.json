@@ -1,0 +1,50 @@
+{
+  "v": 3,
+  "createdOnFiles": {"v": 1, "at": "2026-11-24T18:00:00Z"},
+  "title": "Kubb: Pitchside",
+  "launch": {"view": "canvas"},
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {"x": 0, "y": 0, "w": 390, "h": 844, "title": "Prototype: turn 5, press Play", "is_interactive": true},
+    "S01-inkast-outcomes.dc.html": {"x": 470, "y": 0, "w": 390, "h": 844, "title": "Inkast, level 1: all in or out", "is_interactive": true},
+    "S02-inkast-place.dc.html": {"x": 940, "y": 0, "w": 390, "h": 844, "title": "Inkast, level 2: tap the spots", "is_interactive": true},
+    "S03-rethrow.dc.html": {"x": 1410, "y": 0, "w": 390, "h": 844, "title": "Rethrow", "is_interactive": true},
+    "S04-punishment.dc.html": {"x": 1880, "y": 0, "w": 390, "h": 844, "title": "Punishment kubb", "is_interactive": true},
+    "S05-three-kubbs.dc.html": {"x": 2350, "y": 0, "w": 390, "h": 844, "title": "One baton, three kubbs", "is_interactive": true},
+    "S06-batons.dc.html": {"x": 2820, "y": 0, "w": 390, "h": 844, "title": "Baton 2 of 6", "is_interactive": true},
+    "S07-thrower.dc.html": {"x": 3290, "y": 0, "w": 390, "h": 844, "title": "Level 3: who threw", "is_interactive": true},
+    "S08-king.dc.html": {"x": 0, "y": 964, "w": 390, "h": 844, "title": "The king shot", "is_interactive": true},
+    "S09-rare-events.dc.html": {"x": 470, "y": 964, "w": 390, "h": 844, "title": "Rare events, out of the way", "is_interactive": true},
+    "S10-turn-change.dc.html": {"x": 940, "y": 964, "w": 390, "h": 844, "title": "Turn change, no dialog", "is_interactive": true},
+    "S11-catch-up.dc.html": {"x": 1410, "y": 964, "w": 390, "h": 844, "title": "Catch-up between turns", "is_interactive": true},
+    "S12-undo.dc.html": {"x": 1880, "y": 964, "w": 390, "h": 844, "title": "Undo", "is_interactive": true},
+    "S13-photo.dc.html": {"x": 2350, "y": 964, "w": 390, "h": 844, "title": "Photo, pinned to a spot", "is_interactive": true},
+    "S14-sideline.dc.html": {"x": 2820, "y": 964, "w": 390, "h": 844, "title": "View from the sideline", "is_interactive": true},
+    "S15-behind-b.dc.html": {"x": 3290, "y": 964, "w": 390, "h": 844, "title": "View from behind the other baseline", "is_interactive": true},
+    "S16-dark.dc.html": {"x": 3760, "y": 964, "w": 390, "h": 844, "title": "Dark, for dusk", "is_interactive": true},
+    "S17-stance.dc.html": {"x": 4230, "y": 964, "w": 390, "h": 844, "title": "Thrown from (stance line)", "is_interactive": true},
+    "Home.dc.html": {"x": 0, "y": 2300, "w": 390, "h": 900, "title": "Home"},
+    "Teams.dc.html": {"x": 470, "y": 2300, "w": 390, "h": 980, "title": "Roster and teams"},
+    "Setup.dc.html": {"x": 940, "y": 2300, "w": 390, "h": 1150, "title": "Match setup"},
+    "Timeline.dc.html": {"x": 1410, "y": 2300, "w": 390, "h": 910, "title": "Timeline, with an edit"},
+    "Sheet.dc.html": {"x": 1880, "y": 2300, "w": 390, "h": 1344, "title": "Score sheet and notation"},
+    "Stats.dc.html": {"x": 2350, "y": 2300, "w": 390, "h": 1272, "title": "Stats"}
+  },
+  "order": [
+    "Main.dc.html",
+    "S01-inkast-outcomes.dc.html", "S02-inkast-place.dc.html", "S03-rethrow.dc.html", "S04-punishment.dc.html",
+    "S05-three-kubbs.dc.html", "S06-batons.dc.html", "S07-thrower.dc.html",
+    "S08-king.dc.html", "S09-rare-events.dc.html", "S10-turn-change.dc.html", "S11-catch-up.dc.html",
+    "S12-undo.dc.html", "S13-photo.dc.html", "S14-sideline.dc.html", "S15-behind-b.dc.html", "S16-dark.dc.html", "S17-stance.dc.html",
+    "Home.dc.html", "Teams.dc.html", "Setup.dc.html", "Timeline.dc.html", "Sheet.dc.html", "Stats.dc.html"
+  ],
+  "notes": {
+    "t-live": {"x": 0, "y": -300, "text": "Live scoring", "kind": "title1", "maxW": 3680},
+    "t-rest": {"x": 0, "y": 2000, "text": "The rest of the flow", "kind": "title1", "maxW": 2740},
+    "n-start": {"x": -500, "y": 0, "w": 400, "text": "Start with the Prototype and press Play. It is a working scorer on turn 5: tap the pitch, the big button and UNDO. Its Tweaks switch the capture level, the view and dark.\n\nEvery other live-scoring frame is the same scorer opened at one moment, so each of them can be played too."},
+    "n-taps": {"x": -500, "y": 420, "w": 400, "text": "Turn 5, tap by tap\n3 kubbs in, then 3F B B B - K\n\nTurn line only: 13 taps\nALL 3 IN (1). Three kubbs, 3 DOWN (4). Kubb, 1 DOWN, three times (6). MISS (1). KING DOWN (1).\n\nPlus where kubbs stand (@ and *): 15 taps\nThree taps on the pitch replace ALL 3 IN.\n\nPlus who threw: no more taps in order, 2 for each baton out of order.\n\nPlus thrown from (^): 2 more at least\nOne tap sets the spot and it sticks. One more when the king shot moves to the baseline."}
+  },
+  "designSystems": [
+    {"title": "Throwing Wood", "namespace": "throwing-wood", "version": "1795543743-032e", "copiedAt": "2026-11-24T18:00:00Z"}
+  ]
+}

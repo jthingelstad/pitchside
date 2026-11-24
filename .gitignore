@@ -1,0 +1,16 @@
+.DS_Store
+.build/
+.swiftpm/
+DerivedData/
+build/
+xcuserdata/
+*.xcodeproj/project.xcworkspace/
+*.xcuserstate
+*.ipa
+*.dSYM.zip
+*.mobileprovision
+.env
+.env.*
+!.env.example
+*.p8
+Config/Signing.local.xcconfig

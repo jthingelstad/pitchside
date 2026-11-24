@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Match setup</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ps.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Londrina+Solid:wght@900&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="ps" style="width: 390px; height: 1150px; display: flex; flex-direction: column; background: var(--ground); overflow: hidden">
+  <div style="padding: 50px 16px 8px; background: var(--wood); border-bottom: 3px solid var(--line); display: flex; align-items: center; gap: 8px">
+    <a class="quiet" href="Teams.dc.html">Teams</a>
+    <h1 class="disp" style="margin: 0 0 0 auto; font-size: 34px">This game</h1>
+  </div>
+
+  <div style="flex: 1; padding: 14px 16px 0; display: flex; flex-direction: column; gap: 16px">
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div class="kick">Opening · the same switches as Throwing Wood</div>
+      <div class="seg"><button class="on">2-4-6</button><button>Six batons</button></div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div class="kick">Surface</div>
+      <div class="seg"><button class="on">Grass</button><button>Sand</button><button>Snow</button></div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div class="kick">Wind today</div>
+      <div class="seg"><button class="on">Off</button><button>Light</button><button>Strong</button></div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div class="kick">Who throws first</div>
+      <div class="seg"><button class="on">Wobbly Towers</button><button>Birch Batons</button></div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div class="kick">What to record</div>
+      <div style="display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 8px 12px; text-align: left; border: 3px solid var(--line); border-radius: 6px; background: var(--solid); color: var(--on-solid)">
+        <span class="mono" style="font-size: 18px; font-weight: 700; width: 34px">5.</span>
+        <span style="flex: 1"><span style="display: block; font-weight: 800; font-size: 17px">The turn</span><span style="display: block; font-size: 15px">Kubbs thrown in and what each baton felled.</span></span>
+        <span style="font-weight: 800; font-size: 14px; text-transform: uppercase">Always</span>
+      </div>
+      <button aria-pressed="false" style="display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 8px 12px; text-align: left; border: 3px solid var(--line); border-radius: 6px; box-shadow: 3px 3px 0 var(--shade); cursor: pointer; background: var(--plate); color: var(--text)">
+        <span class="mono" style="font-size: 18px; font-weight: 700; width: 34px">k:</span>
+        <span style="flex: 1"><span style="display: block; font-weight: 800; font-size: 17px">Who threw</span><span style="display: block; font-size: 15px">Names fill in by order. Tap only to change one.</span></span>
+        <span style="font-weight: 800; font-size: 14px; text-transform: uppercase">Off</span>
+      </button>
+      <button aria-pressed="true" style="display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 8px 12px; text-align: left; border: 3px solid var(--line); border-radius: 6px; box-shadow: 3px 3px 0 var(--shade); cursor: pointer; background: var(--solid); color: var(--on-solid)">
+        <span class="mono" style="font-size: 18px; font-weight: 700; width: 34px">@ *</span>
+        <span style="flex: 1"><span style="display: block; font-weight: 800; font-size: 17px">Where kubbs stand</span><span style="display: block; font-size: 15px">Tap where each kubb lands. Felled kubbs come free.</span></span>
+        <span style="font-weight: 800; font-size: 14px; text-transform: uppercase">On</span>
+      </button>
+      <button aria-pressed="false" style="display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 8px 12px; text-align: left; border: 3px solid var(--line); border-radius: 6px; box-shadow: 3px 3px 0 var(--shade); cursor: pointer; background: var(--plate); color: var(--text)">
+        <span class="mono" style="font-size: 18px; font-weight: 700; width: 34px">~</span>
+        <span style="flex: 1"><span style="display: block; font-weight: 800; font-size: 17px">How kubbs lay</span><span style="display: block; font-size: 15px">Drag along each kubb before it is raised.</span></span>
+        <span style="font-weight: 800; font-size: 14px; text-transform: uppercase">Off</span>
+      </button>
+      <button aria-pressed="true" style="display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 8px 12px; text-align: left; border: 3px solid var(--line); border-radius: 6px; box-shadow: 3px 3px 0 var(--shade); cursor: pointer; background: var(--solid); color: var(--on-solid)">
+        <span class="mono" style="font-size: 18px; font-weight: 700; width: 34px">^</span>
+        <span style="flex: 1"><span style="display: block; font-weight: 800; font-size: 17px">Where batons are thrown from</span><span style="display: block; font-size: 15px">Tap the thrower's spot. It sticks until they move.</span></span>
+        <span style="font-weight: 800; font-size: 14px; text-transform: uppercase">On</span>
+      </button>
+      <div style="font-size: 14px; color: var(--muted)">Pitchside only asks for what is on, and the file says what was recorded. Change it between turns.</div>
+    </div>
+
+  </div>
+
+  <div style="padding: 12px 16px 30px">
+    <a class="btn solid" href="Main.dc.html" style="height: 56px; font-size: 24px">Start scoring</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1150}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
