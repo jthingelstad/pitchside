@@ -82,9 +82,9 @@ struct ReplayView: View {
       .padding(12).frame(maxWidth: .infinity, alignment: .leading)
       .overlay(alignment: .top) { Divider() }
       HStack(spacing: 8) {
-        Button("Previous") { index -= 1 }.buttonStyle(.ps).disabled(index == 0)
+        Button("Previous") { index = max(0, index - 1) }.buttonStyle(.ps).disabled(index == 0)
         Button("Details") { details = true }.buttonStyle(.quiet)
-        Button("Next") { index += 1 }.buttonStyle(.psSolid).disabled(index + 1 == replay.steps.count)
+        Button("Next") { index = min(replay.steps.count - 1, index + 1) }.buttonStyle(.psSolid).disabled(index + 1 == replay.steps.count)
       }
       .padding(.horizontal, 12).padding(.bottom, 6)
     }

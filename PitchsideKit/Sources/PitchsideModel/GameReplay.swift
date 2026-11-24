@@ -194,7 +194,7 @@ public struct GameReplay: Identifiable, Sendable {
         let own = board[att, default: Half()].field
         if let m = rec.advantageMeters, (0...4).contains(m) { line = 4 - m }
         else if own.unknown == 0, own.places.allSatisfy({ !$0.cell }) { line = own.places.map(\.depth).min() }
-        var advantage = frame("Advantage", "\(a.name(att)) has the advantage", row.advantageMarked?.raw ?? "")
+        var advantage = frame(row.advantageMarked == nil ? "Advantage (inferred)" : "Advantage", "\(a.name(att)) has the advantage", row.advantageMarked?.raw ?? "")
         advantage.advantage = true
         advantage.advantageDepth = line
         steps.append(advantage)
