@@ -190,6 +190,30 @@ public final class NotationReader {
         });
         return out;
       }
+      // Keep the released reader's token alignment, side and precision, including
+      // null entries for batons whose stance or fall positions were not written.
+      function recording(row, turn) {
+        const def = row.team === 'A' ? 'b' : 'a';
+        function line(mark, half) { return row.lines.find(l => l.mark === mark && l.half === half); }
+        function places(entries, precision) {
+          return entries.flatMap(e => Array.from({length: e.count}, () => ({
+            across: e.at[0], depth: e.at[1], cell: precision === 'cell', mark: e.mark || null
+          })));
+        }
+        const pitch = {};
+        for (const half of ['a','b']) {
+          const l = line('@', half);
+          if (l) pitch[half.toUpperCase()] = places(l.entries, l.precision);
+        }
+        const lay = line('~', def), stance = line('^', row.team.toLowerCase()), fell = line('*', def);
+        const point = xy => ({across: xy[0], depth: xy[1], cell: false});
+        return { pitch, inkasts: turn.inkasts.map(k => k.raw),
+          advantageMeters: row.advantageMarked && row.advantageMarked.meters,
+          lays: lay ? lay.entries.map(e => ({first: point(e.ends[0]), last: point(e.ends[1])})) : [],
+          stances: stance ? stance.entries.map(xy => xy && point(xy)) : [],
+          falls: fell ? fell.entries.map(word => word && places(word, fell.precision)) : []
+        };
+      }
       function grammar(text) {
         try { PK.parse(text); return { ok: true }; }
         catch (e) {
@@ -200,6 +224,8 @@ public final class NotationReader {
       return {
         read: function (text) {
           var a = PK.analyze(text);
+          const turns = PK.parseGame(text).turns;
+          a.rows.forEach((r, i) => { r.recording = recording(r, turns[i]); });
           var rules = a.headers['Rules'] || '';
           return JSON.stringify({
             analysis: a,

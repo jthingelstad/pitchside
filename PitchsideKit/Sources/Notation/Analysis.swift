@@ -99,6 +99,9 @@ public struct Analysis: Decodable, Sendable {
       public let E: Bool
     }
     public let advantage: Bool
+    public struct AdvantageMark: Decodable, Sendable { public let raw: String }
+    public let advantageMarked: AdvantageMark?
+    public let recording: TurnRecording
     public let startField: Int
     public let startBase: Int
     public let knocked: Int
@@ -120,6 +123,7 @@ public struct Analysis: Decodable, Sendable {
   public struct Baton: Decodable, Sendable {
     /// kubb.js's kinds: hit, miss, king, kingmiss, illegalking, unthrown, win, resign.
     public let kind: String
+    public let raw: String
     public let f: Int?
     public let b: Int?
     public let e: Bool?
