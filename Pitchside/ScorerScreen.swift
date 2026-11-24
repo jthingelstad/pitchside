@@ -197,8 +197,8 @@ final class ScorerScreen {
           return "A kubb that lands out gets one more throw. In, or out again?"
         }
         return i.rethrows > 0
-          ? "Tap when the rest are in, or 1 OUT again."
-          : "All in the far half? Tap ALL IN. One landed out? Tap 1 OUT."
+          ? "Record the rest together, or tap “1 out” for another rethrow."
+          : "Record all the kubbs together, or tap “1 out” for a rethrow."
       }
       if state.next.rethrow == true { return "It is thrown again. Tap where it lands." }
       return i.due == i.dueAtStart
@@ -213,11 +213,11 @@ final class ScorerScreen {
     }
     if !positionsOn {
       return downCount > 0
-        ? "\(n(downCount, "kubb")) down. Tap \(downCount) DOWN when that is all of them."
+        ? "\(n(downCount, "kubb")) down. Tap “\(primaryTitle)” to record the throw."
         : "Count what this baton knocked over: field kubbs, then base kubbs."
     }
     if downCount > 0 {
-      return "\(n(downCount, "kubb")) marked. Tap \(downCount) DOWN when that is all of them."
+      return "\(n(downCount, "kubb")) marked. Tap “\(primaryTitle)” to record the throw."
     }
     return state.side(defender).field > 0
       ? "Tap each kubb this baton knocked over. Field kubbs first."
