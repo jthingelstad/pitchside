@@ -1,0 +1,40 @@
+name: Pitchside tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: macos-26
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: pitchside
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: pitchside
+          persist-credentials: false
+      - name: Check out the notation reader's archive for comparison
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: Planet-Kubb/pk-kubb-score
+          ref: 9298de633ac7f54a64383b446faee225e6c0f3d4 # v2-2026.11
+          path: pk-kubb-score
+          persist-credentials: false
+      - run: scripts/vendor-engine.sh check
+      - run: scripts/vendor-notation.sh check
+      - run: swift test --package-path PitchsideKit
+      - run: >
+          xcodebuild -project Pitchside.xcodeproj -scheme Pitchside
+          -destination 'generic/platform=iOS Simulator'
+          -derivedDataPath build/dd CODE_SIGNING_ALLOWED=NO build

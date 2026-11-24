@@ -21,8 +21,9 @@ let vendorDir = URL(fileURLWithPath: #filePath)
   .appending(path: "Sources/Notation/Vendor")
 
 func which(_ tool: String) -> URL? {
-  for dir in ["/opt/homebrew/bin", "/usr/local/bin", "/usr/bin"] {
-    let url = URL(fileURLWithPath: dir).appending(path: tool)
+  let path = ProcessInfo.processInfo.environment["PATH"] ?? ""
+  for dir in path.split(separator: ":") {
+    let url = URL(fileURLWithPath: String(dir)).appending(path: tool)
     if FileManager.default.isExecutableFile(atPath: url.path) { return url }
   }
   return nil
@@ -145,9 +146,9 @@ func object(_ json: String) throws -> NSDictionary {
     let games = pkScore.appending(path: "games")
     if let names = try? FileManager.default.contentsOfDirectory(atPath: games.path) {
       let sorted = names.filter { $0.hasSuffix(".txt") }.sorted()
+      #expect(sorted.count >= 75, "expected the archived games in the pk-kubb-score checkout")
       files += stride(from: 0, to: sorted.count, by: 25).map { games.appending(path: sorted[$0]) }
     }
-    #expect(files.count >= 4, "expected the pk-kubb-score checkout beside this repo")
     for file in files {
       let text = try String(contentsOf: file, encoding: .utf8)
       let mine = try object(reader.analyzeJSON(text))

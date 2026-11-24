@@ -506,8 +506,8 @@ generated team names, the rules choice).
    throwingwood-ios has a rule that "no name is typed anywhere" because names others see
    are user-generated content for App Store review, while Pitchside types real players'
    names and shares nothing (Jamie, 2026-11-24). Reasons
-   against: two apps to carry the same engine and C targets. Bundle id, App Store name
-   and whether this repo is public are Jamie's.
+   against: two apps to carry the same engine and C targets. Pitchside now has its own bundle id and App Store
+   record. Its public repository uses the MIT License.
 2. **Where does the notation live?** It lives in pk-kubb-score today, as its own repo and
    tagged editions, vendored by the engine's tests, the Playdate's and the thingelstad.xyz
    gadget. The engine owns only the writer. The brief asked whether it should be an engine
@@ -547,10 +547,9 @@ generated team names, the rules choice).
 - **Status (2026-11-24).** A game can be set up, scored, reopened, corrected and
   exported on the iPhone simulator. The live pitch, in-game timeline, score sheet,
   roster, local stats and opening other Notation 2 files are connected. The repository
-  stays local on `scaffold`. Photos, lay-line entry, landscape and an app icon are
-  future work. The team-order menu moves players. Apple has registered the explicit
-  identifier `com.throwingwood.pitchside` as “Kubb Pitchside” on Throwing Wood's
-  developer team. The owner creates the app record in App Store Connect.
+  is public at `jthingelstad/pitchside`, with `main` as the default branch and an
+  MIT license. Photos, lay-line entry and landscape are future work. Internal
+  TestFlight builds use `com.throwingwood.pitchside` and the Dev tester group.
 - **Layout.** `Pitchside/` contains the SwiftUI app. `ScorerView.swift` and
   `PitchCanvas.swift` draw the live screen. `ScorerScreen.swift` interprets gestures
   using the engine's next action and allowed events. `TimelineView.swift` previews

@@ -1,13 +1,35 @@
 # Kubb: Pitchside
 
-An iPhone app for scoring real games of kubb, throw by throw, in Planet Kubb Notation,
-from the side of the pitch.
+Pitchside is an iPhone scorekeeper for real games of kubb. Tap the kubbs that fell,
+record a miss, or mark where a throw landed. Undo a throw in one tap or correct an
+earlier turn in the timeline. Each game produces a plain-text Planet Kubb Notation
+file, a score sheet and player stats. Games and roster names stay on the phone until
+the scorer chooses to share a file.
 
-Score a game on the pitch, undo a throw or correct an earlier turn in the timeline.
-The score sheet, notation export and player stats follow the same local record.
-Pitchside uses Kubb Engine v1.1.0 and the Planet Kubb Notation 2 reader. Games and
-roster names stay on the phone.
+<img src="docs/design/build-shots/Baton-marked-light.png" width="260" alt="Pitchside scoring a baton that felled three field kubbs">
 
-`AGENTS.md` has the plan: what it is, the domain model, how it carries the engine, the
-notation it needs, the feature scope, the interface brief, the open questions, and how to
-build and test (section 10).
+## Run it
+
+Open `Pitchside.xcodeproj` in Xcode, select the **Pitchside** scheme and run on an
+iPhone simulator with iOS 26 or later. The Kubb Engine and notation reader are
+included in the checkout. Simulator builds require no developer account.
+
+On a Mac with Xcode selected, run the package tests and check the pinned dependencies:
+
+```sh
+swift test --package-path PitchsideKit
+scripts/vendor-engine.sh check
+scripts/vendor-notation.sh check
+```
+
+For the archive comparison, install Node.js and place a checkout of
+[pk-kubb-score](https://github.com/Planet-Kubb/pk-kubb-score) beside this repository.
+To run the scoring journeys, select an installed iPhone simulator and use **Product → Test**.
+The [agent guide](AGENTS.md#10-conventions-for-agents) covers storage, the scorer API
+and the command-line build. Changes are welcome through pull requests.
+
+## License
+
+Pitchside uses the [MIT License](LICENSE). The bundled engine, Lua, musl, Planet Kubb
+reader and fonts carry their respective notices in [PitchsideKit/Sources](PitchsideKit/Sources)
+and [Pitchside/Fonts](Pitchside/Fonts).
