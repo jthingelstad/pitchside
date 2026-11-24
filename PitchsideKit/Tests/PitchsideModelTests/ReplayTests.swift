@@ -97,6 +97,19 @@ import Testing
     #expect(game.steps.last?.kingStanding == true)
   }
 
+  @Test func onlyUniqueFallsCanBeRecoveredByElimination() throws {
+    let g = try replay("""
+      1. 3B
+      2. 3I 2F F
+      @b 1.12,0.64 2.14,1.58 3.16,2.46
+      *b - 2.14,1.58
+      """)
+    let hit = try #require(g.steps.first { $0.turn == 2 && $0.phase == "Baton 1" })
+    #expect(hit.falls.isEmpty && hit.unlocatedFalls == 0)
+    #expect(hit.inferredFalls.map(\.across) == [1.12, 3.16])
+    #expect(hit.board[.B]?.field.places.map(\.across) == [2.14])
+  }
+
   @Test func aCellPrecisionFallAmongPointsPreservesOnlyTheCell() throws {
     let game = try replay("""
       1. 3B
