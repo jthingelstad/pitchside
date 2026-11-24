@@ -18,6 +18,7 @@ struct HomeView: View {
       header
       ScrollView {
         VStack(alignment: .leading, spacing: 16) {
+          if let problem = model.recoveryProblem { Text(problem).psHelp() }
           if let game = model.playing { stillOnThePitch(game) }
           Button("New game", action: newGame)
             .buttonStyle(.ps)

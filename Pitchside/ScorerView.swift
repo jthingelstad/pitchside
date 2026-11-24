@@ -1,268 +1,278 @@
-import Notation
 import PitchsideDesign
 import PitchsideModel
 import SwiftUI
 
-/// The live scorer's screen, as a placeholder: the design's frame (team band, turn
-/// header, baton bar, the pitch, the prompt, the bottom bar) drawn from a static pitch,
-/// talking only to `LiveScorer`. Record mode brings the taps. No tab bar.
+/// The band, pitch and thumb controls stay in place through every turn.
 struct ScorerView: View {
-  @Environment(AppModel.self) private var model
-  let session: ScoringSession
+  @Environment(\.colorScheme) private var colorScheme
+  @State private var screen: ScorerScreen
+  @State private var timeline = false
   let close: () -> Void
-  @State private var capture: Capture
-  @State private var editingCapture = false
-  @State private var undone = 0
 
   init(session: ScoringSession, close: @escaping () -> Void) {
-    self.session = session
+    _screen = State(initialValue: ScorerScreen(scorer: session.scorer))
     self.close = close
-    _capture = State(initialValue: session.scorer.game.capture)
   }
-
-  var scorer: LiveScorer { session.scorer }
-  var game: Game { scorer.game }
-  var thrower: Side { game.options.first }
 
   var body: some View {
-    VStack(spacing: 0) {
-      VStack(spacing: 8) {
-        placeholderBanner
-        header
-        batonBar
+    Group {
+      if timeline {
+        TimelineView(screen: screen) { timeline = false }
+      } else {
+        VStack(spacing: 0) {
+          VStack(spacing: 8) {
+            header
+            batonBar
+          }
+          .padding(.horizontal, 12).padding(.top, 4).padding(.bottom, 8)
+          PitchCanvas(screen: screen)
+            .frame(maxHeight: .infinity)
+            .overlay(alignment: .bottom) {
+              if screen.panel != .none && screen.panel != .pick {
+                GeometryReader { geo in
+                  VStack {
+                    Spacer(minLength: 0)
+                    ScrollView { panel.padding(12) }
+                      .scrollBounceBehavior(.basedOnSize)
+                      .fixedSize(horizontal: false, vertical: true)
+                      .frame(maxHeight: geo.size.height)
+                      .background(Color.psGround)
+                      .overlay(alignment: .top) { Divider().overlay(Color.psLine) }
+                  }
+                }
+              }
+            }
+          prompt
+          bottomBar
+        }
+        .foregroundStyle(Color.psText)
+        .background {
+          GeometryReader { geo in
+            let team = TeamMarker.fill(screen.attacker.marker)
+            (colorScheme == .dark ? Color.psGround : team).ignoresSafeArea()
+            team.frame(height: geo.safeAreaInsets.top).offset(y: -geo.safeAreaInsets.top)
+          }
+        }
       }
-      .padding(.horizontal, 12)
-      .padding(.top, 6)
-      .padding(.bottom, 10)
-      PitchView(thrower: thrower, teams: [.A: game.team(.A).shownName(.A), .B: game.team(.B).shownName(.B)])
-        .frame(maxHeight: .infinity)
-      prompt
-      bottomBar
-    }
-    .background(TeamMarker.fill(thrower.marker).ignoresSafeArea())
-    .sheet(isPresented: $editingCapture) { captureSheet }
-  }
-
-  var placeholderBanner: some View {
-    Text("Placeholder scorer · record mode is not built yet")
-      .font(PSFont.body(14, .bold, relativeTo: .footnote))
-      .foregroundStyle(Color.psOnSolid)
-      .padding(.horizontal, 10)
-      .padding(.vertical, 4)
-      .frame(maxWidth: .infinity)
-      .background(Color.psSolid, in: RoundedRectangle(cornerRadius: 6))
-      .accessibilityAddTraits(.isStaticText)
+    }.onChange(of: screen.over) { _, over in if over { close() } }
   }
 
   var header: some View {
-    HStack(spacing: 12) {
-      TeamMarker(thrower, size: 46)
-      VStack(alignment: .leading, spacing: 2) {
-        Text(scorer.prompt.kick).font(PSFont.body(15, .bold, relativeTo: .subheadline))
-        Text(game.team(thrower).shownName(thrower)).font(PSFont.display(26, relativeTo: .title2))
-      }
-      .foregroundStyle(Color.psText)
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .accessibilityElement(children: .combine)
-      IconPlate(symbol: "arrow.triangle.2.circlepath", enabled: false)
-        .accessibilityLabel("Change the view, not built yet")
+    HStack(spacing: 10) {
+      TeamMarker(screen.attacker, size: 44)
+      VStack(alignment: .leading, spacing: 1) {
+        Text(screen.header).font(PSFont.body(14, .bold))
+        if screen.playersOn, let player = screen.thrower, !screen.over {
+          HStack(spacing: 8) {
+            Button {
+              screen.panel = screen.panel == .pick ? .none : .pick
+            } label: {
+              HStack(spacing: 4) {
+                Text(player.name).font(PSFont.display(24))
+                Image(systemName: "chevron.down").font(.system(size: 14, weight: .bold))
+              }.padding(.horizontal, 8).padding(.vertical, 2).psBox()
+                .frame(minWidth: 48, minHeight: 48).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain).accessibilityLabel("Change who throws")
+            .accessibilityValue(player.name)
+            Text(screen.teamName(screen.attacker)).font(PSFont.body(14, .semibold)).lineLimit(2)
+          }
+        } else {
+          Text(screen.teamName(screen.attacker)).font(PSFont.display(26)).lineLimit(2)
+        }
+      }.frame(maxWidth: .infinity, alignment: .leading)
+      icon("rectangle.2.swap", "Change view", action: screen.nextView)
+        .accessibilityValue(screen.view.title)
     }
-    .padding(12)
-    .psCard()
+    .padding(.horizontal, 10).padding(.vertical, 6).frame(minHeight: 76).psCard()
   }
-
-  var batons: Int { game.options.opening == .six ? 6 : 2 }
 
   var batonBar: some View {
-    HStack(spacing: 6) {
-      Text("1.").font(PSFont.mono(16).weight(.bold))
-      Spacer()
-      ForEach(0..<batons, id: \.self) { _ in
+    HStack(spacing: 5) {
+      ScrollView(.horizontal) {
+        Text("\(screen.state.turn). \(screen.tokens)").font(PSFont.mono(15).weight(.bold))
+      }.scrollIndicators(.hidden).defaultScrollAnchor(.leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
+      ForEach(0..<screen.batonsLeft, id: \.self) { _ in
         Capsule().fill(Color.psKubb).overlay(Capsule().strokeBorder(Color.psKubbInk, lineWidth: 2))
-          .frame(width: 11, height: 24)
+          .frame(width: 10, height: 22)
       }
-      Text("\(batons) left").font(PSFont.body(15, .bold)).padding(.leading, 4)
+      Text("\(screen.batonsLeft) left").font(PSFont.body(14, .bold))
     }
-    .foregroundStyle(Color.psText)
-    .padding(.horizontal, 12)
-    .frame(minHeight: 40)
-    .background(Color.psPlate, in: RoundedRectangle(cornerRadius: 6))
-    .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 2))
+    .padding(.horizontal, 10).frame(minHeight: 36).psBox()
     .accessibilityElement(children: .ignore)
-    .accessibilityLabel("Turn 1, \(batons) batons left")
+    .accessibilityLabel(
+      "Turn \(screen.state.turn), \(screen.tokens), \(screen.batonsLeft) batons left")
   }
 
-  var prompt: some View {
-    HStack(spacing: 12) {
-      VStack(alignment: .leading, spacing: 2) {
-        Text("Turn 1 · \(game.team(thrower).shownName(thrower))").psKick()
-        Text(scorer.prompt.text).font(PSFont.body(16, .medium)).foregroundStyle(Color.psText)
-          .fixedSize(horizontal: false, vertical: true)
+  @ViewBuilder var prompt: some View {
+    VStack(alignment: .leading, spacing: 4) {
+      if screen.panel == .pick {
+        Text(
+          screen.isInkast
+            ? "Who throws the kubbs in?" : "Who throws baton \(screen.state.next.n ?? 1)?"
+        ).psKick()
+        ScrollView(.horizontal) {
+          HStack {
+            ForEach(screen.players, id: \.id) { p in
+              Button(p.name) { screen.choose(p) }
+                .buttonStyle(PSButtonStyle(solid: screen.thrower?.id == p.id, minHeight: 48))
+            }
+          }.padding(.trailing, 4).padding(.bottom, 4)
+        }.scrollIndicators(.hidden)
+      } else {
+        HStack {
+          VStack(alignment: .leading, spacing: 3) {
+            Text(screen.kick).psKick()
+            Text(screen.problem ?? screen.text).font(PSFont.body(16, .semibold))
+          }.frame(maxWidth: .infinity, alignment: .leading)
+          if !screen.owed.isEmpty && !screen.placing {
+            Button("Place \(screen.owed.count)") {
+              screen.placing = true
+              screen.panel = .none
+            }
+            .buttonStyle(.quiet)
+          }
+          if !screen.lastWarnings.isEmpty {
+            Button {
+              screen.panel = screen.panel == .warnings ? .none : .warnings
+            } label: {
+              Chip("Rule note").frame(minHeight: 48)
+            }.buttonStyle(.plain).accessibilityLabel("Read engine warning")
+          }
+        }
+        if screen.isBaton && !screen.marksKubbs && !screen.punishPending && !screen.placing {
+          HStack {
+            if (screen.state.next.field ?? 0) > 0 {
+              countButton("field", count: $screen.countField, total: screen.state.next.field ?? 0)
+            }
+            if (screen.state.next.base ?? 0) > 0 {
+              countButton("base", count: $screen.countBase, total: screen.state.next.base ?? 0)
+            }
+          }
+        }
       }
-      .frame(maxWidth: .infinity, alignment: .leading)
-      .accessibilityElement(children: .combine)
-      IconPlate(symbol: "camera", enabled: false)
-        .accessibilityLabel("Photo, not built yet")
     }
-    .padding(.horizontal, 12)
-    .padding(.vertical, 8)
+    .padding(.horizontal, 12).padding(.vertical, 8).frame(maxWidth: .infinity, minHeight: 72)
     .background(Color.psGround)
-    .overlay(alignment: .top) { Rectangle().fill(Color.psLine).frame(height: 3) }
+    .overlay(alignment: .top) { Rectangle().fill(Color.psLine).frame(height: 2) }
+  }
+
+  func countButton(_ kind: String, count: Binding<Int>, total: Int) -> some View {
+    Button("\(count.wrappedValue) \(kind) +") {
+      count.wrappedValue = (count.wrappedValue + 1) % (total + 1)
+    }
+    .buttonStyle(PSButtonStyle(minHeight: 48)).accessibilityLabel("Count \(kind) kubbs")
+    .accessibilityValue("\(count.wrappedValue)").accessibilityHint(
+      "Adds one. After \(total), returns to zero.")
   }
 
   var bottomBar: some View {
     HStack(spacing: 8) {
-      Button {
-        try? scorer.undo()
-        undone += 1
-      } label: {
-        Label("Undo", systemImage: "arrow.uturn.backward").labelStyle(.titleAndIcon)
+      Button("Undo") {
+        screen.panel = .none
+        screen.undo()
+      }.buttonStyle(PSButtonStyle(minHeight: 62)).frame(width: 96)
+      Button(screen.primaryTitle) {
+        screen.panel = .none
+        if screen.over { close() } else { screen.primary() }
+      }.buttonStyle(
+        PSButtonStyle(
+          solid: !(screen.positionsOn && screen.isInkast) && !screen.placing, minHeight: 62))
+      if let second = screen.secondTitle {
+        Button(second) {
+          screen.panel = .none
+          screen.second()
+        }
+        .buttonStyle(PSButtonStyle(minHeight: 62)).fixedSize(horizontal: true, vertical: false)
       }
-      .buttonStyle(PSButtonStyle(minHeight: 64))
-      .frame(width: 104)
-      .accessibilityHint("Logs an undo; there is nothing to undo yet")
-      Button("Out") {}
-        .buttonStyle(PSButtonStyle(minHeight: 64))
-        .disabled(true)
-        .accessibilityHint("Comes with record mode")
-      Button("Later") {}
-        .buttonStyle(PSButtonStyle(minHeight: 64))
-        .frame(width: 92)
-        .disabled(true)
-        .accessibilityHint("Comes with record mode")
-      Menu {
-        Button("What to record", systemImage: "list.bullet") { editingCapture = true }
-          .disabled(!scorer.canChangeCapture)
-        Button("Back to Home (the game stays on the pitch)", systemImage: "house", action: close)
-      } label: {
-        Image(systemName: "ellipsis").font(.system(size: 22, weight: .heavy))
-          .frame(width: 56, height: 64)
-          .foregroundStyle(Color.psText)
-          .background(Color.psPlate, in: RoundedRectangle(cornerRadius: 6))
-          .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 3))
-          .background(RoundedRectangle(cornerRadius: 6).fill(Color.psShade).offset(x: 3, y: 3))
+      icon("ellipsis", "More", height: 62) {
+        screen.panel = screen.panel == .none ? .rare : .none
       }
-      .accessibilityLabel("More")
-    }
-    .padding(.horizontal, 12)
-    .padding(.top, 10)
-    .padding(.bottom, 8)
-    .background(TeamMarker.fill(thrower.marker))
+    }.padding(.horizontal, 12).padding(.top, 9).padding(.bottom, 6)
   }
 
-  var captureSheet: some View {
-    NavigationStack {
-      ScrollView {
-        VStack(alignment: .leading, spacing: 10) {
-          Text("What to record").psKick()
-          ForEach(Capture.Row.allCases, id: \.self) { row in
-            CaptureRowButton(row: row, on: capture.isOn(row)) {
-              capture.set(row, !capture.isOn(row))
-              try? scorer.setCapture(capture)
+  private func icon(
+    _ symbol: String, _ label: String, height: CGFloat = 48, action: @escaping () -> Void
+  ) -> some View {
+    Button(action: action) {
+      Image(systemName: symbol).font(.system(size: 22, weight: .bold))
+        .frame(width: 48, height: height).psCard(shadow: 3)
+    }.buttonStyle(.plain).accessibilityLabel(label)
+  }
+
+  @ViewBuilder var panel: some View {
+    @Bindable var s = screen
+    VStack(alignment: .leading, spacing: 8) {
+      switch screen.panel {
+      case .rare:
+        Text("More").psKick()
+        LazyVGrid(columns: [.init(.flexible()), .init(.flexible())], spacing: 8) {
+          if screen.isInkast && screen.state.allows("toss") {
+            Button(
+              screen.rescueAttempt ? "Cancel rescue mark" : "Failed rescue",
+              action: screen.failedRescue)
+            if !screen.positionsOn && screen.state.next.rethrow != true {
+              Button("One kubb in", action: screen.oneIn)
             }
           }
-          Text("Changes start with the next turn. The file says what was recorded.").psHelp()
-          Button("Done") { editingCapture = false }.buttonStyle(.psSolid)
+          if !screen.isInkast && screen.state.allows("baton") {
+            Button("Illegal throw", action: screen.illegal)
+          }
+          if !screen.over && !screen.isKingShot {
+            Button("King hit early", action: screen.kingEarly)
+          }
+          if screen.state.allows("advantage") {
+            Button("Advantage line") { screen.panel = .advantage }
+          }
+          if screen.state.allows("resign") { Button("Resign") { screen.panel = .resign } }
+          if screen.state.allows("call") { Button("Game called") { screen.panel = .call } }
+          if screen.state.allows("note") { Button("Add a note") { screen.panel = .note } }
+          if screen.scorer.captureAppliesNow && screen.state.allows("capture") {
+            Button("What to record") { screen.panel = .capture }
+          }
+          Button("Timeline") {
+            screen.panel = .none
+            timeline = true
+          }
+          Button("Home", action: close)
         }
-        .padding(16)
+      case .capture:
+        Text("What to record · turn \(screen.state.turn)").psKick()
+        ForEach(Capture.Row.allCases, id: \.self) { row in
+          CaptureRowButton(row: row, on: screen.game.capture.isOn(row)) {
+            var capture = screen.game.capture
+            capture.set(row, !capture.isOn(row))
+            screen.setCapture(capture)
+          }
+        }
+        Button("Done") { screen.panel = .none }
+      case .advantage:
+        Text("Where was the line used?").psKick()
+        Button("Baseline") { screen.observeLine(applies: false) }
+        Button("Advantage · distance unknown") { screen.observeLine(applies: true) }
+        HStack {
+          ForEach(1...4, id: \.self) { m in
+            Button("\(m) m") { screen.observeLine(applies: true, meters: m) }
+              .accessibilityLabel("\(m) metres from the baseline")
+          }
+        }
+      case .note:
+        TextField("Turn note", text: $s.noteText).textFieldStyle(.roundedBorder)
+          .frame(minHeight: 48).accessibilityLabel("Turn note").onSubmit(screen.saveNote)
+        Button("Save note", action: screen.saveNote)
+      case .call, .resign:
+        Text(screen.panel == .call ? "Which team won?" : "Which team resigned?").psKick()
+        ForEach(Side.allCases, id: \.self) { side in
+          Button(screen.teamName(side)) {
+            if screen.panel == .call { screen.call(side) } else { screen.resign(side) }
+          }
+        }
+      case .warnings:
+        ForEach(screen.lastWarnings, id: \.self) { Text($0.text).font(PSFont.body(16)) }
+        Button("Done") { screen.panel = .none }
+      default: EmptyView()
       }
-      .background(Color.psGround)
-    }
-  }
-}
-
-/// A 52-point square icon button drawn like the design's small plates. Disabled ones
-/// (the view switch and the photo, which come later) say so to VoiceOver.
-struct IconPlate: View {
-  let symbol: String
-  var enabled = true
-  var action: () -> Void = {}
-
-  var body: some View {
-    Button(action: action) {
-      Image(systemName: symbol).font(.system(size: 20, weight: .bold))
-        .foregroundStyle(Color.psText)
-        .frame(width: 52, height: 52)
-        .background(Color.psPlate, in: RoundedRectangle(cornerRadius: 6))
-        .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 3))
-        .background(RoundedRectangle(cornerRadius: 6).fill(Color.psShade).offset(x: 3, y: 3))
-        .opacity(enabled ? 1 : 0.55)
-    }
-    .buttonStyle(.plain)
-    .disabled(!enabled)
-  }
-}
-
-/// The pitch as the design draws it from behind the thrower's baseline: rough around a
-/// 5 by 8 m grass rectangle, a chalk outline, the centre line, six stakes, the king, and
-/// five base kubbs on each baseline. The far half (where kubbs are thrown in) is lighter.
-/// Static until record mode says what stands.
-struct PitchView: View {
-  let thrower: Side
-  let teams: [Side: String]
-
-  var body: some View {
-    GeometryReader { g in
-      let chipRoom: CGFloat = 40
-      let h = max(100, g.size.height - chipRoom * 2)
-      let w = min(g.size.width - 64, h * 5 / 8)
-      let height = w * 8 / 5
-      let x0 = (g.size.width - w) / 2
-      let y0 = (g.size.height - height) / 2
-      let unit = w / 5
-      let kubb = max(16, unit * 0.36)
-      ZStack(alignment: .topLeading) {
-        Color.psRough
-        // The grass, the far half lighter (the half kubbs are thrown into).
-        Rectangle().fill(Color.psGrass).frame(width: w, height: height).offset(x: x0, y: y0)
-        Rectangle().fill(Color.white.opacity(0.18)).frame(width: w, height: height / 2).offset(x: x0, y: y0)
-        Rectangle().strokeBorder(Color.psChalk, lineWidth: 3).frame(width: w, height: height).offset(x: x0, y: y0)
-        Rectangle().fill(Color.psChalk).frame(width: w, height: 2).offset(x: x0, y: y0 + height / 2 - 1)
-        // Stakes: the four corners and both ends of the centre line.
-        ForEach(0..<6, id: \.self) { i in
-          let sx = x0 + (i % 2 == 0 ? 0 : w)
-          let sy = y0 + CGFloat(i / 2) * height / 2
-          RoundedRectangle(cornerRadius: 2).fill(Color.psKubb)
-            .overlay(RoundedRectangle(cornerRadius: 2).strokeBorder(Color.psKubbInk, lineWidth: 1.5))
-            .frame(width: 10, height: 10)
-            .offset(x: sx - 5, y: sy - 5)
-        }
-        // Base kubbs: five on each baseline, 1 m apart.
-        ForEach(0..<10, id: \.self) { i in
-          let bx = x0 + unit * (CGFloat(i % 5) + 0.5)
-          let by = i < 5 ? y0 + kubb / 2 : y0 + height - kubb / 2
-          RoundedRectangle(cornerRadius: 3).fill(Color.psKubbRest)
-            .overlay(RoundedRectangle(cornerRadius: 3).strokeBorder(Color.psKubbInk, lineWidth: 2))
-            .frame(width: kubb, height: kubb)
-            .offset(x: bx - kubb / 2, y: by - kubb / 2)
-        }
-        // The king.
-        RoundedRectangle(cornerRadius: 3).fill(Color.psKubb)
-          .overlay(RoundedRectangle(cornerRadius: 3).strokeBorder(Color.psKubbInk, lineWidth: 3))
-          .overlay(Text("K").font(.custom("Inter", fixedSize: 16).weight(.black)).foregroundStyle(Color.psKubbInk))
-          .frame(width: kubb * 1.5, height: kubb * 1.5)
-          .offset(x: x0 + w / 2 - kubb * 0.75, y: y0 + height / 2 - kubb * 0.75)
-        // Each team's chip by its baseline: the far team at the top.
-        chip(thrower.other, standing: 5).position(x: g.size.width / 2, y: y0 - 18)
-        chip(thrower, standing: 5).position(x: g.size.width / 2, y: y0 + height + 18)
-      }
-    }
-    .clipped()
-    .accessibilityElement(children: .ignore)
-    .accessibilityLabel(
-      "The pitch from behind \(teams[thrower] ?? "")'s baseline: five base kubbs on each baseline and the king in the middle.")
-  }
-
-  func chip(_ side: Side, standing: Int) -> some View {
-    HStack(spacing: 6) {
-      TeamMarker(side, size: 18)
-      Text("\(teams[side] ?? "") · \(standing) standing").font(PSFont.body(14, .bold))
-    }
-    .foregroundStyle(Color.psText)
-    .padding(.horizontal, 8)
-    .padding(.vertical, 3)
-    .background(Color.psPlate, in: RoundedRectangle(cornerRadius: 6))
-    .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 2))
-    .fixedSize()
+    }.buttonStyle(PSButtonStyle(minHeight: 48))
   }
 }

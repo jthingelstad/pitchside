@@ -76,7 +76,7 @@ struct PitchCanvas: View {
         }.accessibilityHidden(true)
         chip(screen.defender, geo)
         chip(screen.attacker, geo)
-        if screen.advantageShown && !screen.isKingShot && !screen.placing {
+        if screen.advantageShown && screen.isBaton && !screen.placing && !screen.punishPending {
           advantage(geo)
         }
       }

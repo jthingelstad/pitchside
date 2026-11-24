@@ -4,6 +4,7 @@ import SwiftUI
 
 /// The saved names, kept on this phone only: add, rename, forget.
 struct RosterView: View {
+  let home: () -> Void
   @Environment(AppModel.self) private var model
   @State private var newName = ""
   @State private var editing: SavedName?
@@ -12,7 +13,7 @@ struct RosterView: View {
 
   var body: some View {
     let totals = model.totals()
-    Screen(title: "Roster") {
+    Screen(title: "Roster", back: "Games", onBack: home) {
       Text("Saved names · kept on this phone only").psKick()
       Text("Names you type for a team are kept here for the next game. Nobody else sees them.").psHelp()
       if model.roster.isEmpty {

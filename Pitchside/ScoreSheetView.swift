@@ -8,6 +8,9 @@ import SwiftUI
 struct ScoreSheetView: View {
   @Environment(AppModel.self) private var model
   let id: UUID
+  var engineNotes: [RecordWarning] = []
+  var resume: ((LiveScorer) -> Void)? = nil
+  @State private var problem: String?
   @State private var copied = false
 
   var body: some View {
@@ -16,6 +19,24 @@ struct ScoreSheetView: View {
         let text = model.text(game)
         let read = model.read(game)
         result(game, read)
+        if !engineNotes.isEmpty {
+          DisclosureGroup("Scorer notes (\(engineNotes.count))") {
+            ForEach(engineNotes, id: \.self) { note in
+              Text(note.text).font(PSFont.body(15)).frame(maxWidth: .infinity, alignment: .leading)
+            }
+          }.padding(12).frame(minHeight: 48).psBox()
+        }
+        if let resume, !game.isImported, FileManager.default.fileExists(atPath: model.store.logURL(id).path) {
+          Button("Undo last event") {
+            do {
+              let scorer = try model.scorer(for: game)
+              try scorer.undo()
+              model.refresh()
+              resume(scorer)
+            } catch { problem = String(describing: error) }
+          }.buttonStyle(.quiet)
+          if let problem { Text(problem).psHelp() }
+        }
         if let read {
           Text("Turn by turn").psKick()
           turns(read.analysis)
@@ -31,7 +52,7 @@ struct ScoreSheetView: View {
           .padding(14)
           .frame(maxWidth: .infinity, alignment: .leading)
           .psCard(fill: .psInside, shadow: 0)
-          .accessibilityLabel("The game file")
+          .accessibilityLabel("The game file").accessibilityValue(text)
         actions(game, text, read)
       } else {
         Text("This game is gone.").font(PSFont.body(16))
@@ -42,15 +63,14 @@ struct ScoreSheetView: View {
   @ViewBuilder func result(_ game: Game, _ read: GameRead?) -> some View {
     VStack(alignment: .leading, spacing: 8) {
       if let a = read?.analysis, let w = a.winner {
-        Text(kick(a)).psKick()
+        Text("Result").psKick()
         HStack(spacing: 10) {
           TeamMarker(w, size: 26)
-          Text("\(a.name(w)) win").font(PSFont.display(28, relativeTo: .title)).foregroundStyle(Color.psText)
+          Text("\(a.name(w)) beat \(a.name(w.other))").font(PSFont.display(28, relativeTo: .title)).foregroundStyle(Color.psText)
         }
         .accessibilityElement(children: .combine)
         HStack(alignment: .top, spacing: 8) {
-          TeamMarker(w.other, size: 22).padding(.top, 1)
-          Text(overLine(a, w)).font(PSFont.body(16)).foregroundStyle(Color.psText)
+          Text(kick(a)).font(PSFont.body(16)).foregroundStyle(Color.psText)
         }
         .accessibilityElement(children: .combine)
       } else {
@@ -58,7 +78,7 @@ struct ScoreSheetView: View {
         Text("\(game.team(.A).shownName(.A)) v \(game.team(.B).shownName(.B))")
           .font(PSFont.display(26, relativeTo: .title)).foregroundStyle(Color.psText)
         if game.status == .playing {
-          Text("No turns yet: the scorer is a placeholder until record mode.")
+          Text("Draft · scoring in progress.")
             .font(PSFont.body(16)).foregroundStyle(Color.psText)
         }
       }
@@ -75,12 +95,6 @@ struct ScoreSheetView: View {
     case let how?: return "Over \(turn) · \(how)"
     case nil: return "Over"
     }
-  }
-
-  func overLine(_ a: Analysis, _ w: Side) -> String {
-    guard a.winHow == "king", let left = a.winnerBaseStanding else { return "over \(a.name(w.other))" }
-    if left == 0 { return "over \(a.name(w.other)), who had felled all their base kubbs" }
-    return "over \(a.name(w.other)), who still had \(left) base \(left == 1 ? "kubb" : "kubbs") to fell"
   }
 
   func turns(_ a: Analysis) -> some View {
@@ -151,7 +165,7 @@ struct ScoreSheetView: View {
         .buttonStyle(.ps)
         .disabled(true)
         .accessibilityHint("Not yet: Throwing Wood cannot show a real game yet.")
-      Text("Not yet: Throwing Wood cannot replay a real game until record mode.").psHelp()
+      Text("Real-game replay is planned for Throwing Wood.").psHelp()
     }
     HStack(spacing: 10) {
       Button(copied ? "Copied" : "Copy") {

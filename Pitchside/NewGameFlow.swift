@@ -10,6 +10,7 @@ struct NewGameFlow: View {
   let started: (LiveScorer) -> Void
   @State private var game: Game?
   @State private var path: [Step] = []
+  @State private var problem: String?
 
   enum Step: Hashable { case thisGame }
 
@@ -25,12 +26,16 @@ struct NewGameFlow: View {
             ThisGameView(game: game) {
               model.saveDraft(game.wrappedValue)
             } start: {
-              if let scorer = try? model.start(game.wrappedValue) { started(scorer) }
+              do { started(try model.start(game.wrappedValue)) }
+              catch { problem = String(describing: error) }
             }
           }
         }
       }
     }
+    .alert("Could not start scoring", isPresented: .constant(problem != nil)) {
+      Button("OK") { problem = nil }
+    } message: { Text(problem ?? "") }
     .onAppear {
       if game == nil { game = model.draft() }
       #if DEBUG
@@ -321,6 +326,10 @@ struct ThisGameView: View {
           "Who throws first", options: Side.allCases.map { ($0, game.team($0).shownName($0)) },
           selection: $game.options.first)
       }
+      section("Event and place · optional, in the file's header") {
+        textField("Event, like Fall Open, pool 2", text: optional(\.event), label: "Event")
+        textField("Place or pitch number", text: optional(\.location), label: "Location")
+      }
       Text("What to record").psKick()
       VStack(spacing: 10) {
         ForEach(Capture.Row.allCases, id: \.self) { row in captureRow(row) }
@@ -339,6 +348,31 @@ struct ThisGameView: View {
     }
   }
 
+  /// An optional text of the game as a field's text (empty is none). The engine takes
+  /// at most 120 bytes.
+  func optional(_ key: WritableKeyPath<Game, String?>) -> Binding<String> {
+    Binding(
+      get: { game[keyPath: key] ?? "" },
+      set: { v in
+        var t = v
+        while t.utf8.count > 120 { t.removeLast() }
+        game[keyPath: key] = t.isEmpty ? nil : t
+      })
+  }
+
+  func textField(_ prompt: String, text: Binding<String>, label: String) -> some View {
+    TextField(prompt, text: text)
+      .font(PSFont.body(17))
+      .textInputAutocapitalization(.words)
+      .autocorrectionDisabled()
+      .padding(.horizontal, 12)
+      .frame(minHeight: 52)
+      .background(Color.psField, in: RoundedRectangle(cornerRadius: 6))
+      .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 3))
+      .foregroundStyle(Color.psText)
+      .accessibilityLabel(label)
+  }
+
   func captureRow(_ row: Capture.Row) -> some View {
     CaptureRowButton(row: row, on: game.capture.isOn(row)) {
       game.capture.set(row, !game.capture.isOn(row))
@@ -355,6 +389,7 @@ struct CaptureRowButton: View {
 
   var body: some View {
     let always = row == .turn
+    let reserved = row == .lay
     Button(action: toggle) {
       HStack(alignment: .center, spacing: 12) {
         Text(row.glyph)
@@ -367,7 +402,7 @@ struct CaptureRowButton: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .multilineTextAlignment(.leading)
-        Text(always ? "Always" : on ? "On" : "Off")
+        Text(always ? "Always" : reserved ? "Later" : on ? "On" : "Off")
           .font(PSFont.body(14, .heavy)).textCase(.uppercase)
       }
       .foregroundStyle(on ? Color.psOnSolid : Color.psText)
@@ -380,10 +415,10 @@ struct CaptureRowButton: View {
     }
     .buttonStyle(.plain)
     // Not `.disabled`: that greys the always-on row below 7:1. It just takes no taps.
-    .allowsHitTesting(!always)
+    .disabled(always || reserved)
     .accessibilityElement(children: .ignore)
     .accessibilityLabel("\(row.title). \(row.detail)")
-    .accessibilityValue(always ? "always recorded" : on ? "on" : "off")
+    .accessibilityValue(always ? "always recorded" : reserved ? "unavailable" : on ? "on" : "off")
     .accessibilityAddTraits(always ? [] : [.isToggle])
   }
 }

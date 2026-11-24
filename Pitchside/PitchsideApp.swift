@@ -52,8 +52,7 @@ enum Route: Hashable {
   case stats(UUID)
 }
 
-/// Home, Roster and Stats under a tab bar. The new-game flow and the scorer cover it
-/// (no tab bar there).
+/// The tab bar is available on Games, the score sheet and Stats. Roster has its own back button.
 struct RootView: View {
   @Environment(AppModel.self) private var model
   @State private var tab: Tab = .games
@@ -61,6 +60,8 @@ struct RootView: View {
   @State private var statsPath: [Route] = []
   @State private var newGame = false
   @State private var scoring: ScoringSession?
+  @State private var engineNotes: [UUID: [RecordWarning]] = [:]
+  @State private var resumeProblem: String?
 
   var body: some View {
     VStack(spacing: 0) {
@@ -70,12 +71,15 @@ struct RootView: View {
           NavigationStack(path: $gamesPath) {
             HomeView(
               newGame: { newGame = true },
-              carryOn: { game in scoring = try? ScoringSession(model.scorer(for: game)) }
+              carryOn: { game in
+                do { scoring = try ScoringSession(model.scorer(for: game)) }
+                catch { resumeProblem = String(describing: error) }
+              }
             )
             .navigationDestination(for: Route.self) { destination($0, back: "Score sheet") }
           }
         case .roster:
-          NavigationStack { RosterView() }
+          NavigationStack { RosterView { tab = .games } }
         case .stats:
           NavigationStack(path: $statsPath) {
             StatsTabView().navigationDestination(for: Route.self) { destination($0, back: "Stats") }
@@ -83,12 +87,15 @@ struct RootView: View {
         }
       }
       .frame(maxHeight: .infinity)
-      TabBar(tab: $tab)
+      if tab != .roster { TabBar(tab: $tab) }
     }
     .background(Color.psGround)
     #if DEBUG
       .onAppear(perform: openForScreenshot)
     #endif
+    .alert("Could not reopen the game", isPresented: .constant(resumeProblem != nil)) {
+      Button("OK") { resumeProblem = nil }
+    } message: { Text(resumeProblem ?? "") }
     .fullScreenCover(isPresented: $newGame) {
       NewGameFlow { scorer in
         newGame = false
@@ -98,8 +105,13 @@ struct RootView: View {
     }
     .fullScreenCover(item: $scoring) { session in
       ScorerView(session: session) {
-        scoring = nil
         model.refresh()
+        if session.scorer.state.over {
+          engineNotes[session.id] = session.scorer.warnings
+          tab = .games
+          gamesPath = [.sheet(session.id)]
+        }
+        scoring = nil
       }
       .environment(model)
     }
@@ -126,7 +138,11 @@ struct RootView: View {
 
   @ViewBuilder func destination(_ route: Route, back: String) -> some View {
     switch route {
-    case .sheet(let id): ScoreSheetView(id: id)
+    case .sheet(let id):
+      ScoreSheetView(id: id, engineNotes: engineNotes[id] ?? []) { scorer in
+        gamesPath = []
+        scoring = ScoringSession(scorer)
+      }
     case .stats(let id): GameStatsView(id: id, back: back)
     }
   }

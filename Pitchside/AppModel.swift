@@ -10,12 +10,12 @@ import PitchsideModel
 final class AppModel {
   let store: GameStore
   let version: VersionLabel
-  /// Why the engine did not start, if it did not (shown on Home; nothing else needs it
-  /// until record mode).
+  /// Why the engine did not start, if it did not (shown on Home).
   let engineProblem: String?
-  @ObservationIgnored private(set) var reader: NotationReader?
+  @ObservationIgnored private let reader: NotationReader?
   @ObservationIgnored let scorers: ScorerFactory
 
+  private(set) var recoveryProblem: String?
   private(set) var games: [Game] = []
   private(set) var roster: [SavedName] = []
   @ObservationIgnored private var reads: [UUID: (text: String, read: GameRead?)] = [:]
@@ -37,12 +37,22 @@ final class AppModel {
     version = VersionLabel(app: app, engine: engineVersion, build: build)
     engineProblem = problem
     reader = try? NotationReader()
-    scorers = PlaceholderScorer.Factory(appVersion: app)
+    scorers = RecordScorer.Factory(appVersion: app)
+    for game in store.games() where store.needsReplay(game) {
+      do { _ = try scorers.scorer(for: game, store: store) }
+      catch { recoveryProblem = "Could not rebuild a saved game. \(error)" }
+    }
     refresh()
   }
 
   func refresh() {
-    games = store.games()
+    let saved = store.games()
+    // JavaScriptCore runs when the files change, outside SwiftUI's lazy row layout.
+    for game in saved where game.status == .finished {
+      guard let text = store.fileText(game.id), reads[game.id]?.text != text else { continue }
+      reads[game.id] = (text, try? reader?.read(text))
+    }
+    games = saved
     roster = store.roster().sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
   }
 
@@ -66,11 +76,7 @@ final class AppModel {
 
   /// The game read by pk-kubb-score's reader (nil when it has no turns yet).
   func read(_ game: Game) -> GameRead? {
-    let text = text(game)
-    if let cached = reads[game.id], cached.text == text { return cached.read }
-    let read = try? reader?.read(text)
-    reads[game.id] = (text, read)
-    return read
+    reads[game.id]?.read
   }
 
   /// Opens a game file from elsewhere. Throws a refusal the user can read.
@@ -121,10 +127,11 @@ final class AppModel {
 
   // MARK: A new game
 
-  /// A new game's draft: the last game's options and capture, empty teams.
+  /// A new game's draft: the last game's options, empty teams, and the capture a new
+  /// game starts with: the turn and where kubbs stand (the design review's call).
   func draft() -> Game {
     let last = games.first { !$0.isImported }
-    return Game(options: last?.options ?? GameOptions(), capture: last?.capture ?? Capture())
+    return Game(options: last?.options ?? GameOptions(), capture: Capture(stand: true))
   }
 
   func saveDraft(_ game: Game) {
@@ -136,10 +143,11 @@ final class AppModel {
     refresh()
   }
 
-  /// Starts scoring: the game goes on the pitch and its log starts.
+  /// Starts scoring: the game goes on the pitch and its log starts. The game's start is
+  /// now (the file's `Start`).
   func start(_ game: Game) throws -> LiveScorer {
     var game = game
-    game.playerKeys = GameFile.playerKeys(for: game)
+    game.created = .now
     try store.save(game)
     let scorer = try scorers.scorer(for: game, store: store)
     refresh()

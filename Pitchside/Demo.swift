@@ -14,7 +14,7 @@
       let root = FileManager.default.temporaryDirectory.appending(path: "PitchsideDemo")
       try? FileManager.default.removeItem(at: root)
       let store = try! GameStore(root: root)
-      let names = ["Wren", "Tomas", "Ivo", "Maren", "Kit", "Odile", "Bram", "Linnea", "Lark", "Nell"]
+      let names = ["Wren", "Tomas", "Ivo", "Maren", "Kit", "Odile", "Bram", "Linnea", "Lark", "Nell", "Kim", "Dana", "Ole", "Sam", "Lee"]
       var keys: [String: UUID] = [:]
       for n in names { keys[n] = try! store.save(name: n).key }
       func p(_ n: String) -> TeamPlayer { TeamPlayer(name: n, key: keys[n]) }
@@ -50,15 +50,54 @@
       three.created = day(15, 18)
       try! store.save(three)
 
-      // Still on the pitch.
+      // Still on the pitch: the canvas's game (the worked example of kubb-engine's
+      // RECORD.md, renamed), stopped where `-PitchsideDemoAt <n>` says.
       let four = Game(
         created: Date.now.addingTimeInterval(-25 * 60), status: .setup,
-        teams: [.A: Team(name: "Wobbly Towers", players: [p("Odile"), p("Linnea")]),
-                .B: Team(name: "Pine Kings", players: [p("Lark"), p("Nell")])],
-        options: GameOptions(first: .A), capture: Capture(who: true, stand: true))
+        teams: [.A: Team(name: "Wobbly Towers", players: [p("Kim"), p("Dana"), p("Ole")]),
+                .B: Team(name: "Birch Batons", players: [p("Sam"), p("Lee")])],
+        options: GameOptions(wind: .light, first: .A), capture: Capture(who: true, stand: true, stance: true),
+        event: "Tumblecone Cup", location: "Lantern Kubb Hollow, Pitch 4")
       try! store.save(four)
-      _ = try! PlaceholderScorer(game: four, store: store, appVersion: "0.1")
+      let scorer = try! RecordScorer(game: four, store: store, appVersion: "0.1")
+      let args = ProcessInfo.processInfo.arguments
+      let at = args.firstIndex(of: "-PitchsideDemoAt").flatMap { args.dropFirst($0 + 1).first }.flatMap(Int.init) ?? 28
+      for e in canvasGame.prefix(max(0, at)) { try! scorer.add(e) }
       return store
+    }
+
+    /// The worked example's events (kubb-engine tests/fixtures/record/games.lua,
+    /// `example`): five turns, the fifth `5. k:3I A k:3F d:B o:B k:B d:= o:K`.
+    static var canvasGame: [[String: JSONValue]] {
+      func P(_ a: Double, _ d: Double) -> RecordPoint { RecordPoint(across: a, depth: d) }
+      typealias E = RecordEvent
+      return [
+        E.baton(base: 1, by: "kim", at: [P(1.5, 4)], stance: P(2.5, 4)),
+        E.baton(base: 1, by: "dana", at: [P(4.5, 4)], stance: P(2.5, 4)),
+        E.toss(true, by: "sam", at: P(1.2, 2.4)), E.toss(true, by: "sam", at: P(3.6, 1.1)),
+        E.baton(field: 2, by: "sam", at: [P(1.2, 2.4), P(3.6, 1.1)]),
+        E.baton(base: 1, by: "lee", at: [P(0.5, 4)]), E.baton(base: 1, by: "sam", at: [P(2.5, 4)]),
+        E.baton(by: "lee"),
+        E.toss(true, by: "kim", at: P(0.4, 1.5)), E.toss(true, by: "kim", at: P(2.2, 0.6)),
+        E.toss(true, by: "kim", at: P(2.8, 0.9)), E.toss(true, by: "kim", at: P(4.1, 2.2)),
+        E.baton(field: 2, by: "kim", at: [P(2.2, 0.6), P(2.8, 0.9)]),
+        E.baton(field: 1, by: "dana", at: [P(0.4, 1.5)]), E.baton(field: 1, by: "ole", at: [P(4.1, 2.2)]),
+        E.baton(by: "kim"), E.baton(by: "dana"), E.baton(by: "ole"),
+        E.toss(true, by: "sam", at: P(0.7, 0.8)), E.toss(true, by: "sam", at: P(1.9, 1.2)),
+        E.toss(true, by: "lee", at: P(3.4, 1.3)), E.toss(true, by: "lee", at: P(4.4, 0.5)),
+        E.baton(field: 1, by: "sam", at: [P(0.7, 0.8)]), E.baton(field: 1, by: "lee", at: [P(1.9, 1.2)]),
+        E.baton(field: 1, by: "sam", at: [P(4.4, 0.5)]),
+        E.baton(by: "lee"), E.baton(by: "sam"), E.baton(by: "lee"),
+        E.toss(true, by: "kim", at: P(1.4, 1.6)), E.toss(true, by: "kim", at: P(2.3, 1.2)),
+        E.toss(true, by: "kim", at: P(2.6, 1.7)),
+        E.advantage(applies: true),
+        E.baton(field: 3, by: "kim", at: [P(1.4, 1.6), P(2.3, 1.2), P(2.6, 1.7)], stance: P(2.6, 1.3)),
+        E.baton(base: 1, by: "dana", at: [P(0.5, 4)], stance: P(2.6, 1.3)),
+        E.baton(base: 1, by: "ole", at: [P(2.5, 4)], stance: P(2.4, 1.3)),
+        E.baton(base: 1, by: "kim", at: [P(3.5, 4)], stance: P(2.6, 1.3)),
+        E.baton(by: "dana", stance: P(2.7, 1.3)),
+        E.baton(king: true, by: "ole", stance: P(2.5, 4)),
+      ]
     }
 
     static let g1Turns = """
