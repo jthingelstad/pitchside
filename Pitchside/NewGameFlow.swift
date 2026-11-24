@@ -391,17 +391,18 @@ struct CaptureRowButton: View {
   private var status: String { row == .turn ? "Always" : row == .lay ? "Later" : on ? "On" : "Off" }
 
   var body: some View {
-    Group {
-      if editable {
-        Button(action: toggle) { label }.buttonStyle(.plain)
-          .accessibilityAddTraits(.isToggle)
-      } else {
-        label
-      }
+    if editable {
+      Button(action: toggle) { label }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(row.title). \(row.detail)")
+        .accessibilityValue(status)
+        .accessibilityAddTraits(.isToggle)
+    } else {
+      label
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(row.title). \(row.detail)")
+        .accessibilityValue(row == .turn ? "always recorded" : "unavailable")
     }
-    .accessibilityElement(children: .combine)
-    .accessibilityLabel("\(row.title). \(row.detail)")
-    .accessibilityValue(row == .turn ? "always recorded" : row == .lay ? "unavailable" : status)
   }
 
   private var label: some View {

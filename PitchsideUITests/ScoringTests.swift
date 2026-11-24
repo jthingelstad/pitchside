@@ -311,7 +311,7 @@ final class ScoringTests: XCTestCase {
     launch("scorer", after: 28)
     tap("More")
     tap("What to record")
-    app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] 'Where kubbs stand'")).firstMatch
+    app.switches.matching(NSPredicate(format: "label BEGINSWITH[c] 'Where kubbs stand'")).firstMatch
       .tap()
     tap("Done")
     tap("All 3 in")
