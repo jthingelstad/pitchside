@@ -303,7 +303,7 @@ final class ScoringTests: XCTestCase {
     tap("Score sheet PDF")
     XCTAssertTrue(app.buttons["Share"].waitForExistence(timeout: 8), app.debugDescription)
     let page = app.descendants(matching: .any).matching(
-      NSPredicate(format: "label CONTAINS[c] '1 of 1' OR value CONTAINS[c] '1 of 1'")
+      NSPredicate(format: "label CONTAINS[c] 'Score sheet · Page 1' OR label CONTAINS[c] '1 of 1' OR value CONTAINS[c] '1 of 1'")
     ).firstMatch
     XCTAssertTrue(page.waitForExistence(timeout: 15), app.debugDescription)
     shot("Printable-score-sheet")
