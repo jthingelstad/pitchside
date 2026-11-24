@@ -14,6 +14,7 @@ struct ScoreSheetView: View {
   @State private var problem: String?
   @State private var copied = false
   @State private var pdf: URL?
+  @State private var replay: GameReplay?
 
   var body: some View {
     PushedScreen(title: "Score sheet", back: "Home") {
@@ -21,6 +22,11 @@ struct ScoreSheetView: View {
         let text = model.text(game)
         let read = model.read(game)
         result(game, read)
+        if let read {
+          Button("Play by play") { replay = GameReplay(read.analysis) }
+            .buttonStyle(.ps)
+            .accessibilityHint("Step through the game on the pitch")
+        }
         if !engineNotes.isEmpty {
           DisclosureGroup("Scorer notes (\(engineNotes.count))") {
             ForEach(engineNotes, id: \.self) { note in
@@ -81,6 +87,7 @@ struct ScoreSheetView: View {
       }
     }
     .quickLookPreview($pdf)
+    .fullScreenCover(item: $replay) { ReplayView(replay: $0) }
   }
 
   @ViewBuilder func result(_ game: Game, _ read: GameRead?) -> some View {

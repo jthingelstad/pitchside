@@ -547,7 +547,7 @@ generated team names, the rules choice).
 - **Status (2026-11-24).** A game can be set up, scored, reopened, corrected and
   exported on the iPhone simulator. Home resumes every unfinished game. A local score
   sheet opens the timeline for corrections and previews a printable US Letter PDF.
-  Imported games support PDF export too. The live pitch, in-game timeline, score sheet,
+  Every readable score sheet opens a read-only play-by-play viewer for its recorded\n  inkasts, advantage, batons and result. Imported games support PDF export too. The live pitch, in-game timeline, score sheet,
   roster, local stats and opening other Notation 2 files are connected. The repository
   is public at `jthingelstad/pitchside`, with `main` as the default branch and an
   MIT license. Photos, lay-line entry and landscape are future work. Internal
@@ -588,6 +588,12 @@ generated team names, the rules choice).
   group at its observed spots. The observed advantage distance stays in the journal.
   On a baton with both located and unlocated hits, `knownFelled` keeps the available
   positions locally until the timeline editor can supply a complete felled word.
+- **Play by play.** `GameReplay` builds immutable pitch snapshots from the vendored
+  reader’s turn rows. `ReplayView` uses the live pitch geometry, orientations and zoom.
+  Pitch and fall lines retain point or cell precision. A recorded fall can establish a
+  standing position on a turn with no pitch line. An unidentified fall leaves uncertain
+  survivors unlocated. Inkast totals are grouped because a notation file does not give
+  toss order. Lay and throwing-spot coordinates appear when the file contains them.
 - **Build and test.**
   - `swift test --package-path PitchsideKit` runs model, frame, contrast, reader and
     engine tests. Node is needed to compare the reader with archived games read in
@@ -597,7 +603,7 @@ generated team names, the rules choice).
   - `xcodebuild -project Pitchside.xcodeproj -scheme Pitchside -destination
     'platform=iOS Simulator,name=iPhone 17' CODE_SIGNING_ALLOWED=NO build` builds
     the simulator app. Replace `build` with `-parallel-testing-enabled NO test` for
-    the twelve UI journeys.
+    the thirteen UI journeys.
   - `scripts/screenshots.sh --scorer "iPhone 17"` runs the UI journeys and writes their
     attachments to `docs/design/build-shots/` and checks the simulator export with the
     vendored reader. Omit `--scorer` to refresh the other

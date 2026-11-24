@@ -26,13 +26,15 @@ struct PitchCanvas: View {
 
   var body: some View {
     GeometryReader { g in
-      let geo = Geo(size: g.size, view: screen.view, viewport: viewport)
+      let geo = PitchGeometry(size: g.size, view: screen.view, viewport: viewport)
       ZStack(alignment: .topLeading) {
         Color.psRough.contentShape(Rectangle())
           .accessibilityLabel("Pitch position")
           .accessibilityRepresentation { accessibleSpots }
 
-        grass(geo).frame(width: g.size.width, height: g.size.height, alignment: .topLeading)
+        PitchGround(geo: geo, target: screen.over ? nil : screen.placingHalf,
+                    placing: screen.isInkast || screen.placing || screen.punishPending)
+          .frame(width: g.size.width, height: g.size.height, alignment: .topLeading)
         ForEach(Array(screen.fallen.enumerated()), id: \.offset) { i, at in
           let group = screen.fallen.indices.filter { screen.fallen[$0] == at }
           let location = spread(at, index: group.firstIndex(of: i) ?? 0, count: group.count)
@@ -83,7 +85,7 @@ struct PitchCanvas: View {
     .accessibilityIdentifier("pitch")
   }
 
-  private func score(at location: CGPoint, geo: Geo) {
+  private func score(at location: CGPoint, geo: PitchGeometry) {
     let hits = pieces.compactMap { piece -> (ScorerScreen.Target, CGFloat)? in
       guard let target = piece.target else { return nil }
       let centre = geo.point(piece.at)
@@ -115,101 +117,7 @@ struct PitchCanvas: View {
     }
   }
 
-  // MARK: Geometry
-
-  /// The drawn pitch's rectangle in the canvas, and the map both ways.
-  struct Geo {
-    let size: CGSize
-    let fitted: CGRect
-    let rect: CGRect
-    let view: PitchFrame.View
-    let unit: CGFloat
-
-    init(size: CGSize, view: PitchFrame.View, viewport: PitchFrame.Viewport) {
-      self.size = size
-      self.view = view
-      let pad: CGFloat = view.isSideways ? 20 : 34
-      let room = CGSize(
-        width: max(100, size.width - pad * 2), height: max(100, size.height - pad * 2))
-      let aspect: CGFloat = view.isSideways ? 8 / 5 : 5 / 8
-      var w = room.width
-      var h = w / aspect
-      if h > room.height {
-        h = room.height
-        w = h * aspect
-      }
-      fitted = CGRect(x: (size.width - w) / 2, y: (size.height - h) / 2, width: w, height: h)
-      rect = viewport.rect(fitted: fitted)
-      // Markers keep their readable size as zoom separates the kubb centres.
-      unit = view.isSideways ? w / 8 : w / 5
-    }
-
-    func fittedPoint(_ p: CGPoint) -> PitchFrame.Screen {
-      .init(u: (p.x - fitted.minX) / fitted.width, v: (p.y - fitted.minY) / fitted.height)
-    }
-
-    func point(_ p: PitchFrame.World) -> CGPoint {
-      let s = PitchFrame.screen(p, in: view)
-      return CGPoint(x: rect.minX + s.u * rect.width, y: rect.minY + s.v * rect.height)
-    }
-
-    func world(_ p: CGPoint) -> PitchFrame.World {
-      PitchFrame.world(
-        PitchFrame.Screen(u: (p.x - rect.minX) / rect.width, v: (p.y - rect.minY) / rect.height),
-        in: view)
-    }
-
-    /// A half of the pitch as a rectangle on screen.
-    func half(_ side: Side) -> CGRect {
-      let a = point(PitchFrame.World(x: 0, y: side == .A ? 0 : 4))
-      let b = point(PitchFrame.World(x: 5, y: side == .A ? 4 : 8))
-      return CGRect(
-        x: min(a.x, b.x), y: min(a.y, b.y), width: abs(a.x - b.x), height: abs(a.y - b.y))
-    }
-  }
-
-  // MARK: Drawing
-
-  func grass(_ geo: Geo) -> some View {
-    let r = geo.rect
-    let target = screen.over ? nil : screen.placingHalf
-    let c1 = geo.point(.init(x: 0, y: 4))
-    let c2 = geo.point(.init(x: 5, y: 4))
-    return ZStack(alignment: .topLeading) {
-      Rectangle().fill(Color.psGrass).frame(width: r.width, height: r.height).offset(
-        x: r.minX, y: r.minY)
-      if let target {
-        let h = geo.half(target)
-        Rectangle().fill(
-          Color.white.opacity(
-            screen.isInkast || screen.placing || screen.punishPending ? 0.22 : 0.12)
-        )
-        .frame(width: h.width, height: h.height).offset(x: h.minX, y: h.minY)
-        if screen.isInkast || screen.placing || screen.punishPending {
-          Rectangle().strokeBorder(Color.psChalk, style: StrokeStyle(lineWidth: 2, dash: [6, 5]))
-            .frame(width: h.width, height: h.height).offset(x: h.minX, y: h.minY)
-        }
-      }
-      Rectangle().strokeBorder(Color.psChalk, lineWidth: 3).frame(width: r.width, height: r.height)
-        .offset(x: r.minX, y: r.minY)
-      Path { p in
-        p.move(to: c1)
-        p.addLine(to: c2)
-      }
-      .stroke(Color.psChalk, lineWidth: 2)
-      ForEach(0..<6, id: \.self) { i in
-        let s = geo.point(.init(x: i % 2 == 0 ? 0 : 5, y: Double(i / 2) * 4))
-        RoundedRectangle(cornerRadius: 2).fill(Color.psKubb)
-          .overlay(RoundedRectangle(cornerRadius: 2).strokeBorder(Color.psKubbInk, lineWidth: 1.5))
-          .frame(width: 10, height: 10)
-          .position(s)
-      }
-    }
-    .allowsHitTesting(false)
-    .accessibilityHidden(true)
-  }
-
-  func advantage(_ geo: Geo) -> some View {
+  func advantage(_ geo: PitchGeometry) -> some View {
     let half = geo.half(screen.attacker)
     return ZStack(alignment: .topLeading) {
       if let depth = screen.advantageDepth {
@@ -237,7 +145,7 @@ struct PitchCanvas: View {
     }.allowsHitTesting(false)
   }
 
-  func chip(_ side: Side, _ geo: Geo) -> some View {
+  func chip(_ side: Side, _ geo: PitchGeometry) -> some View {
     let s = screen.state.side(side)
     let base = geo.point(.init(x: 2.5, y: side == .A ? 0 : 8))
     let out: CGFloat = 18
@@ -354,7 +262,7 @@ struct PitchCanvas: View {
     return out
   }
 
-  @ViewBuilder func kubb(_ piece: Piece, _ geo: Geo) -> some View {
+  @ViewBuilder func kubb(_ piece: Piece, _ geo: PitchGeometry) -> some View {
     let p = geo.point(piece.at)
     let size = max(20, geo.unit * 0.42)
     let marked = piece.target.map { screen.marked.contains($0) } ?? false

@@ -140,7 +140,10 @@
 [Mode "Pass and Play"]
 
 1. wes:- xan:B yara:- zed:- abe:B bea:B
+*b - 1.50,4.00 - - 3.50,4.00 0.50,4.00
 2. cy:3I2R cy:F di:F eli:- fay:F gus:- hal:-
+@a 1.10,1.50 1.40,1.72 1.78,1.88
+*a 1.40,1.72 1.10,1.50 - 1.78,1.88 - -
 3. wes:3IR wes:- xan:- yara:- zed:F abe:- bea:F
 4. cy:2I A cy:F di:F eli:- fay:B gus:- hal:-
 5. wes:4IQ wes:- xan:F yara:- xan:- abe:F bea:-
