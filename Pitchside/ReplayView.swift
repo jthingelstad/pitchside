@@ -32,7 +32,8 @@ struct ReplayView: View {
              viewport.scale == 1 ? "Zoom in on pitch" : "Fit whole pitch") {
           if viewport.scale == 1 {
             let half = step.team.other
-            let sites = step.falls.isEmpty ? (step.board[half]?.field.places ?? []) : step.falls
+            let fell = step.falls + step.inferredFalls
+            let sites = fell.isEmpty ? (step.board[half]?.field.places ?? []) : fell
             let coords = sites.map { $0.world(in: half) }
             let focus = coords.isEmpty ? PitchFrame.World(x: 2.5, y: half == .A ? 2 : 6)
               : .init(x: coords.map(\.x).reduce(0, +) / Double(coords.count),
@@ -57,7 +58,8 @@ struct ReplayView: View {
       VStack(alignment: .leading, spacing: 4) {
         HStack {
           Text(step.phase).psKick()
-          if !step.falls.isEmpty { Text("× fell this play").psHelp() }
+          if !step.inferredFalls.isEmpty { Text("× inferred falls").psHelp() }
+          else if !step.falls.isEmpty { Text("× fell this play").psHelp() }
           Spacer()
           if !step.token.isEmpty { Text(step.token).font(PSFont.mono(14)).lineLimit(1) }
         }
@@ -102,6 +104,7 @@ struct ReplayView: View {
         }
         if let note = step.note, !note.isEmpty { Text(note) }
         if !step.falls.isEmpty { Text("Felled in Team \(step.team.other.rawValue)’s half · \(locations(step.falls))") }
+        if !step.inferredFalls.isEmpty { Text("Inferred falls in Team \(step.team.other.rawValue)’s half · \(locations(step.inferredFalls))") }
         if step.unlocatedFalls > 0 { Text("\(step.unlocatedFalls) fall positions unrecorded") }
         if let stance = step.stance { Text("Throwing spot · Team \(step.team.rawValue) · \(stance.label)") }
         ForEach(step.lays.indices, id: \.self) { i in
@@ -191,7 +194,7 @@ struct ReplayView: View {
             stroke(point(lay.first, step.team.other), point(lay.last, step.team.other), .psKubbInk, width: 7)
             stroke(point(lay.first, step.team.other), point(lay.last, step.team.other), .psKubb, width: 3)
           }
-          for p in step.falls {
+          for p in step.falls + step.inferredFalls {
             marker(point(p, step.team.other), "", fill: .psKubbInk, ink: .psKubb, size: 16, fallen: true)
           }
           marker(geo.point(.init(x: 2.5, y: 4)), "K", fill: .psKubb, ink: .psKubbInk, size: 23, fallen: !step.kingStanding)

@@ -52,6 +52,18 @@ public struct GameReplay: Identifiable, Sendable {
       places = confirmed.count + unused.count <= count ? confirmed + unused : confirmed
     }
 
+    /// If both sides of an unlocated hit have a complete layout at matching
+    /// precision, their multiset difference identifies the falls by elimination.
+    fileprivate func inferredFalls(from before: Standing, number: Int) -> [ReplayPlace] {
+      guard number > 0, before.unknown == 0, unknown == 0, before.count - count == number else { return [] }
+      var removed = before.places
+      for survivor in places {
+        guard let i = removed.firstIndex(where: { $0.sameSpot(survivor) }) else { return [] }
+        removed.remove(at: i)
+      }
+      return removed
+    }
+
     fileprivate mutating func fell(_ n: Int, at hits: [ReplayPlace]) {
       guard n > 0 else { return }
       let remaining = max(0, count - n)
@@ -108,6 +120,7 @@ public struct GameReplay: Identifiable, Sendable {
     public let board: [Side: Half]
     public let kingStanding: Bool
     public var falls: [ReplayPlace] = []
+    public var inferredFalls: [ReplayPlace] = []
     public var unlocatedFalls = 0
     public var lays: [TurnRecording.Lay] = []
     public var stance: ReplayPlace?
@@ -172,7 +185,7 @@ public struct GameReplay: Identifiable, Sendable {
       board[def] = target
       if row.ink?.E == true { king = false }
       let hasInkast = row.inkastRecorded || row.inkast > 0
-      steps.append(frame(hasInkast ? "Inkast" : "Opening pitch",
+      steps.append(frame(hasInkast ? "Inkast" : (row.turn == 1 ? "Opening pitch" : "Start of turn"),
                          hasInkast ? Self.inkastTitle(row) : "\(a.name(att)) to throw",
                          rec.inkasts.joined(separator: " ")))
 
@@ -199,6 +212,7 @@ public struct GameReplay: Identifiable, Sendable {
         futureField = futureField.dropFirst(fields.count)
         futureBase = futureBase.dropFirst(bases.count)
         let f = b.f ?? 0, base = b.b ?? 0
+        let before = target
         if b.kind == "hit" {
           target.field.fell(f, at: fields)
           target.base.fell(base, at: bases)
@@ -214,7 +228,12 @@ public struct GameReplay: Identifiable, Sendable {
         }
         var step = frame("Baton \(number)", title, b.raw)
         step.falls = fields + bases
-        step.unlocatedFalls = max(0, f + base - step.falls.count)
+        if step.falls.isEmpty {
+          step.inferredFalls = target.field.inferredFalls(from: before.field, number: f)
+            + target.base.inferredFalls(from: before.base, number: base)
+        }
+        let (total, overflow) = f.addingReportingOverflow(base)
+        step.unlocatedFalls = (overflow ? Int.max : total) - step.falls.count - step.inferredFalls.count
         step.stance = i < rec.stances.count ? rec.stances[i] : nil
         step.advantage = row.advantage && !["king", "kingmiss"].contains(b.kind)
         step.advantageDepth = step.advantage ? line : nil
