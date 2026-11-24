@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: Planet-Kubb/pk-kubb-score
-          ref: 9298de633ac7f54a64383b446faee225e6c0f3d4 # v2-2026.11
+          ref: refs/tags/v2-2026.11 # vendor-notation also verifies the pinned commit
           path: pk-kubb-score
           persist-credentials: false
       - run: scripts/vendor-engine.sh check

@@ -130,7 +130,7 @@ struct RootView: View {
       case "roster": tab = .roster
       case "statstab": tab = .stats
       case "teams", "thisgame": newGame = true
-      case "scorer": if let g = model.playing { scoring = try? ScoringSession(model.scorer(for: g)) }
+      case "scorer": if let g = model.playing.first { scoring = try? ScoringSession(model.scorer(for: g)) }
       default: break
       }
     }
