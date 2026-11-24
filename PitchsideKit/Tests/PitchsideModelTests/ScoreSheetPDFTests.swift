@@ -26,6 +26,20 @@ import Testing
     #expect(text.contains("Page 1"))
   }
 
+  @Test func scoreSheetDescribesRareObservations() throws {
+    let reader = try NotationReader()
+    let game = try reader.read(header + "\n1. B -\n2. IRP Z E").analysis
+    let turn = try #require(game.rows.last)
+    #expect(turn.scoringSummary.contains("1 rethrow, 1 punishment"))
+    #expect(turn.scoringSummary.contains("illegal throw"))
+    #expect(turn.scoringSummary.contains("king felled early"))
+    #expect(game.resultDetail == "King felled early in turn 2")
+    for (tokens, words) in [("5B = K", "missed king shot"), ("G", "resigned"), ("W", "game called")] {
+      let row = try #require(reader.read(header + "\n1. " + tokens).analysis.rows.first)
+      #expect(row.scoringSummary.contains(words))
+    }
+  }
+
   @Test func longGameAndLongNotePaginateWithoutDroppingThrows() throws {
     let longNote = String(repeating: "Lichen glimmer ", count: 650) + "End of observation"
     let turns = (1...40).map { number in
