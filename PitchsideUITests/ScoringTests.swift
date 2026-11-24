@@ -264,6 +264,31 @@ final class ScoringTests: XCTestCase {
   }
 
   /// Starts in setup, picks the opening, then scores every throw through the live controls.
+  func testResumeAnOlderUnfinishedGame() {
+    launch("thisgame", after: 28)
+    let start = app.buttons.matching(NSPredicate(format: "label ==[c] 'Start scoring'")).firstMatch
+    for _ in 0..<5 where !start.isHittable { app.swipeUp() }
+    tap("Start scoring")
+    tap("More")
+    tap("Home")
+    let older = app.buttons["Carry on, Wobbly Towers versus Birch Batons"]
+    XCTAssertTrue(older.waitForExistence(timeout: 5))
+    XCTAssertTrue(app.buttons["Carry on, Mossy Stakes versus Crooked Crowns"].exists)
+    for _ in 0..<4 where !older.isHittable { app.swipeUp() }
+    older.tap()
+    XCTAssertTrue(app.buttons["Change view"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label ==[c] 'Later'")).firstMatch.exists)
+  }
+
+  func testPrintableScoreSheet() {
+    launch("sheet", after: 0)
+    let export = app.buttons.matching(NSPredicate(format: "label ==[c] 'Score sheet PDF'")).firstMatch
+    for _ in 0..<6 where !export.isHittable { app.swipeUp() }
+    tap("Score sheet PDF")
+    XCTAssertTrue(app.buttons["Share"].waitForExistence(timeout: 8), app.debugDescription)
+    shot("Printable-score-sheet")
+  }
+
   func testWholeGame() {
     launch("thisgame", after: 0)
     tap("Six batons")

@@ -1,6 +1,7 @@
 import Notation
 import PitchsideDesign
 import PitchsideModel
+import QuickLook
 import SwiftUI
 
 /// The score sheet: the result, turn by turn, and the Planet Kubb Notation file to copy
@@ -12,6 +13,7 @@ struct ScoreSheetView: View {
   var resume: ((LiveScorer) -> Void)? = nil
   @State private var problem: String?
   @State private var copied = false
+  @State private var pdf: URL?
 
   var body: some View {
     PushedScreen(title: "Score sheet", back: "Home") {
@@ -35,14 +37,28 @@ struct ScoreSheetView: View {
               resume(scorer)
             } catch { problem = String(describing: error) }
           }.buttonStyle(.quiet)
-          if let problem { Text(problem).psHelp() }
         }
         if let read {
           Text("Turn by turn").psKick()
           turns(read.analysis)
           Text("Right column: batons that hit, of batons thrown.").psHelp()
+          Button("Score sheet PDF") {
+            do {
+              let directory = FileManager.default.temporaryDirectory
+                .appending(path: "Score sheets").appending(path: game.id.uuidString)
+              try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+              let name = String(GameFile.fileName(for: game).dropLast(4)) + ".pdf"
+              let file = directory.appending(path: name)
+              try ScoreSheetPDF.data(for: read.analysis, inProgress: game.status == .playing)
+                .write(to: file, options: .atomic)
+              pdf = file
+            } catch { problem = "Could not create the score sheet. \(error.localizedDescription)" }
+          }
+          .buttonStyle(.ps)
+          .accessibilityHint("Preview, print or share the score sheet")
           if read.analysis.turnWarnings + read.analysis.warnings.count > 0 { readerNotes(read.analysis) }
         }
+        if let problem { Text(problem).psHelp() }
         Text("Planet Kubb Notation").psKick()
         Text(text)
           .font(PSFont.mono(14))
@@ -58,6 +74,7 @@ struct ScoreSheetView: View {
         Text("This game is gone.").font(PSFont.body(16))
       }
     }
+    .quickLookPreview($pdf)
   }
 
   @ViewBuilder func result(_ game: Game, _ read: GameRead?) -> some View {
@@ -70,7 +87,7 @@ struct ScoreSheetView: View {
         }
         .accessibilityElement(children: .combine)
         HStack(alignment: .top, spacing: 8) {
-          Text(kick(a)).font(PSFont.body(16)).foregroundStyle(Color.psText)
+          Text(a.resultDetail).font(PSFont.body(16)).foregroundStyle(Color.psText)
         }
         .accessibilityElement(children: .combine)
       } else {
@@ -88,54 +105,25 @@ struct ScoreSheetView: View {
     .psCard()
   }
 
-  func kick(_ a: Analysis) -> String {
-    let turn = a.endTurn.map { "in turn \($0)" } ?? ""
-    switch a.winHow {
-    case "king": return "King down \(turn)"
-    case let how?: return "Over \(turn) · \(how)"
-    case nil: return "Over"
-    }
-  }
-
   func turns(_ a: Analysis) -> some View {
     VStack(spacing: 0) {
       ForEach(a.rows, id: \.turn) { row in
         HStack(spacing: 10) {
           Text("\(row.turn)").font(PSFont.body(16, .bold)).frame(minWidth: 24, alignment: .leading)
           TeamMarker(row.team, size: 20)
-          Text(summary(row)).font(PSFont.body(16)).frame(maxWidth: .infinity, alignment: .leading)
+          Text(row.scoringSummary).font(PSFont.body(16)).frame(maxWidth: .infinity, alignment: .leading)
           Text("\(row.hits) of \(row.thrown.count)").font(PSFont.body(16, .bold))
         }
         .foregroundStyle(Color.psText)
         .padding(.vertical, 6)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
-          "Turn \(row.turn), \(a.name(row.team)): \(summary(row)). \(row.hits) of \(row.thrown.count) batons hit.")
+          "Turn \(row.turn), \(a.name(row.team)): \(row.scoringSummary). \(row.hits) of \(row.thrown.count) batons hit.")
       }
     }
     .padding(.horizontal, 12)
     .padding(.vertical, 6)
     .psBox()
-  }
-
-  /// "3 in · 3 field, 1 base", "1 base kubb", "4 in, 1 punishment · 3 field".
-  func summary(_ row: Analysis.Row) -> String {
-    var first: [String] = []
-    if row.inkast > 0 {
-      first.append("\(row.inkast) in")
-    }
-    let thrown = row.thrown
-    let f = thrown.reduce(0) { $0 + ($1.kind == "hit" ? $1.f ?? 0 : 0) }
-    let b = thrown.reduce(0) { $0 + ($1.kind == "hit" ? $1.b ?? 0 : 0) }
-    var felled: [String] = []
-    if f > 0 { felled.append("\(f) field") }
-    if b > 0 { felled.append(f == 0 && first.isEmpty ? "\(b) base \(b == 1 ? "kubb" : "kubbs")" : "\(b) base") }
-    if thrown.contains(where: { $0.kind == "king" }) { felled.append("king") }
-    if felled.isEmpty { felled.append("nothing felled") }
-    var parts = first
-    if row.advantage { parts.append("advantage") }
-    parts.append(felled.joined(separator: ", "))
-    return parts.joined(separator: " · ")
   }
 
   func readerNotes(_ a: Analysis) -> some View {
