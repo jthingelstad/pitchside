@@ -10,7 +10,7 @@ The pitch stays on the left. On the right, each entry shows the turn, player and
 action in order. Tap the suggested player to change who threw. “Inkast complete”
 marks the switch to batons and stays visible until you record the first baton.
 Scroll back through earlier turns and tap one to read its throws while the current
-throw stays ready to record.
+throw stays ready to record. Open **More** to see the current turn’s notation.
 
 Games, setup, Roster, Stats, score sheets, the timeline and play by play use
 portrait. Return to Games between turns and resume at the next throw.

@@ -2,7 +2,7 @@ import PitchsideDesign
 import PitchsideModel
 import SwiftUI
 
-/// The band, pitch and thumb controls stay in place through every turn.
+/// The pitch and recording controls stay in place while the scorer reads earlier turns.
 struct ScorerView: View {
   @Environment(AppModel.self) private var model
   @Environment(\.dynamicTypeSize) private var typeSize
@@ -43,12 +43,14 @@ struct ScorerView: View {
             VStack(spacing: 0) {
               if additionalPanel {
                 HStack {
-                  turnProgress
+                  ScrollView(.horizontal) {
+                    Text("Turn \(screen.state.turn)  \(screen.tokens)").font(PSFont.mono())
+                  }
+                  .scrollIndicators(.hidden)
                   icon("xmark", "Close options") { screen.panel = .none }
                 }.padding(.horizontal, 12)
                 ScrollView { panel.padding(12) }
               } else {
-                turnProgress.padding(.horizontal, 12)
                 TurnHistoryView(screen: screen)
                 Divider()
                 ScrollView {
@@ -86,11 +88,13 @@ struct ScorerView: View {
   }
 
   var header: some View {
-    HStack(spacing: 6) {
-      icon("chevron.backward", "Back to Games", action: close)
-      TeamMarker(screen.attacker, size: 22)
-      Text(screen.teamName(screen.attacker)).font(PSFont.display(24)).lineLimit(2)
-        .frame(maxWidth: .infinity, alignment: .leading)
+    HStack(spacing: 0) {
+      Button(action: close) {
+        Label("Games", systemImage: "chevron.backward")
+          .font(PSFont.body(15, .medium)).frame(minHeight: 48)
+      }
+      .buttonStyle(.plain).accessibilityLabel("Back to Games")
+      Spacer(minLength: 4)
       HStack(spacing: 4) {
         icon(
           viewport.scale == 1 ? "plus.magnifyingglass" : "arrow.down.right.and.arrow.up.left",
@@ -108,92 +112,50 @@ struct ScorerView: View {
           .accessibilityValue(screen.view.title)
       }
     }
-    .padding(.vertical, 4).frame(minHeight: 60)
-  }
-
-  var turnProgress: some View {
-    HStack(spacing: 5) {
-      ScrollView(.horizontal) {
-        Text("\(screen.state.turn). \(screen.tokens)").font(PSFont.mono(15).weight(.bold))
-      }.scrollIndicators(.hidden).defaultScrollAnchor(.leading)
-        .frame(maxWidth: .infinity, alignment: .leading)
-      if screen.isInkast {
-        Text("\(screen.state.inkast?.left ?? 0) to throw").font(PSFont.body(14, .bold))
-      } else if !screen.placing && !screen.punishPending {
-        if !typeSize.isAccessibilitySize {
-          ForEach(0..<screen.batonsLeft, id: \.self) { _ in
-            Capsule().fill(Color.psKubb).overlay(Capsule().strokeBorder(Color.psKubbInk, lineWidth: 2))
-              .frame(width: 10, height: 22)
-              .accessibilityHidden(true)
-          }
-        }
-        Text("\(screen.batonsLeft) left").font(PSFont.body(14, .bold))
-          .accessibilityLabel("\(screen.n(screen.batonsLeft, "baton")) left")
-      }
-    }
-    .frame(minHeight: 32)
-    .accessibilityElement(children: .combine)
   }
 
   private var throwContext: some View {
     let handlesKubbs = screen.isInkast || screen.punishPending || screen.placing
     let layout = typeSize.isAccessibilitySize
       ? AnyLayout(VStackLayout(alignment: .leading, spacing: 2))
-      : AnyLayout(HStackLayout(spacing: 12))
+      : AnyLayout(HStackLayout(spacing: 10))
     return layout {
-      VStack(alignment: .leading, spacing: 1) {
-        Text("Turn").font(PSFont.body(14, .semibold, relativeTo: .footnote))
-        Text("\(screen.state.turn)").font(PSFont.display(20, relativeTo: .headline))
+      HStack(spacing: 5) {
+        TeamMarker(screen.attacker, size: 16)
+        Text("Turn \(screen.state.turn)").font(PSFont.body(15, .semibold))
       }
       .accessibilityElement(children: .ignore)
       .accessibilityLabel("Turn \(screen.state.turn)")
+      .accessibilityValue(screen.teamName(screen.attacker))
       .accessibilityIdentifier("entry-turn")
 
-      if !screen.placing && !screen.punishPending {
-        if screen.playersOn, let player = screen.thrower {
-          Button {
-            screen.panel = screen.panel == .pick ? .none : .pick
-          } label: {
-            VStack(alignment: .leading, spacing: 1) {
-              Text("Player").font(PSFont.body(14, .semibold, relativeTo: .footnote))
-              HStack(spacing: 6) {
-                Text(player.name).font(PSFont.body(18, .bold, relativeTo: .headline))
-                Image(systemName: "chevron.up.chevron.down").font(.footnote.weight(.bold))
-              }
-            }
-            .padding(.horizontal, 10).padding(.vertical, 4)
-            .foregroundStyle(Color.psText).psBox()
-            .frame(minWidth: 48, minHeight: 48).contentShape(Rectangle())
+      if !screen.placing, !screen.punishPending, screen.playersOn, let player = screen.thrower {
+        Button {
+          screen.panel = screen.panel == .pick ? .none : .pick
+        } label: {
+          HStack(spacing: 4) {
+            Text(player.name).font(PSFont.body(16, .semibold)).lineLimit(2)
+            Image(systemName: "chevron.down").font(.footnote)
           }
-          .buttonStyle(.plain).accessibilityLabel("Change who throws").accessibilityValue(player.name)
-        } else {
-          VStack(alignment: .leading, spacing: 1) {
-            Text("Player").font(PSFont.body(14, .semibold, relativeTo: .footnote))
-            Text("Not tracked").font(PSFont.body(16, .semibold))
-          }
-          .accessibilityElement(children: .combine)
+          .foregroundStyle(Color.psSolid)
+          .frame(minWidth: 48, minHeight: 48).contentShape(Rectangle())
         }
+        .buttonStyle(.plain).accessibilityLabel("Change who throws").accessibilityValue(player.name)
+      } else if !screen.playersOn, !screen.placing, !screen.punishPending {
+        Text(screen.teamName(screen.attacker)).font(PSFont.body(15))
+          .accessibilityIdentifier("entry-team")
       }
 
-      VStack(alignment: .leading, spacing: 1) {
-        Text("Action").font(PSFont.body(14, .semibold, relativeTo: .footnote))
-        HStack(spacing: 6) {
-          Image(systemName: handlesKubbs ? "cube.fill" : "capsule.portrait.fill")
-            .rotationEffect(.degrees(handlesKubbs ? 0 : 35))
-            .accessibilityHidden(true)
-          Text(screen.placing ? "Place kubbs" : (handlesKubbs ? "Inkast" : "Baton throws"))
-            .font(PSFont.display(20, relativeTo: .headline))
-            .accessibilityAddTraits(.isHeader)
-        }
-      }
-      .frame(maxWidth: .infinity, alignment: .leading)
+      Text(screen.scoringAction)
+        .font(PSFont.body(15, .semibold))
+        .padding(.horizontal, 7).padding(.vertical, 3)
+        .foregroundStyle(handlesKubbs ? Color.psText : Color.psOnSolid)
+        .background(handlesKubbs ? Color.psWood : Color.psSolid, in: RoundedRectangle(cornerRadius: 4))
+        .accessibilityIdentifier("entry-action")
     }
     .frame(maxWidth: .infinity, alignment: .leading)
-    .padding(.horizontal, 12).padding(.vertical, 3)
-    .frame(minHeight: 48)
+    .padding(.horizontal, 12).padding(.vertical, 2)
     .fixedSize(horizontal: false, vertical: true)
-    .foregroundStyle(handlesKubbs ? Color.psText : Color.psOnSolid)
-    .background(handlesKubbs ? Color.psWood : Color.psSolid)
     .onChange(of: screen.firstBatonAfterInkast) { _, starts in
       if starts { AccessibilityNotification.Announcement("Inkast complete. Throw batons.").post() }
     }
@@ -202,10 +164,6 @@ struct ScorerView: View {
   @ViewBuilder var prompt: some View {
     VStack(alignment: .leading, spacing: 4) {
       if screen.panel == .pick {
-        Text(
-          screen.isInkast
-            ? "Who throws the kubbs in?" : "Who throws baton \(screen.state.next.n ?? 1)?"
-        ).psKick()
         ScrollView(.horizontal) {
           HStack {
             ForEach(screen.players, id: \.id) { p in
@@ -217,13 +175,14 @@ struct ScorerView: View {
         }.scrollIndicators(.hidden)
       } else {
         HStack {
-          VStack(alignment: .leading, spacing: 3) {
+          VStack(alignment: .leading, spacing: 2) {
             if screen.firstBatonAfterInkast {
               Label("Inkast complete", systemImage: "checkmark.circle.fill")
-                .font(PSFont.body(16, .bold)).foregroundStyle(Color.psSolid)
+                .font(PSFont.body(14, .semibold)).foregroundStyle(Color.psSolid)
             }
-            Text(screen.kick).psKick()
-            Text(screen.problem ?? screen.text).font(PSFont.body(16, .semibold))
+            if let hint = screen.scoringHint {
+              Text(hint).font(PSFont.body(15))
+            }
           }.frame(maxWidth: .infinity, alignment: .leading)
           if !screen.owed.isEmpty && !screen.placing {
             Button("Place \(screen.owed.count)") {
@@ -254,9 +213,7 @@ struct ScorerView: View {
         }
       }
     }
-    .padding(.horizontal, 12).padding(.vertical, 8).frame(maxWidth: .infinity, minHeight: 72)
-    .background(Color.psGround)
-    .overlay(alignment: .top) { Divider() }
+    .padding(.horizontal, 12).frame(maxWidth: .infinity, alignment: .leading)
   }
 
   func countButton(_ kind: String, count: Binding<Int>, total: Int) -> some View {
@@ -296,14 +253,14 @@ struct ScorerView: View {
       icon("ellipsis", "More", height: 52) {
         screen.panel = screen.panel == .none ? .rare : .none
       }
-    }.padding(.horizontal, 12).padding(.top, 3).padding(.bottom, 8)
+    }.padding(.horizontal, 12).padding(.top, 4).padding(.bottom, 4)
   }
 
   private func icon(
     _ symbol: String, _ label: String, height: CGFloat = 48, action: @escaping () -> Void
   ) -> some View {
     Button(action: action) {
-      Image(systemName: symbol).font(.system(size: 20, weight: .medium))
+      Image(systemName: symbol).font(.system(size: 17, weight: .medium))
         .frame(width: 48, height: height).contentShape(Rectangle())
     }.buttonStyle(.plain).accessibilityLabel(label)
   }
@@ -409,28 +366,31 @@ struct ScorerView: View {
 private struct TurnHistoryView: View {
   let screen: ScorerScreen
   @State private var expanded: Int?
+  @State private var scrolledFromLatest = false
 
   var body: some View {
     ScrollViewReader { scroll in
       VStack(alignment: .leading, spacing: 0) {
         HStack {
-          Text("Turn history").font(PSFont.body(16, .bold)).accessibilityAddTraits(.isHeader)
+          Text("Turn history").font(PSFont.body(14, .semibold)).foregroundStyle(Color.psMuted).accessibilityAddTraits(.isHeader)
           Spacer()
-          if screen.rows.count > 1 {
-            Button("Latest") {
+          if screen.rows.count > 1 && (expanded != nil || scrolledFromLatest) {
+            Button {
               expanded = nil
               if let latest = screen.rows.last { scroll.scrollTo(latest.turn, anchor: .top) }
+            } label: {
+              Text("Latest").font(PSFont.body(14))
+                .frame(minWidth: 48, minHeight: 48).contentShape(Rectangle())
             }
             .buttonStyle(.plain).foregroundStyle(Color.psSolid)
             .accessibilityLabel("Show latest turn")
-            .padding(.vertical, 6)
           }
         }
-        .padding(.horizontal, 12).frame(minHeight: 32)
+        .padding(.horizontal, 12).frame(minHeight: 48)
         ScrollView {
           LazyVStack(alignment: .leading, spacing: 0) {
             if screen.rows.isEmpty {
-              Text("The first throw will appear here.").psHelp().padding(.horizontal, 12)
+              Text("No throws yet.").psHelp().padding(.horizontal, 12)
             }
             ForEach(screen.rows.reversed(), id: \.turn) { row in
               let plays = screen.playsByTurn[row.turn] ?? []
@@ -440,37 +400,43 @@ private struct TurnHistoryView: View {
                   expanded = expanded == row.turn ? nil : row.turn
                   if expanded != nil { scroll.scrollTo(row.turn, anchor: .top) }
                 } label: {
-                  HStack(spacing: 8) {
-                    TeamMarker(row.side, size: 18)
-                    VStack(alignment: .leading, spacing: 2) {
-                      Text("Turn \(row.turn) · \(screen.teamName(row.side))").font(PSFont.body(16, .bold))
+                  VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                      Text("Turn \(row.turn)").font(PSFont.body(14, .semibold))
+                      Text(screen.teamName(row.side)).font(PSFont.body(15))
+                        .lineLimit(expanded == row.turn ? nil : 1)
+                      Spacer(minLength: 2)
                       if !row.batons.isEmpty {
-                        Text("\(down) down with \(screen.n(row.batons.count, "baton"))").psHelp()
+                        Text("\(down) down").font(PSFont.body(14)).foregroundStyle(Color.psMuted)
+                          .accessibilityLabel("\(down) down with \(screen.n(row.batons.count, "baton"))")
                       }
-                      if expanded != row.turn, let last = plays.last {
-                        Text(last).psHelp()
-                      }
+                      Image(systemName: expanded == row.turn ? "chevron.up" : "chevron.down")
+                        .font(.caption).foregroundStyle(Color.psMuted)
                     }
-                    Spacer(minLength: 0)
-                    Image(systemName: expanded == row.turn ? "chevron.up" : "chevron.down")
+                    if row.turn == screen.rows.last?.turn, expanded != row.turn, let last = plays.last {
+                      Text(last).psHelp()
+                    }
                   }
-                  .frame(maxWidth: .infinity, minHeight: 46, alignment: .leading)
+                  .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
                   .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain).accessibilityIdentifier("history-turn-\(row.turn)")
                 .accessibilityValue(expanded == row.turn ? "Expanded" : "Collapsed")
                 if expanded == row.turn {
                   ForEach(plays.indices, id: \.self) { i in
-                    Text(plays[i]).font(PSFont.body(15)).padding(.leading, 26)
+                    Text(plays[i]).font(PSFont.body(15)).padding(.leading, 8)
                   }
                 }
               }
-              .padding(.horizontal, 12).padding(.vertical, 3)
+              .padding(.horizontal, 12)
               .id(row.turn)
               Divider()
             }
           }
         }
+        .onScrollGeometryChange(for: Bool.self) {
+          $0.contentOffset.y + $0.contentInsets.top > 1
+        } action: { _, away in scrolledFromLatest = away }
         .accessibilityIdentifier("turn-history")
       }
     }

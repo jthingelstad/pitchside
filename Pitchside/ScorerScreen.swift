@@ -152,93 +152,39 @@ final class ScorerScreen {
       && !punishPending && !placing
   }
 
-  var kick: String {
-    if placing {
-      return "Catch-up · turn \(owed.first?.turn ?? state.turn) inkast · \(owed.count) owed"
+  var scoringAction: String {
+    if placing { return "Place kubbs" }
+    if punishPending { return "Place punishment kubb" }
+    if isInkast {
+      let phase = state.next.rethrow == true ? "Rethrow" : "Inkast"
+      return "\(phase) · \(state.inkast?.left ?? 0) left"
     }
-    if rescueAttempt { return "Failed rescue · record where this kubb landed" }
-    if let flash { return flash }
-    var k: String
-    if over {
-      k = "Game over · turn \(state.turn)"
-    } else if isInkast {
-      let i = state.inkast!
-      if state.next.rethrow == true {
-        k = "Rethrow · " + n(i.rethrows, "kubb") + (positionsOn ? " landed out" : "")
-      } else {
-        k = n(i.due, "kubb") + " to throw in" + (i.rethrows > 0 ? " · \(i.rethrows) out" : "")
-      }
-      if punishPending { k = "Punishment kubb · out twice" }
-    } else if punishPending {
-      k = "Punishment kubb · out twice"
-    } else if isKingShot {
-      k = "King shot · baton \(state.next.n ?? 1) of \(state.next.of ?? 6)"
-    } else {
-      k =
-        "Baton \(state.next.n ?? 1) of \(state.next.of ?? 6)"
-        + (advantageShown ? " · from the advantage line" : "")
-    }
-    if stanceOn, !over, !isInkast, let s = stance { k += " · from " + word(s) }
-    return k
+    let throwNumber = "\(state.next.n ?? 1) of \(state.next.of ?? 6)"
+    return isKingShot ? "King shot · \(throwNumber)" : "Baton \(throwNumber)"
   }
 
   func word(_ p: RecordPoint) -> String { String(format: "%.2f,%.2f", p.across, p.depth) }
 
-  var text: String {
-    if placing {
-      let total = owed.count
-      return "Tap the spot in Team \(placingHalf.rawValue)’s half. \(total) left to place."
+  /// One cue for the next pitch input. The record button already names a marked result.
+  var scoringHint: String? {
+    if let problem { return problem }
+    if placing, let next = owed.first {
+      return "Turn \(next.turn) · Tap Team \(next.half.rawValue)’s half (\(owed.count) left)."
     }
-    if over {
-      let w = state.winner.map(teamName) ?? "Nobody"
-      return "\(w) win" + (state.how.map { " · \(howWords($0))" } ?? "") + "."
+    if rescueAttempt { return "Failed rescue · Tap where the kubb landed." }
+    if let flash { return flash }
+    if punishPending { return "Tap where \(teamName(defender)) placed it." }
+    if isInkast { return positionsOn ? "Tap where the kubb lands." : nil }
+    if isKingShot { return "Throw from the baseline." }
+    if downCount > 0 { return nil }
+    if stanceOn, let stance { return "Stance \(word(stance)) · Mark fallen kubbs." }
+    if stanceOn {
+      return positionsOn ? "Tap the throwing spot, then mark fallen kubbs."
+                         : "Tap the throwing spot, then count fallen kubbs."
     }
-    if punishPending {
-      return "\(teamName(defender)) place it. Tap where they put it."
-    }
-    if isInkast {
-      let i = state.inkast!
-      if !positionsOn {
-        if state.next.rethrow == true {
-          return "A kubb that lands out gets one more throw. In, or out again?"
-        }
-        return i.rethrows > 0
-          ? "Record the rest together, or tap “1 out” for another rethrow."
-          : "Record all the kubbs together, or tap “1 out” for a rethrow."
-      }
-      if state.next.rethrow == true { return "It is thrown again. Tap where it lands." }
-      return i.due == i.dueAtStart
-        ? "Tap where each kubb lands in the marked half." : "Tap where the next one lands."
-    }
-    if isKingShot { return "Every kubb is down. This baton is at the king, from the baseline." }
-    if stanceOn && stance == nil && downCount == 0 {
-      return "Tap where the thrower stands, on your side. Then tap what fell."
-    }
-    if positionsOn && downCount == 0 && (unplacedFields > 0 || unplacedBases > 0) {
-      return "Tap kubbs with a known spot. Count the others below."
-    }
-    if !positionsOn {
-      return downCount > 0
-        ? "\(n(downCount, "kubb")) down. Tap “\(primaryTitle)” to record the throw."
-        : "Count what this baton knocked over: field kubbs, then base kubbs."
-    }
-    if downCount > 0 {
-      return "\(n(downCount, "kubb")) marked. Tap “\(primaryTitle)” to record the throw."
-    }
-    return state.side(defender).field > 0
-      ? "Tap each kubb this baton knocked over. Field kubbs first."
-      : "Tap each kubb this baton knocked over."
-  }
-
-  func howWords(_ how: String) -> String {
-    switch how {
-    case "king": "king down"
-    case "king toppled early": "the king fell early"
-    case "king toppled by a thrown kubb": "a kubb thrown in knocked the king over"
-    case "resigned": "resigned"
-    case "called": "game called"
-    default: how
-    }
+    if !positionsOn { return nil }
+    if unplacedFields > 0 || unplacedBases > 0 { return "Tap located kubbs. Count the others below." }
+    return state.side(defender).field > 0 ? "Tap fallen field kubbs first." : "Tap fallen kubbs."
   }
 
   // MARK: Doing
@@ -735,7 +681,7 @@ final class ScorerScreen {
     } catch { problem = String(describing: error) }
   }
 
-  // MARK: The token bar
+  // MARK: Turn notation
 
   /// This turn's tokens so far, without the turn number.
   var tokens: String {
@@ -744,5 +690,4 @@ final class ScorerScreen {
     return line.split(separator: " ").dropFirst().joined(separator: " ")
   }
 
-  var batonsLeft: Int { over ? 0 : (state.batons?.left ?? 0) }
 }
