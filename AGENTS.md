@@ -552,11 +552,16 @@ generated team names, the rules choice).
   inkasts, advantage, batons and result. Imported games support PDF export too. The live pitch, in-game timeline, score sheet,
   roster, local stats and opening other Notation 2 files are connected. The repository
   is public at `jthingelstad/pitchside`, with `main` as the default branch and an
-  MIT license. Photos, lay-line entry and landscape are future work. Internal
+  MIT license. Photos and lay-line entry are future work. Internal
   TestFlight builds use `com.throwingwood.pitchside` and the Dev tester group.
-- **Navigation and appearance.** Games, Roster and Stats stay at the bottom of every
-  app page, including setup, live scoring, timeline edits, play by play and pitch
-  details. Switching sections preserves the current throw, draft and reading position.
+- **Navigation and appearance.** The live pitch uses the full screen. Leaving it for Games,
+  the timeline, play by play or a finished score sheet restores the section bar.
+  Games, Roster and Stats are available during setup and browsing. Switching sections preserves drafts and
+  reading positions. Each throw shows the turn, player and action in order. The active
+  player can be changed next to the recording controls when tracking is enabled.
+  Only live scoring uses landscape, automatically on entry and resume. The pitch stays
+  on the left, with scoring controls and independently scrollable turn history on the
+  right. All other screens, including the timeline and play by play, use portrait.
   The file picker, PDF preview and share sheet use the system presentation.
   Inter, sentence-case labels, flat surfaces and a field-green action colour carry the
   tool interface. The pitch, lettered team markers and Pitchside wordmark carry the

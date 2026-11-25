@@ -4,6 +4,7 @@ import SwiftUI
 
 @main
 struct PitchsideApp: App {
+  @UIApplicationDelegateAdaptor(PitchsideDelegate.self) private var delegate
   @State private var model: AppModel
 
   init() {
@@ -27,6 +28,51 @@ struct PitchsideApp: App {
         .environment(model)
         .tint(Color.psText)
     }
+  }
+}
+
+/// Only the live input surface requests landscape. A score sheet or timeline
+/// opened directly starts with the same portrait policy as Games.
+struct LivePitchVisible: PreferenceKey {
+  static let defaultValue = false
+  static func reduce(value: inout Bool, nextValue: () -> Bool) {
+    value = value || nextValue()
+  }
+}
+
+@MainActor
+private final class PitchsideDelegate: NSObject, UIApplicationDelegate {
+  private(set) static var orientations: UIInterfaceOrientationMask = .portrait
+
+  func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?)
+    -> UIInterfaceOrientationMask { Self.orientations }
+
+  func application(
+    _ application: UIApplication, configurationForConnecting session: UISceneSession,
+    options: UIScene.ConnectionOptions
+  ) -> UISceneConfiguration {
+    let configuration = UISceneConfiguration(name: nil, sessionRole: session.role)
+    configuration.delegateClass = PitchsideSceneDelegate.self
+    return configuration
+  }
+
+  static func showLivePitch(_ live: Bool) {
+    let requested: UIInterfaceOrientationMask = live ? .landscape : .portrait
+    guard orientations != requested else { return }
+    orientations = requested
+    for case let scene as UIWindowScene in UIApplication.shared.connectedScenes {
+      scene.keyWindow?.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
+      scene.requestGeometryUpdate(.iOS(interfaceOrientations: requested))
+    }
+  }
+}
+
+@MainActor
+private final class PitchsideSceneDelegate: NSObject, UIWindowSceneDelegate {
+  // Keep the scene callback visible to iOS 27 when building with the iOS 26 SDK.
+  @objc(supportedInterfaceOrientationsForWindowScene:)
+  func supportedInterfaceOrientations(for windowScene: UIWindowScene) -> UIInterfaceOrientationMask {
+    PitchsideDelegate.orientations
   }
 }
 
@@ -54,6 +100,7 @@ enum Route: Hashable {
 
 /// Each section keeps its navigation and unfinished work when the scorer switches tabs.
 struct RootView: View {
+  @Environment(\.scenePhase) private var scenePhase
   @Environment(AppModel.self) private var model
   @State private var tab: AppSection = .games
   @State private var gamesPath: [Route] = []
@@ -61,6 +108,7 @@ struct RootView: View {
   @State private var newGame = false
   @State private var scoring: ScoringSession?
   @State private var resumeProblem: String?
+  @State private var livePitchVisible = false
 
   var body: some View {
     VStack(spacing: 0) {
@@ -78,7 +126,14 @@ struct RootView: View {
           .toolbarVisibility(.hidden, for: .tabBar)
         }
       }
-      TabBar(tab: $tab)
+      if !livePitchVisible { TabBar(tab: $tab) }
+    }
+    .onPreferenceChange(LivePitchVisible.self) { live in
+      livePitchVisible = live
+      if scenePhase == .active { PitchsideDelegate.showLivePitch(live) }
+    }
+    .onChange(of: scenePhase) { _, phase in
+      if phase == .active { PitchsideDelegate.showLivePitch(livePitchVisible) }
     }
     .background(Color.psGround)
     #if DEBUG

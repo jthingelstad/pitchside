@@ -36,6 +36,7 @@ final class ScorerScreen {
   private(set) var redoAction: ScoreAction?
   private(set) var state: RecordState
   private(set) var rows: [RecordRow]
+  private(set) var playsByTurn: [Int: [String]] = [:]
   private(set) var lastWarnings: [RecordWarning] = []
   private(set) var game: Game
 
@@ -287,6 +288,7 @@ final class ScorerScreen {
     }
     guard scorer.records.count > oldCount, let saved = scorer.records.last else { return }
     if saved["type"] == "toss" { rescueAttempt = false }
+    rememberPlay(saved, before: before)
     trackPlace(saved, before: before)
     trackFallen(saved, before: before, after: state)
     if state.turn != turnBefore || (!before.over && before.next.kingShot != true && isKingShot) {
@@ -687,7 +689,26 @@ final class ScorerScreen {
     }
   }
 
+  /// Short descriptions for the live turn log. Rebuild on reopen or correction and
+  /// append from the same accepted record used for the pitch after an ordinary throw.
+  private func rememberPlay(_ event: [String: JSONValue], before: RecordState) {
+    let action: String
+    switch event["type"]?.string {
+    case "baton": action = "Baton \(before.next.n ?? 1)"
+    case "toss": action = before.next.rethrow == true ? "Rethrow" : "Inkast"
+    case "punish": action = "Placement"
+    case "note":
+      if let text = event["text"]?.string { playsByTurn[before.turn, default: []].append(text) }
+      return
+    default: return
+    }
+    let player = before.attacker.flatMap { before.side($0).players.first { $0.id == event["by"]?.string } }
+    let line = [action, player?.name, Self.label(event)].compactMap { $0 }.joined(separator: " · ")
+    playsByTurn[before.turn, default: []].append(line)
+  }
+
   private func restoreContext() {
+    playsByTurn = [:]
     placements = FieldPlacements()
     fallen = []
     owed = []
@@ -699,6 +720,7 @@ final class ScorerScreen {
     do {
       let events = try scorer.timeline().flatMap(\.events).sorted { $0.index < $1.index }
       for (i, entry) in events.enumerated() {
+        rememberPlay(entry.event, before: entry.before)
         trackPlace(entry.event, before: entry.before)
         let after = i + 1 < events.count ? events[i + 1].before : state
         trackFallen(entry.event, before: entry.before, after: after)

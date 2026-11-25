@@ -47,7 +47,7 @@ xcrun xcresulttool export attachments --path "$scratch/dark.xcresult" --output-p
 python3 - "$scratch/shots" "$scratch/dark" "$out" <<'PY'
 import json, pathlib, shutil, sys
 source, dark, output = map(pathlib.Path, sys.argv[1:])
-expected = {"Scorer-light", "Inkast-light", "Baton-marked-light", "Who-threw-light",
+expected = {"Landscape-turn-history", "Scorer-light", "Inkast-light", "Baton-marked-light", "Who-threw-light",
             "Thrown-from-light", "King-shot-light", "Sideline-light", "Scorer-dark", "Timeline-edit-light", "Printable-score-sheet", "Zoomed-cluster", "Redo-throw", "Sheet-redo-edit", "Play-by-play", "Cluster-replay", "Inkast-replay"}
 shots = {a["suggestedHumanReadableName"].split("_")[0]: folder / a["exportedFileName"]
          for folder in (source, dark) for test in json.loads((folder / "manifest.json").read_text()) for a in test["attachments"]}

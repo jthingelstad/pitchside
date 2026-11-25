@@ -11,6 +11,22 @@ final class ScoringTests: XCTestCase {
       "-PitchsideDemo", "-PitchsideScreen", screen, "-PitchsideDemoAt", "\(events)",
     ]
     app.launch()
+    expectLandscape(screen == "scorer")
+  }
+
+  func expectLandscape(_ landscape: Bool, file: StaticString = #filePath, line: UInt = #line) {
+    let window = app.windows.firstMatch
+    let matches = NSPredicate { _, _ in
+      guard window.exists else { return false }
+      let frame = window.frame
+      if !landscape { return frame.height > frame.width }
+      guard frame.width > frame.height else { return false }
+      let pitch = self.app.descendants(matching: .any)["pitch"]
+      let history = self.app.scrollViews["turn-history"]
+      return pitch.exists && history.exists && pitch.frame.maxX <= history.frame.minX + 1
+    }
+    let expectation = XCTNSPredicateExpectation(predicate: matches, object: nil)
+    XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: 6), .completed, app.debugDescription, file: file, line: line)
   }
 
   func tap(_ label: String, file: StaticString = #filePath, line: UInt = #line) {
@@ -23,8 +39,24 @@ final class ScoringTests: XCTestCase {
     button.tap()
   }
 
+  // The runner can return a portrait pixel buffer even for a landscape window.
+  // Choose one landscape direction so the gallery and colour sampling use
+  // the same upright image, including when the simulator started in portrait.
+  func screenImage() -> UIImage {
+    let frame = app.windows.firstMatch.frame
+    let landscape = frame.width > frame.height
+    let direction: UIDeviceOrientation = landscape ? .landscapeLeft : .portrait
+    if XCUIDevice.shared.orientation != direction { XCUIDevice.shared.orientation = direction }
+    let image = XCUIScreen.main.screenshot().image
+    guard landscape, let pixels = image.cgImage, pixels.width < pixels.height else { return image }
+    let upright = UIImage(cgImage: pixels, scale: image.scale, orientation: .left)
+    return UIGraphicsImageRenderer(size: upright.size, format: upright.imageRendererFormat).image { _ in
+      upright.draw(at: .zero)
+    }
+  }
+
   func shot(_ name: String) {
-    let attachment = XCTAttachment(screenshot: app.screenshot())
+    let attachment = XCTAttachment(data: screenImage().pngData()!, uniformTypeIdentifier: "public.png")
     attachment.name = name
     attachment.lifetime = .keepAlways
     add(attachment)
@@ -32,9 +64,12 @@ final class ScoringTests: XCTestCase {
 
   /// Read the rendered rough at the side of the pitch to identify the actual appearance.
   func darkPitch() -> Bool {
-    guard let image = app.screenshot().image.cgImage,
-      let sample = image.cropping(to: CGRect(x: 4, y: image.height / 2, width: 1, height: 1))
-    else { return false }
+    let pitch = app.descendants(matching: .any)["pitch"].frame
+    let screenshot = screenImage()
+    guard let pixels = screenshot.cgImage else { return false }
+    let scale = CGFloat(pixels.width) / app.windows.firstMatch.frame.width
+    let samplePoint = CGRect(x: (pitch.minX + 3) * scale, y: pitch.midY * scale, width: 1, height: 1)
+    guard let sample = pixels.cropping(to: samplePoint) else { return false }
     var pixel = [UInt8](repeating: 0, count: 4)
     return pixel.withUnsafeMutableBytes { bytes in
       guard
@@ -225,7 +260,7 @@ final class ScoringTests: XCTestCase {
     XCTAssertTrue(turn.frame.maxX <= thrower.frame.minX || turn.frame.maxY <= thrower.frame.minY)
     XCTAssertTrue(thrower.frame.maxX <= inkast.frame.minX || thrower.frame.maxY <= inkast.frame.minY)
     XCTAssertEqual(thrower.value as? String, "Kim")
-    XCTAssertGreaterThanOrEqual(thrower.frame.minY, pitch.frame.maxY - 1)
+    XCTAssertGreaterThanOrEqual(thrower.frame.minX, pitch.frame.maxX - 1)
     tap("Change who throws")
     tap("Dana")
     XCTAssertEqual(thrower.value as? String, "Dana")
@@ -265,6 +300,7 @@ final class ScoringTests: XCTestCase {
     XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label ENDSWITH 'Kubb out'")).firstMatch.exists)
     XCTAssertFalse(app.buttons["Next"].isEnabled)
     tap("Back to Scoring")
+    expectLandscape(true)
     spot(2.41, 4.42)
     spot(2.72, 4.69) // The rethrow.
     let fields = (0..<3).map { app.buttons["fB" + String($0)] }
@@ -277,7 +313,9 @@ final class ScoringTests: XCTestCase {
     tap("fB1")
     tap("1 down")
     tap("Back to Games")
+    expectLandscape(false)
     tap("Resume scoring, Wobbly Towers versus Birch Batons")
+    expectLandscape(true)
     XCTAssertEqual(tapLocation(fields[0]), places[0])
     XCTAssertEqual(tapLocation(fields[1]), places[2])
     XCTAssertEqual(fields[0].frame.midX, centres[0], accuracy: 1)
@@ -316,6 +354,7 @@ final class ScoringTests: XCTestCase {
     XCTAssertTrue(standing(3).label.contains(places[1]))
     tap("Back to Play by play")
     tap("Back to Scoring")
+    expectLandscape(true)
     XCTAssertEqual(tapLocation(fields[1]), places[2])
   }
 
@@ -555,28 +594,93 @@ final class ScoringTests: XCTestCase {
     XCTAssertFalse(app.buttons["Redo edit"].exists)
   }
 
-  func testSectionsKeepScoringAndTimelineInPlace() {
+  func testBrowseTurnsBesideThePitchWhileScoring() {
+    XCUIDevice.shared.orientation = .portrait
+    defer { XCUIDevice.shared.orientation = .portrait }
     launch("scorer", after: 31)
-    let field = app.buttons["fB0"]
+    tap("Change who throws")
+    tap("Ole")
     tap("fB0")
-    tap("section-Stats")
-    XCTAssertTrue(app.buttons["section-Stats"].isSelected)
-    tap("section-Roster")
-    XCTAssertTrue(app.buttons["section-Roster"].isSelected)
-    tap("section-Games")
-    XCTAssertEqual(field.value as? String, "marked down")
+    let history = app.scrollViews["turn-history"]
+    XCTAssertTrue(history.waitForExistence(timeout: 5))
+    let pitch = app.descendants(matching: .any)["pitch"]
+    XCTAssertLessThanOrEqual(pitch.frame.maxX, history.frame.minX + 1)
+    XCTAssertEqual(app.buttons["Change who throws"].value as? String, "Ole")
+    XCTAssertEqual(app.buttons["fB0"].value as? String, "marked down")
+    let older = app.buttons["history-turn-2"]
+    for _ in 0..<8 where !older.isHittable { history.swipeUp() }
+    older.tap()
+    let firstBaton = app.staticTexts["Baton 1 · Sam · 2 down"]
+    for _ in 0..<4 where !firstBaton.isHittable { history.swipeUp() }
+    XCTAssertTrue(firstBaton.isHittable)
+    let record = app.buttons["1 down"]
+    XCTAssertTrue(record.isHittable)
+    XCTAssertLessThanOrEqual(record.frame.maxY, app.windows.firstMatch.frame.maxY)
+    shot("Landscape-turn-history")
     tap("1 down")
+    tap("Show latest turn")
+    XCTAssertTrue(app.staticTexts["Baton 1 · Ole · 1 down"].waitForExistence(timeout: 4))
+    tap("Undo")
+    XCTAssertFalse(app.staticTexts["Baton 1 · Ole · 1 down"].exists)
+    tap("Redo")
+    XCTAssertTrue(app.staticTexts["Baton 1 · Ole · 1 down"].exists)
+    XCUIDevice.shared.orientation = .landscapeRight
+    expectLandscape(true)
+    XCUIDevice.shared.orientation = .portrait
+    expectLandscape(true)
+    XCTAssertTrue(history.isHittable)
+    XCTAssertEqual(app.buttons["Change who throws"].value as? String, "Dana")
+    XCTAssertTrue(app.buttons["Miss"].isHittable)
+  }
+
+  func testScoringUsesTheWholeScreenAndResumesFromGames() {
+    XCUIDevice.shared.orientation = .landscapeLeft
+    defer { XCUIDevice.shared.orientation = .portrait }
+    launch("home", after: 31)
+    tap("Resume scoring, Wobbly Towers versus Birch Batons")
+    expectLandscape(true)
+    let games = app.buttons["section-Games"]
+    let roster = app.buttons["section-Roster"]
+    let stats = app.buttons["section-Stats"]
+    XCTAssertFalse(games.exists)
+    XCTAssertFalse(roster.exists)
+    XCTAssertFalse(stats.exists)
+    tap("fB0")
+    tap("1 down")
+    tap("Change who throws")
+    tap("Ole")
+    tap("fB0")
     tap("More")
     tap("Timeline")
-    let turn = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Turn 5,'")).firstMatch
-    turn.tap()
+    expectLandscape(false)
+    app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Turn 5,'")).firstMatch.tap()
     tap("section-Roster")
     tap("section-Games")
     XCTAssertTrue(app.buttons["Baton 1 · 1 down"].exists)
     tap("Back to Scoring")
-    XCTAssertEqual(app.buttons["fB0"].value as? String, "standing")
+    expectLandscape(true)
+    tap("More")
+    tap("Play by play")
+    expectLandscape(false)
+    XCTAssertTrue(games.isSelected)
+    tap("Back to Scoring")
+    expectLandscape(true)
+    XCTAssertEqual(app.buttons["Change who throws"].value as? String, "Ole")
+    XCTAssertEqual(app.buttons["fB0"].value as? String, "marked down")
     tap("Back to Games")
-    XCTAssertTrue(app.buttons["New game"].exists)
+    expectLandscape(false)
+    XCTAssertTrue(games.isSelected)
+    tap("section-Roster")
+    expectLandscape(false)
+    XCTAssertTrue(roster.isSelected)
+    tap("section-Stats")
+    expectLandscape(false)
+    XCTAssertTrue(stats.isSelected)
+    tap("section-Games")
+    tap("Resume scoring, Wobbly Towers versus Birch Batons")
+    XCTAssertFalse(games.exists)
+    XCTAssertEqual(app.buttons["Change who throws"].value as? String, "Dana")
+    XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Baton 2 of 6'")).firstMatch.exists)
   }
 
   func testSectionsKeepDraftAndNameEditor() {
@@ -662,6 +766,7 @@ final class ScoringTests: XCTestCase {
     let start = app.buttons.matching(NSPredicate(format: "label ==[c] 'Start scoring'")).firstMatch
     for _ in 0..<5 where !start.isHittable { app.swipeUp() }
     tap("Start scoring")
+    expectLandscape(true)
     XCTAssertTrue(app.buttons["bB0"].waitForExistence(timeout: 5))
     for _ in 0..<5 {
       tap("bB0")
@@ -669,5 +774,7 @@ final class ScoringTests: XCTestCase {
     }
     tap("King down")
     XCTAssertTrue(app.staticTexts["Mossy Stakes beat Crooked Crowns"].waitForExistence(timeout: 5))
+    expectLandscape(false)
+    XCTAssertTrue(app.buttons["section-Games"].isSelected)
   }
 }
