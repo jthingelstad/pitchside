@@ -5,6 +5,7 @@ import SwiftUI
 /// The band, pitch and thumb controls stay in place through every turn.
 struct ScorerView: View {
   @Environment(AppModel.self) private var model
+  @Environment(\.dynamicTypeSize) private var typeSize
   @State private var replay: GameReplay?
   @State private var screen: ScorerScreen
   @State private var timeline = false
@@ -33,24 +34,21 @@ struct ScorerView: View {
         VStack(spacing: 0) {
           VStack(spacing: 0) {
             header
-            batonBar
+            turnProgress
           }
           .padding(.horizontal, 12).padding(.bottom, 4)
           .background(Color.psPlate.ignoresSafeArea(edges: .top))
-          PitchCanvas(screen: screen, viewport: $viewport)
-            .frame(maxHeight: .infinity)
-            .overlay(alignment: .bottom) {
-              if screen.panel != .none && screen.panel != .pick {
-                ViewThatFits(in: .vertical) {
-                  panel.padding(12).fixedSize(horizontal: false, vertical: true)
-                  ScrollView { panel.padding(12) }.scrollBounceBehavior(.basedOnSize)
-                }
-                .background(Color.psGround)
-                .overlay(alignment: .top) { Divider().overlay(Color.psLine) }
+          if typeSize.isAccessibilitySize {
+            GeometryReader { area in
+              VStack(spacing: 0) {
+                pitch.frame(height: area.size.height * 0.4)
+                ScrollView { scoringControls }
               }
             }
-          prompt
-          bottomBar
+          } else {
+            pitch
+            scoringControls
+          }
         }
         .foregroundStyle(Color.psText)
         .background(Color.psGround)
@@ -61,33 +59,35 @@ struct ScorerView: View {
     .onChange(of: screen.over) { _, over in if over { close() } }
   }
 
+  private var pitch: some View {
+    PitchCanvas(screen: screen, viewport: $viewport)
+      .frame(maxHeight: .infinity)
+      .overlay(alignment: .bottom) {
+        if screen.panel != .none && screen.panel != .pick {
+          ViewThatFits(in: .vertical) {
+            panel.padding(12).fixedSize(horizontal: false, vertical: true)
+            ScrollView { panel.padding(12) }.scrollBounceBehavior(.basedOnSize)
+          }
+          .background(Color.psGround)
+          .overlay(alignment: .top) { Divider().overlay(Color.psLine) }
+        }
+      }
+  }
+
+  private var scoringControls: some View {
+    VStack(spacing: 0) {
+      if !screen.over { throwContext }
+      prompt
+      bottomBar
+    }
+  }
+
   var header: some View {
     HStack(spacing: 6) {
       icon("chevron.backward", "Back to Games", action: close)
-      VStack(alignment: .leading, spacing: 1) {
-        HStack(spacing: 5) {
-          TeamMarker(screen.attacker, size: 18)
-          Text(screen.header).font(PSFont.body(14, .semibold)).foregroundStyle(Color.psMuted)
-        }
-        if screen.playersOn, let player = screen.thrower, !screen.over {
-          HStack(spacing: 8) {
-            Button {
-              screen.panel = screen.panel == .pick ? .none : .pick
-            } label: {
-              HStack(spacing: 4) {
-                Text(player.name).font(PSFont.display(24))
-                Image(systemName: "chevron.down").font(.system(size: 14, weight: .bold))
-              }.padding(.horizontal, 8).padding(.vertical, 2).psBox()
-                .frame(minWidth: 48, minHeight: 48).contentShape(Rectangle())
-            }
-            .buttonStyle(.plain).accessibilityLabel("Change who throws")
-            .accessibilityValue(player.name)
-            Text(screen.teamName(screen.attacker)).font(PSFont.body(14, .semibold)).lineLimit(2)
-          }
-        } else {
-          Text(screen.teamName(screen.attacker)).font(PSFont.display(26)).lineLimit(2)
-        }
-      }.frame(maxWidth: .infinity, alignment: .leading)
+      TeamMarker(screen.attacker, size: 22)
+      Text(screen.teamName(screen.attacker)).font(PSFont.display(24)).lineLimit(2)
+        .frame(maxWidth: .infinity, alignment: .leading)
       HStack(spacing: 4) {
         icon(
           viewport.scale == 1 ? "plus.magnifyingglass" : "arrow.down.right.and.arrow.up.left",
@@ -108,22 +108,92 @@ struct ScorerView: View {
     .padding(.vertical, 4).frame(minHeight: 60)
   }
 
-  var batonBar: some View {
+  var turnProgress: some View {
     HStack(spacing: 5) {
       ScrollView(.horizontal) {
         Text("\(screen.state.turn). \(screen.tokens)").font(PSFont.mono(15).weight(.bold))
       }.scrollIndicators(.hidden).defaultScrollAnchor(.leading)
         .frame(maxWidth: .infinity, alignment: .leading)
-      ForEach(0..<screen.batonsLeft, id: \.self) { _ in
-        Capsule().fill(Color.psKubb).overlay(Capsule().strokeBorder(Color.psKubbInk, lineWidth: 2))
-          .frame(width: 10, height: 22)
+      if screen.isInkast {
+        Text("\(screen.state.inkast?.left ?? 0) to throw").font(PSFont.body(14, .bold))
+      } else if !screen.placing && !screen.punishPending {
+        if !typeSize.isAccessibilitySize {
+          ForEach(0..<screen.batonsLeft, id: \.self) { _ in
+            Capsule().fill(Color.psKubb).overlay(Capsule().strokeBorder(Color.psKubbInk, lineWidth: 2))
+              .frame(width: 10, height: 22)
+              .accessibilityHidden(true)
+          }
+        }
+        Text("\(screen.batonsLeft) left").font(PSFont.body(14, .bold))
+          .accessibilityLabel("\(screen.n(screen.batonsLeft, "baton")) left")
       }
-      Text("\(screen.batonsLeft) left").font(PSFont.body(14, .bold))
     }
     .frame(minHeight: 32)
-    .accessibilityElement(children: .ignore)
-    .accessibilityLabel(
-      "Turn \(screen.state.turn), \(screen.tokens), \(screen.batonsLeft) batons left")
+    .accessibilityElement(children: .combine)
+  }
+
+  private var throwContext: some View {
+    let handlesKubbs = screen.isInkast || screen.punishPending || screen.placing
+    let layout = typeSize.isAccessibilitySize
+      ? AnyLayout(VStackLayout(alignment: .leading, spacing: 2))
+      : AnyLayout(HStackLayout(spacing: 12))
+    return layout {
+      VStack(alignment: .leading, spacing: 1) {
+        Text("Turn").font(PSFont.body(14, .semibold, relativeTo: .footnote))
+        Text("\(screen.state.turn)").font(PSFont.display(20, relativeTo: .headline))
+      }
+      .accessibilityElement(children: .ignore)
+      .accessibilityLabel("Turn \(screen.state.turn)")
+      .accessibilityIdentifier("entry-turn")
+
+      if !screen.placing && !screen.punishPending {
+        if screen.playersOn, let player = screen.thrower {
+          Button {
+            screen.panel = screen.panel == .pick ? .none : .pick
+          } label: {
+            VStack(alignment: .leading, spacing: 1) {
+              Text("Player").font(PSFont.body(14, .semibold, relativeTo: .footnote))
+              HStack(spacing: 6) {
+                Text(player.name).font(PSFont.body(18, .bold, relativeTo: .headline))
+                Image(systemName: "chevron.up.chevron.down").font(.footnote.weight(.bold))
+              }
+            }
+            .padding(.horizontal, 10).padding(.vertical, 4)
+            .foregroundStyle(Color.psText).psBox()
+            .frame(minWidth: 48, minHeight: 48).contentShape(Rectangle())
+          }
+          .buttonStyle(.plain).accessibilityLabel("Change who throws").accessibilityValue(player.name)
+        } else {
+          VStack(alignment: .leading, spacing: 1) {
+            Text("Player").font(PSFont.body(14, .semibold, relativeTo: .footnote))
+            Text("Not tracked").font(PSFont.body(16, .semibold))
+          }
+          .accessibilityElement(children: .combine)
+        }
+      }
+
+      VStack(alignment: .leading, spacing: 1) {
+        Text("Action").font(PSFont.body(14, .semibold, relativeTo: .footnote))
+        HStack(spacing: 6) {
+          Image(systemName: handlesKubbs ? "cube.fill" : "capsule.portrait.fill")
+            .rotationEffect(.degrees(handlesKubbs ? 0 : 35))
+            .accessibilityHidden(true)
+          Text(screen.placing ? "Place kubbs" : (handlesKubbs ? "Inkast" : "Baton throws"))
+            .font(PSFont.display(20, relativeTo: .headline))
+            .accessibilityAddTraits(.isHeader)
+        }
+      }
+      .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(.horizontal, 12).padding(.vertical, 3)
+    .frame(minHeight: 48)
+    .fixedSize(horizontal: false, vertical: true)
+    .foregroundStyle(handlesKubbs ? Color.psText : Color.psOnSolid)
+    .background(handlesKubbs ? Color.psWood : Color.psSolid)
+    .onChange(of: screen.firstBatonAfterInkast) { _, starts in
+      if starts { AccessibilityNotification.Announcement("Inkast complete. Throw batons.").post() }
+    }
   }
 
   @ViewBuilder var prompt: some View {
@@ -138,12 +208,17 @@ struct ScorerView: View {
             ForEach(screen.players, id: \.id) { p in
               Button(p.name) { screen.choose(p) }
                 .buttonStyle(PSButtonStyle(solid: screen.thrower?.id == p.id, minHeight: 48))
+                .accessibilityAddTraits(screen.thrower?.id == p.id ? [.isSelected] : [])
             }
           }.padding(.trailing, 4).padding(.bottom, 4)
         }.scrollIndicators(.hidden)
       } else {
         HStack {
           VStack(alignment: .leading, spacing: 3) {
+            if screen.firstBatonAfterInkast {
+              Label("Inkast complete", systemImage: "checkmark.circle.fill")
+                .font(PSFont.body(16, .bold)).foregroundStyle(Color.psSolid)
+            }
             Text(screen.kick).psKick()
             Text(screen.problem ?? screen.text).font(PSFont.body(16, .semibold))
           }.frame(maxWidth: .infinity, alignment: .leading)
@@ -191,7 +266,10 @@ struct ScorerView: View {
   }
 
   var bottomBar: some View {
-    HStack(spacing: 8) {
+    let layout = typeSize >= .accessibility2
+      ? AnyLayout(VStackLayout(spacing: 4))
+      : AnyLayout(HStackLayout(spacing: 8))
+    return layout {
       if screen.redoAction != nil {
         icon("arrow.uturn.backward", "Undo", action: screen.undo).disabled(screen.undoAction == nil)
         icon("arrow.uturn.forward", "Redo", action: screen.redo)

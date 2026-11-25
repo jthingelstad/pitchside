@@ -59,11 +59,21 @@ final class ScoringTests: XCTestCase {
   func testWorkedGameAndViews() {
     launch("scorer", after: 0)
 
-    // Establish the first four turns of the design through the same controls as turn five.
+    // The turn changes after the second opening baton. The next entry belongs to Team B's inkaster.
+    let turn = app.descendants(matching: .any)["entry-turn"]
+    let player = app.buttons["Change who throws"]
+    XCTAssertEqual(turn.label, "Turn 1")
+    XCTAssertEqual(player.value as? String, "Kim")
+    XCTAssertFalse(app.staticTexts["Inkast complete"].exists)
     tap("bB1")
     tap("1 down")
+    XCTAssertEqual(turn.label, "Turn 1")
+    XCTAssertEqual(player.value as? String, "Dana")
     tap("bB3")
     tap("1 down")
+    XCTAssertEqual(turn.label, "Turn 2")
+    XCTAssertEqual(player.value as? String, "Sam")
+    XCTAssertTrue(app.staticTexts["Inkast"].exists)
     spot(1.2, 1.6)
     spot(3.6, 2.9)
     tap("fA0")
@@ -206,17 +216,43 @@ final class ScoringTests: XCTestCase {
   func testPlaceInkastOnZoomedPitch() {
     launch("scorer", after: 28)
     let pitch = app.descendants(matching: .any).matching(identifier: "pitch").firstMatch
+    let thrower = app.buttons["Change who throws"]
+    let turn = app.descendants(matching: .any)["entry-turn"]
+    let inkast = app.staticTexts["Inkast"]
+    XCTAssertEqual(turn.label, "Turn 5")
+    XCTAssertTrue(inkast.exists)
+    // The strip reads across at standard sizes and down at accessibility sizes.
+    XCTAssertTrue(turn.frame.maxX <= thrower.frame.minX || turn.frame.maxY <= thrower.frame.minY)
+    XCTAssertTrue(thrower.frame.maxX <= inkast.frame.minX || thrower.frame.maxY <= inkast.frame.minY)
+    XCTAssertEqual(thrower.value as? String, "Kim")
+    XCTAssertGreaterThanOrEqual(thrower.frame.minY, pitch.frame.maxY - 1)
+    tap("Change who throws")
+    tap("Dana")
+    XCTAssertEqual(thrower.value as? String, "Dana")
     let frame = pitch.frame
     let unit = min((frame.width - 68) / 5, (frame.height - 68) / 8)
     tap("Zoom in on pitch")
     // The one-handed 2× view centres Team B's half. Three taps in cell (1, 2)
     // must come back there after returning to the fitted pitch.
     let point = CGVector(dx: frame.midX - 2 * unit, dy: frame.midY - unit)
-    for _ in 0..<3 { app.coordinate(withNormalizedOffset: .zero).withOffset(point).tap() }
+    let landing = app.coordinate(withNormalizedOffset: .zero).withOffset(point)
+    for _ in 0..<2 { landing.tap() }
+    XCTAssertTrue(app.staticTexts["Inkast"].exists)
+    XCTAssertEqual(thrower.value as? String, "Dana")
+    landing.tap()
+    XCTAssertTrue(app.staticTexts["Baton throws"].exists)
+    XCTAssertTrue(app.staticTexts["Inkast complete"].exists)
+    XCTAssertEqual(thrower.value as? String, "Kim")
     tap("Fit whole pitch")
     for i in 0..<3 {
       XCTAssertTrue(app.buttons["fB" + String(i)].label.contains("across 1, depth 2"))
     }
+    tap("Miss")
+    XCTAssertFalse(app.staticTexts["Inkast complete"].exists)
+    XCTAssertEqual(turn.label, "Turn 5")
+    XCTAssertEqual(thrower.value as? String, "Dana")
+    tap("Undo")
+    XCTAssertTrue(app.staticTexts["Inkast complete"].exists)
   }
 
   func testMiddleOfClusterSurvivesReopenAndReplay() {
@@ -387,7 +423,11 @@ final class ScoringTests: XCTestCase {
     tap("Out again")
     XCTAssertTrue(
       app.buttons.matching(NSPredicate(format: "label ==[c] 'Place it later'")).firstMatch.exists)
+    XCTAssertTrue(app.staticTexts["Inkast"].exists)
+    XCTAssertFalse(app.staticTexts["Inkast complete"].exists)
+    XCTAssertFalse(app.buttons["Change who throws"].exists)
     tap("Place it later")
+    XCTAssertTrue(app.staticTexts["Inkast complete"].exists)
     XCTAssertTrue(app.buttons["bB0"].exists)
     let unknown = app.buttons.matching(NSPredicate(format: "label ==[c] 'Count field kubbs'")).firstMatch
     XCTAssertTrue(unknown.waitForExistence(timeout: 3), app.debugDescription)
