@@ -9,11 +9,10 @@ import SwiftUI
 struct ScoreSheetView: View {
   @Environment(AppModel.self) private var model
   let id: UUID
-  var engineNotes: [RecordWarning] = []
-  var updateNotes: ([RecordWarning]) -> Void
   var openSession: ((ScoringSession) -> Void)? = nil
   @State private var problem: String?
   @State private var history: ScoreHistory?
+  @State private var engineNotes: [RecordWarning] = []
   @State private var copied = false
   @State private var pdf: URL?
   @State private var replay: GameReplay?
@@ -97,9 +96,14 @@ struct ScoreSheetView: View {
 
   private func loadHistory() {
     history = nil
+    engineNotes = []
     guard openSession != nil, let game = model.game(id), !game.isImported,
       FileManager.default.fileExists(atPath: model.store.logURL(id).path) else { return }
-    do { history = ScoreHistory(try model.store.log(id).events) }
+    do {
+      let review = try RecordScorer.review(model.store.log(id))
+      history = review.history
+      engineNotes = review.warnings
+    }
     catch { problem = error.localizedDescription }
   }
 
@@ -113,7 +117,6 @@ struct ScoreSheetView: View {
       let scorer = try model.scorer(for: game)
       if undoing { try scorer.undo() } else { try scorer.redo() }
       model.refresh()
-      updateNotes(scorer.warnings)
       loadHistory()
       if !scorer.state.over { openSession?(ScoringSession(scorer)) }
     } catch { problem = error.localizedDescription }

@@ -60,7 +60,6 @@ struct RootView: View {
   @State private var statsPath: [Route] = []
   @State private var newGame = false
   @State private var scoring: ScoringSession?
-  @State private var engineNotes: [UUID: [RecordWarning]] = [:]
   @State private var resumeProblem: String?
 
   var body: some View {
@@ -95,7 +94,6 @@ struct RootView: View {
       ScorerView(session: session) {
         model.refresh()
         if session.scorer.state.over {
-          engineNotes[session.id] = session.scorer.warnings
           gamesPath = [.sheet(session.id)]
         }
         scoring = nil
@@ -138,7 +136,7 @@ struct RootView: View {
   @ViewBuilder func destination(_ route: Route, back: String) -> some View {
     switch route {
     case .sheet(let id):
-      ScoreSheetView(id: id, engineNotes: engineNotes[id] ?? [], updateNotes: { engineNotes[id] = $0 }) { session in
+      ScoreSheetView(id: id) { session in
         tab = .games
         gamesPath = []
         scoring = session

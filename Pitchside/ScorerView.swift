@@ -41,17 +41,12 @@ struct ScorerView: View {
             .frame(maxHeight: .infinity)
             .overlay(alignment: .bottom) {
               if screen.panel != .none && screen.panel != .pick {
-                GeometryReader { geo in
-                  VStack {
-                    Spacer(minLength: 0)
-                    ScrollView { panel.padding(12) }
-                      .scrollBounceBehavior(.basedOnSize)
-                      .fixedSize(horizontal: false, vertical: true)
-                      .frame(maxHeight: geo.size.height)
-                      .background(Color.psGround)
-                      .overlay(alignment: .top) { Divider().overlay(Color.psLine) }
-                  }
+                ViewThatFits(in: .vertical) {
+                  panel.padding(12).fixedSize(horizontal: false, vertical: true)
+                  ScrollView { panel.padding(12) }.scrollBounceBehavior(.basedOnSize)
                 }
+                .background(Color.psGround)
+                .overlay(alignment: .top) { Divider().overlay(Color.psLine) }
               }
             }
           prompt

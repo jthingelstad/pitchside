@@ -150,6 +150,18 @@ public final class RecordScorer: LiveScorer {
     ScoreHistory(events).records
   }
 
+  /// Read a saved sheet’s history controls and rule warnings without opening a writer.
+  public static func review(_ log: EventLog) throws -> (history: ScoreHistory, warnings: [RecordWarning]) {
+    let history = ScoreHistory(log.events)
+    guard let setup = log.events.first(where: { $0.kind == GameEvent.Kind.start && $0.payload["setup"] != nil })?.payload["setup"]
+    else { return (history, []) }
+    let engine = try Engine(appVersion: "0")
+    let result = try decode(engine.call("record.build", json: args([
+      "game": setup, "events": .array(history.records.map(JSONValue.object)),
+    ])))
+    return (history, result.warnings)
+  }
+
   private func nextId() -> String { "e\(log.nextSeq)" }
 
   // MARK: Actions
