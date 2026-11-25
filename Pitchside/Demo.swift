@@ -10,8 +10,9 @@
       try! GameStore(root: FileManager.default.temporaryDirectory.appending(path: "PitchsideScratch"))
     }
 
-    static func store() -> GameStore {
+    static func store(reopen: Bool = false) -> GameStore {
       let root = FileManager.default.temporaryDirectory.appending(path: "PitchsideDemo")
+      if reopen { return try! GameStore(root: root) }
       try? FileManager.default.removeItem(at: root)
       let store = try! GameStore(root: root)
       let names = ["Wren", "Tomas", "Ivo", "Maren", "Kit", "Odile", "Bram", "Linnea", "Lark", "Nell", "Kim", "Dana", "Ole", "Sam", "Lee"]
