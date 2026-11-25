@@ -209,18 +209,19 @@ public struct GameReplay: Identifiable, Sendable {
         let complete = f <= hits.count && hits.count - f == (baton.b ?? 0)
         let local = observations[row.turn]?.batons
         let selected = local.flatMap { $0.indices.contains(i) ? $0[i] : nil } ?? [:]
-        let fields = complete ? Array(hits.prefix(f)) : []
-        // Iterate recorded slots only. A tolerant reader can report arbitrarily large counts.
-        let slots = Set(fields.indices).union(selected.keys.filter { $0 >= 0 && $0 < f })
-        let locations: [ReplayPlace] = slots.sorted().compactMap { slot in
-          if let p = selected[slot]?.point {
-            var place = ReplayPlace(across: p.across, depth: p.depth)
-            place.tapped = true
-            return place
-          }
-          return fields.indices.contains(slot) ? fields[slot] : nil
+        var located: [ReplayPlace] = selected.keys.sorted().compactMap { slot in
+          guard slot < f, let p = selected[slot]?.point else { return nil }
+          var place = ReplayPlace(across: p.across, depth: p.depth)
+          place.tapped = true
+          return place
         }
-        return (locations, complete ? Array(hits.dropFirst(f)) : [])
+        guard complete else { return (located, []) }
+        // The notation writer sorts falls by cell. The journal keeps selection order.
+        let fields = hits.prefix(f).map { cell in
+          guard let index = located.firstIndex(where: { $0.metreCell == cell.metreCell }) else { return cell }
+          return located.remove(at: index)
+        }
+        return (fields, Array(hits.dropFirst(f)))
       }
       var futureField = ArraySlice(words.flatMap(\.0))
       var futureBase = ArraySlice(words.flatMap(\.1))

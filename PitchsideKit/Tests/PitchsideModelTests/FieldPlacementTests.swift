@@ -74,6 +74,27 @@ import Testing
     #expect(survivors.compactMap { $0?.point } == [far])
   }
 
+  @Test func sortedFelledWordKeepsBothTheCellAndTheTappedKubb() throws {
+    let right = RecordPoint(across: 4.72, depth: 2.27)
+    let (s, store, initial) = try cluster([points[0], points[1], right])
+    var positions = initial
+    let before = s.state, half = try #require(before.defender)
+    let leftCell = RecordPoint(across: 2.5, depth: 0.5)
+    try s.add(RecordEvent.baton(field: 1, at: [leftCell]))
+    positions.apply(try #require(s.records.last), before: before, after: s.state)
+    let identified = try #require(positions.aligned(in: half, state: s.state).compactMap { $0 }.first)
+    var hit = RecordEvent.baton(field: 2)
+    // The scorer chose the right-hand kubb first. The writer sorts the left cell first.
+    hit["at"] = .array([identified.hit(in: half), leftCell.tap(in: half)])
+    try s.add(hit)
+    let analysis = try NotationReader().read(s.text).analysis
+    let replay = try GameReplay(analysis, journal: store.log(s.game.id))
+    let falls = try #require(replay.steps.last?.falls)
+    #expect(falls.map(\.across) == [2, right.across])
+    #expect(falls.map(\.cell) == [true, false])
+    #expect(falls.map(\.tapped) == [false, true])
+  }
+
   @Test func aNewPitchSurveyReplacesTheOldPlacementIDs() throws {
     let (s, _, initial) = try cluster(points)
     var positions = initial
