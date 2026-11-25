@@ -10,8 +10,10 @@ struct ScoreSheetView: View {
   @Environment(AppModel.self) private var model
   let id: UUID
   var engineNotes: [RecordWarning] = []
+  var updateNotes: ([RecordWarning]) -> Void
   var openSession: ((ScoringSession) -> Void)? = nil
   @State private var problem: String?
+  @State private var history: ScoreHistory?
   @State private var copied = false
   @State private var pdf: URL?
   @State private var replay: GameReplay?
@@ -35,25 +37,22 @@ struct ScoreSheetView: View {
             }
           }.padding(12).frame(minHeight: 48).psBox()
         }
-        if let openSession, !game.isImported, FileManager.default.fileExists(atPath: model.store.logURL(id).path) {
-          Button("Edit timeline") {
-            do {
-              let scorer = try model.scorer(for: game)
-              openSession(ScoringSession(scorer, showTimeline: true))
-            } catch { problem = String(describing: error) }
-          }.buttonStyle(.ps)
-          Button("Undo last event") {
-            do {
-              let scorer = try model.scorer(for: game)
-              try scorer.undo()
-              model.refresh()
-              openSession(ScoringSession(scorer))
-            } catch { problem = String(describing: error) }
-          }.buttonStyle(.quiet)
+        if let history {
+          Button("Edit timeline") { openTurn(nil, game: game) }.buttonStyle(.ps)
+          if let action = history.undoAction {
+            Button(action == .correction ? "Undo edit" : "Undo last event") {
+              changeHistory(game, undoing: true)
+            }.buttonStyle(.quiet)
+          }
+          if let action = history.redoAction {
+            Button(action == .correction ? "Redo edit" : "Redo last event") {
+              changeHistory(game, undoing: false)
+            }.buttonStyle(.quiet)
+          }
         }
         if let read {
           Text("Turn by turn").psKick()
-          turns(read.analysis)
+          turns(read.analysis, game: game)
           Text("Right column: batons that hit, of batons thrown.").psHelp()
           Button("Score sheet PDF") {
             do {
@@ -93,6 +92,31 @@ struct ScoreSheetView: View {
       if let replay { ReplayView(replay: replay) }
     }
     .quickLookPreview($pdf)
+    .onAppear(perform: loadHistory)
+  }
+
+  private func loadHistory() {
+    history = nil
+    guard openSession != nil, let game = model.game(id), !game.isImported,
+      FileManager.default.fileExists(atPath: model.store.logURL(id).path) else { return }
+    do { history = ScoreHistory(try model.store.log(id).events) }
+    catch { problem = error.localizedDescription }
+  }
+
+  private func openTurn(_ turn: Int?, game: Game) {
+    do { try openSession?(ScoringSession(model.scorer(for: game), showTimeline: true, initialTurn: turn)) }
+    catch { problem = error.localizedDescription }
+  }
+
+  private func changeHistory(_ game: Game, undoing: Bool) {
+    do {
+      let scorer = try model.scorer(for: game)
+      if undoing { try scorer.undo() } else { try scorer.redo() }
+      model.refresh()
+      updateNotes(scorer.warnings)
+      loadHistory()
+      if !scorer.state.over { openSession?(ScoringSession(scorer)) }
+    } catch { problem = error.localizedDescription }
   }
 
   @ViewBuilder func result(_ game: Game, _ read: GameRead?) -> some View {
@@ -123,20 +147,25 @@ struct ScoreSheetView: View {
     .psCard()
   }
 
-  func turns(_ a: Analysis) -> some View {
+  func turns(_ a: Analysis, game: Game) -> some View {
     VStack(spacing: 0) {
       ForEach(a.rows, id: \.turn) { row in
-        HStack(spacing: 10) {
+        let content = HStack(spacing: 10) {
           Text("\(row.turn)").font(PSFont.body(16, .bold)).frame(minWidth: 24, alignment: .leading)
           TeamMarker(row.team, size: 20)
           Text(row.scoringSummary).font(PSFont.body(16)).frame(maxWidth: .infinity, alignment: .leading)
           Text("\(row.hits) of \(row.thrown.count)").font(PSFont.body(16, .bold))
+          if history != nil { Image(systemName: "chevron.right").accessibilityHidden(true) }
+        }.foregroundStyle(Color.psText)
+          .frame(minHeight: 48).contentShape(Rectangle())
+        let summary = "Turn \(row.turn), \(a.name(row.team)): \(row.scoringSummary). \(row.hits) of \(row.thrown.count) batons hit."
+        if history != nil {
+          Button { openTurn(row.turn, game: game) } label: { content }
+            .buttonStyle(.plain).accessibilityLabel(summary).accessibilityHint("Edit this turn")
+            .accessibilityIdentifier("editTurn\(row.turn)")
+        } else {
+          content.accessibilityElement(children: .ignore).accessibilityLabel(summary)
         }
-        .foregroundStyle(Color.psText)
-        .padding(.vertical, 6)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(
-          "Turn \(row.turn), \(a.name(row.team)): \(row.scoringSummary). \(row.hits) of \(row.thrown.count) batons hit.")
       }
     }
     .padding(.horizontal, 12)

@@ -13,6 +13,9 @@ Imported games show the inkast detail present in their notation file.
 Open **More → Play by play** to review the latest throw while scoring, or use
 **Play by play** on a score sheet to step through the pitch in either direction
 or jump to a turn, including games imported from Throwing Wood.
+Tap a turn on a locally scored sheet to correct a throw. Pitchside previews changes
+to later turns. Undo and redo work for both throws and corrections, even after reopening a game.
+
 Each game produces a plain-text Planet Kubb Notation file, a printable PDF score sheet
 and player stats. Games and roster names stay on the phone until
 the scorer chooses to share a file.

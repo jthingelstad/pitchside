@@ -32,6 +32,8 @@ final class ScorerScreen {
   }
 
   @ObservationIgnored let scorer: LiveScorer
+  private(set) var undoAction: ScoreAction?
+  private(set) var redoAction: ScoreAction?
   private(set) var state: RecordState
   private(set) var rows: [RecordRow]
   private(set) var lastWarnings: [RecordWarning] = []
@@ -67,6 +69,8 @@ final class ScorerScreen {
 
   init(scorer: LiveScorer) {
     self.scorer = scorer
+    undoAction = scorer.undoAction
+    redoAction = scorer.redoAction
     state = scorer.state
     rows = scorer.rows
     game = scorer.game
@@ -251,6 +255,8 @@ final class ScorerScreen {
   }
 
   private func refresh() {
+    undoAction = scorer.undoAction
+    redoAction = scorer.redoAction
     state = scorer.state
     rows = scorer.rows
     game = scorer.game
@@ -521,20 +527,23 @@ final class ScorerScreen {
     add(RecordEvent.baton(king: true, stance: stanceOn ? stance : nil))
   }
 
-  func undo() {
-    flash = nil
-    marked = []
-    countField = 0
-    countBase = 0
-    placing = false
-    guard let last = scorer.records.last else {
-      flash = "Nothing to undo"
-      return
-    }
-    let label = Self.label(last)
-    run { try scorer.undo() }
-    restoreContext()
-    flash = "Undone: " + label
+  func undo() { changeHistory(undoAction, undoing: true) }
+  func redo() { changeHistory(redoAction, undoing: false) }
+
+  private func changeHistory(_ action: ScoreAction?, undoing: Bool) {
+    guard let action else { return }
+    do {
+      if undoing { try scorer.undo() } else { try scorer.redo() }
+      problem = nil
+      panel = .none
+      reload()
+      let label: String
+      switch action {
+      case .observation(let event): label = Self.label(event)
+      case .correction: label = "the edit"
+      }
+      flash = (undoing ? "Undone: " : "Redone: ") + label
+    } catch { problem = error.localizedDescription }
   }
 
   /// A record event in a few words, for "Undone: ...".
@@ -690,7 +699,7 @@ final class ScorerScreen {
     punishLater = false
     stance = nil
     do {
-      let events = try scorer.timeline().flatMap(\.events)
+      let events = try scorer.timeline().flatMap(\.events).sorted { $0.index < $1.index }
       for (i, entry) in events.enumerated() {
         trackPlace(entry.event, before: entry.before)
         let after = i + 1 < events.count ? events[i + 1].before : state
