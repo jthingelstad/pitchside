@@ -428,6 +428,17 @@ final class ScoringTests: XCTestCase {
         .firstMatch.exists)
     tap("Done")
     tap("Miss")
+    tap("More")
+    tap("Game called")
+    tap("Wobbly Towers")
+    let notes = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Scorer notes'")).firstMatch
+    XCTAssertTrue(notes.waitForExistence(timeout: 4))
+    app.terminate()
+    app.launchArguments = ["-PitchsideDemo", "-PitchsideReopenDemo", "-PitchsideScreen", "sheet"]
+    app.launch()
+    XCTAssertTrue(notes.waitForExistence(timeout: 4))
+    notes.tap()
+    XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'file follows the count'")).firstMatch.exists)
   }
 
   func testResumeAnOlderUnfinishedGame() {

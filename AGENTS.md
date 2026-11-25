@@ -583,6 +583,7 @@ generated team names, the rules choice).
   observation or correction starts a fresh branch. Earlier journals with id-based undo
   keep their original meaning. The score sheet opens a local turn directly for editing.
   Undoing a correction to a finished game keeps the sheet open when the result still stands.
+  Each opening of a local sheet reads its history and engine warnings from the journal.
   A newline terminates each synced entry. The next append truncates a torn tail.
   `game.json` keeps the game summary and `game.txt` is the engine's current notation,
   a draft until `state.over`. Opening the app repairs stale exports from the journal.

@@ -31,6 +31,9 @@ import Testing
       states.append(Snapshot(s))
     }
     #expect(Data(s.text.utf8) == Data(fixture.text.utf8))
+    let review = try RecordScorer.review(store.log(game.id))
+    #expect(review.history.undoAction == s.undoAction)
+    #expect(review.warnings == s.warnings)
     for expected in states.dropLast().reversed() {
       try s.undo()
       #expect(Snapshot(s) == expected)
