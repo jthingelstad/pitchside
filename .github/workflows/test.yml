@@ -42,7 +42,8 @@ jobs:
           -only-testing:PitchsideUITests/ScoringTests/testPinchPanAndScoreADrilledCluster
           -only-testing:PitchsideUITests/ScoringTests/testMiddleOfClusterSurvivesReopenAndReplay
           -only-testing:PitchsideUITests/ScoringTests/testPlaceInkastOnZoomedPitch
-          -only-testing:PitchsideUITests/ScoringTests/testSectionsKeepScoringAndTimelineInPlace
+          -only-testing:PitchsideUITests/ScoringTests/testBrowseTurnsBesideThePitchWhileScoring
+          -only-testing:PitchsideUITests/ScoringTests/testScoringUsesTheWholeScreenAndResumesFromGames
           -only-testing:PitchsideUITests/ScoringTests/testSectionsKeepDraftAndNameEditor
           -only-testing:PitchsideUITests/ScoringTests/testStepThroughAnImportedGame
           -only-testing:PitchsideUITests/ScoringTests/testWholeGame

@@ -3,11 +3,17 @@
 Pitchside is an iPhone scorekeeper for real games of kubb. Tap the kubbs that fell,
 record a miss, or mark where a throw landed. Pinch to zoom into a drilled group
 and tap the individual kubb that fell. Locally scored games remember each
-standing placement for replay. Each entry shows the turn, player, and action in order.
-When you track who threw, tap the suggested player beside the action to change it. “Inkast complete”
-stays visible until you record the first baton. Undo a throw in one tap or correct an
-earlier turn in the timeline, even after the game finishes. Switch between Games,
-Roster and Stats while scoring, then return to the throw you were marking.
+standing placement for replay.
+
+Start or resume scoring and the iPhone opens a full-screen landscape scorekeeper.
+The pitch stays on the left. On the right, each entry shows the turn, player and
+action in order. Tap the suggested player to change who threw. “Inkast complete”
+marks the switch to batons and stays visible until you record the first baton.
+Scroll back through earlier turns and tap one to read its throws while the current
+throw stays ready to record.
+
+Games, setup, Roster, Stats, score sheets, the timeline and play by play use
+portrait. Return to Games between turns and resume at the next throw.
 In locally scored games, each inkast throw, rethrow and punishment placement has its
 own replay step. A ring marks the kubb just placed when its spot was recorded.
 Imported games show the inkast detail present in their notation file.
@@ -22,7 +28,7 @@ Each game produces a plain-text Planet Kubb Notation file, a printable PDF score
 and player stats. Games and roster names stay on the phone until
 the scorer chooses to share a file.
 
-<img src="docs/design/build-shots/Baton-marked-light.png" width="260" alt="Pitchside scoring a baton that felled three field kubbs">
+<img src="docs/design/build-shots/Landscape-turn-history.png" width="700" alt="Live pitch on the left, with an earlier turn expanded above the current throw on the right">
 
 ## Run it
 

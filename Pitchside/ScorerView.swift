@@ -10,6 +10,7 @@ struct ScorerView: View {
   @State private var screen: ScorerScreen
   @State private var timeline = false
   @State private var viewport = PitchFrame.Viewport()
+  @State private var controlsHeight: CGFloat?
   let initialTurn: Int?
   let close: () -> Void
 
@@ -31,25 +32,36 @@ struct ScorerView: View {
           if screen.over { close() } else { timeline = false }
         }
       } else {
-        VStack(spacing: 0) {
-          VStack(spacing: 0) {
-            header
-            turnProgress
-          }
-          .padding(.horizontal, 12).padding(.bottom, 4)
-          .background(Color.psPlate.ignoresSafeArea(edges: .top))
-          if typeSize.isAccessibilitySize {
-            GeometryReader { area in
-              VStack(spacing: 0) {
-                pitch.frame(height: area.size.height * 0.4)
-                ScrollView { scoringControls }
+        GeometryReader { area in
+          HStack(spacing: 0) {
+            VStack(spacing: 0) {
+              header.padding(.horizontal, 8)
+              pitch
+            }
+            .frame(width: area.size.width * 0.46)
+            Divider()
+            VStack(spacing: 0) {
+              if additionalPanel {
+                HStack {
+                  turnProgress
+                  icon("xmark", "Close options") { screen.panel = .none }
+                }.padding(.horizontal, 12)
+                ScrollView { panel.padding(12) }
+              } else {
+                turnProgress.padding(.horizontal, 12)
+                TurnHistoryView(screen: screen)
+                Divider()
+                ScrollView {
+                  scoringControls
+                    .onGeometryChange(for: CGFloat.self, of: { $0.size.height }) { controlsHeight = $0 }
+                }
+                .scrollBounceBehavior(.basedOnSize)
+                .frame(height: min(controlsHeight ?? area.size.height, area.size.height * 0.70))
               }
             }
-          } else {
-            pitch
-            scoringControls
           }
         }
+        .preference(key: LivePitchVisible.self, value: !screen.over)
         .foregroundStyle(Color.psText)
         .background(Color.psGround)
       }
@@ -60,19 +72,10 @@ struct ScorerView: View {
   }
 
   private var pitch: some View {
-    PitchCanvas(screen: screen, viewport: $viewport)
-      .frame(maxHeight: .infinity)
-      .overlay(alignment: .bottom) {
-        if screen.panel != .none && screen.panel != .pick {
-          ViewThatFits(in: .vertical) {
-            panel.padding(12).fixedSize(horizontal: false, vertical: true)
-            ScrollView { panel.padding(12) }.scrollBounceBehavior(.basedOnSize)
-          }
-          .background(Color.psGround)
-          .overlay(alignment: .top) { Divider().overlay(Color.psLine) }
-        }
-      }
+    PitchCanvas(screen: screen, viewport: $viewport).frame(maxHeight: .infinity)
   }
+
+  private var additionalPanel: Bool { screen.panel != .none && screen.panel != .pick }
 
   private var scoringControls: some View {
     VStack(spacing: 0) {
@@ -398,5 +401,78 @@ struct ScorerView: View {
       default: EmptyView()
       }
     }.buttonStyle(PSButtonStyle(minHeight: 48))
+  }
+}
+
+/// Browse earlier turns independently of the live pitch. Expand a turn for the
+/// throwers and outcomes; returning to the latest turn never changes a score.
+private struct TurnHistoryView: View {
+  let screen: ScorerScreen
+  @State private var expanded: Int?
+
+  var body: some View {
+    ScrollViewReader { scroll in
+      VStack(alignment: .leading, spacing: 0) {
+        HStack {
+          Text("Turn history").font(PSFont.body(16, .bold)).accessibilityAddTraits(.isHeader)
+          Spacer()
+          if screen.rows.count > 1 {
+            Button("Latest") {
+              expanded = nil
+              if let latest = screen.rows.last { scroll.scrollTo(latest.turn, anchor: .top) }
+            }
+            .buttonStyle(.plain).foregroundStyle(Color.psSolid)
+            .accessibilityLabel("Show latest turn")
+            .padding(.vertical, 6)
+          }
+        }
+        .padding(.horizontal, 12).frame(minHeight: 32)
+        ScrollView {
+          LazyVStack(alignment: .leading, spacing: 0) {
+            if screen.rows.isEmpty {
+              Text("The first throw will appear here.").psHelp().padding(.horizontal, 12)
+            }
+            ForEach(screen.rows.reversed(), id: \.turn) { row in
+              let plays = screen.playsByTurn[row.turn] ?? []
+              let down = row.batons.reduce(0) { $0 + ScorerScreen.felled($1.token) }
+              VStack(alignment: .leading, spacing: 3) {
+                Button {
+                  expanded = expanded == row.turn ? nil : row.turn
+                  if expanded != nil { scroll.scrollTo(row.turn, anchor: .top) }
+                } label: {
+                  HStack(spacing: 8) {
+                    TeamMarker(row.side, size: 18)
+                    VStack(alignment: .leading, spacing: 2) {
+                      Text("Turn \(row.turn) · \(screen.teamName(row.side))").font(PSFont.body(16, .bold))
+                      if !row.batons.isEmpty {
+                        Text("\(down) down with \(screen.n(row.batons.count, "baton"))").psHelp()
+                      }
+                      if expanded != row.turn, let last = plays.last {
+                        Text(last).psHelp()
+                      }
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: expanded == row.turn ? "chevron.up" : "chevron.down")
+                  }
+                  .frame(maxWidth: .infinity, minHeight: 46, alignment: .leading)
+                  .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain).accessibilityIdentifier("history-turn-\(row.turn)")
+                .accessibilityValue(expanded == row.turn ? "Expanded" : "Collapsed")
+                if expanded == row.turn {
+                  ForEach(plays.indices, id: \.self) { i in
+                    Text(plays[i]).font(PSFont.body(15)).padding(.leading, 26)
+                  }
+                }
+              }
+              .padding(.horizontal, 12).padding(.vertical, 3)
+              .id(row.turn)
+              Divider()
+            }
+          }
+        }
+        .accessibilityIdentifier("turn-history")
+      }
+    }
   }
 }
