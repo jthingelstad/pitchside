@@ -171,7 +171,7 @@ final class ScorerScreen {
     if placing, let next = owed.first {
       return "Turn \(next.turn) · Tap Team \(next.half.rawValue)’s half (\(owed.count) left)."
     }
-    if rescueAttempt { return "Failed rescue · Tap where the kubb landed." }
+    if rescueAttempt { return "Failed rescue · Record this kubb’s landing." }
     if let flash { return flash }
     if punishPending { return "Tap where \(teamName(defender)) placed it." }
     if isInkast { return positionsOn ? "Tap where the kubb lands." : nil }
