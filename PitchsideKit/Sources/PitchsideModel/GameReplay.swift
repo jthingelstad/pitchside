@@ -130,7 +130,65 @@ public struct GameReplay: Identifiable, Sendable {
     public var result: String?
   }
 
-  public init(_ a: Analysis) {
+  private struct FieldSnapshot {
+    var count: Int
+    var places: [ReplayPlace]
+  }
+
+  private struct ObservedTurn {
+    var pitch: [Side: FieldSnapshot] = [:]
+    var batons: [[Int: FieldPlacements.Placement]] = []
+    var after: [[Side: FieldSnapshot]] = []
+  }
+
+  /// Use the phone's saved approximate placements when its journal accompanies the file.
+  /// The notation reader remains the source of the turns, tokens and result.
+  public init(_ a: Analysis, journal: EventLog) throws {
+    var turns: [Int: ObservedTurn] = [:]
+    var field = FieldPlacements()
+    func snapshot(_ state: RecordState, turn: Int) -> [Side: FieldSnapshot] {
+      guard state.capture.pitch else { return [:] }
+      var result: [Side: FieldSnapshot] = [:]
+      for half in Side.allCases {
+        let side = state.side(half)
+        let observed = field.aligned(in: half, state: state)
+        guard observed.contains(where: { $0 != nil }) else { continue }
+        let places: [ReplayPlace] = zip(side.fieldPositions, observed).map { cell, placement in
+          let p = placement?.point ?? cell
+          var place = ReplayPlace(across: p.across, depth: p.depth, cell: placement == nil,
+                                  mark: placement != nil ? placement?.mark(in: turn) : cell.mark)
+          place.tapped = placement != nil
+          return place
+        }
+        result[half] = FieldSnapshot(count: side.field, places: places)
+      }
+      return result
+    }
+    if let setup = journal.events.first(where: { $0.kind == GameEvent.Kind.start })?.payload["setup"] {
+      try RecordScorer.walk(setup: setup, records: RecordScorer.fold(journal.events)) { entry, after in
+        guard !entry.before.over else { return }
+        let n = entry.turn
+        if entry.type == "baton" {
+          if turns[n, default: ObservedTurn()].batons.isEmpty {
+            turns[n, default: ObservedTurn()].pitch = snapshot(entry.before, turn: n)
+          }
+          let hits = field.apply(entry.event, before: entry.before, after: after)
+          turns[n, default: ObservedTurn()].batons.append(hits)
+          turns[n, default: ObservedTurn()].after.append(snapshot(after, turn: n))
+        } else {
+          field.apply(entry.event, before: entry.before, after: after)
+          if turns[n, default: ObservedTurn()].batons.isEmpty {
+            turns[n, default: ObservedTurn()].pitch = snapshot(after, turn: n)
+          }
+        }
+      }
+    }
+    self.init(a, observations: turns)
+  }
+
+  public init(_ a: Analysis) { self.init(a, observations: [:]) }
+
+  private init(_ a: Analysis, observations: [Int: ObservedTurn]) {
     names = [.A: a.name(.A), .B: a.name(.B)]
     var setup = Half()
     setup.base.count = a.rules.baseKubbs
@@ -145,11 +203,24 @@ public struct GameReplay: Identifiable, Sendable {
       let att = row.team, def = att.other
       let rec = row.recording
       let words = row.batons.enumerated().map { i, baton -> ([ReplayPlace], [ReplayPlace]) in
-        guard baton.isThrown, baton.kind == "hit", i < rec.falls.count, let hits = rec.falls[i],
-          (baton.f ?? 0) <= hits.count, hits.count - (baton.f ?? 0) == (baton.b ?? 0)
-        else { return ([], []) }
+        guard baton.isThrown, baton.kind == "hit" else { return ([], []) }
         let f = baton.f ?? 0
-        return (Array(hits.prefix(f)), Array(hits.dropFirst(f)))
+        let hits = i < rec.falls.count ? rec.falls[i] ?? [] : []
+        let complete = f <= hits.count && hits.count - f == (baton.b ?? 0)
+        let local = observations[row.turn]?.batons
+        let selected = local.flatMap { $0.indices.contains(i) ? $0[i] : nil } ?? [:]
+        let fields = complete ? Array(hits.prefix(f)) : []
+        // Iterate recorded slots only. A tolerant reader can report arbitrarily large counts.
+        let slots = Set(fields.indices).union(selected.keys.filter { $0 >= 0 && $0 < f })
+        let locations: [ReplayPlace] = slots.sorted().compactMap { slot in
+          if let p = selected[slot]?.point {
+            var place = ReplayPlace(across: p.across, depth: p.depth)
+            place.tapped = true
+            return place
+          }
+          return fields.indices.contains(slot) ? fields[slot] : nil
+        }
+        return (locations, complete ? Array(hits.dropFirst(f)) : [])
       }
       var futureField = ArraySlice(words.flatMap(\.0))
       var futureBase = ArraySlice(words.flatMap(\.1))
@@ -161,6 +232,9 @@ public struct GameReplay: Identifiable, Sendable {
       if let own = rec.pitch[att], own.count == board[att]?.field.count {
         board[att, default: Half()].field.places = own
       }
+      if let own = observations[row.turn]?.pitch[att], own.count == board[att]?.field.count {
+        board[att]?.field.places = own.places
+      }
       if !rec.lays.isEmpty {
         let carried = max(0, row.startField - row.inkast)
         let positions = rec.pitch[def]?.filter { $0.mark == "s" } ?? []
@@ -171,7 +245,9 @@ public struct GameReplay: Identifiable, Sendable {
       }
       var target = board[def, default: Half()]
       target.field.count = row.startField
-      if let pitch = rec.pitch[def], pitch.count == row.startField {
+      if let observed = observations[row.turn]?.pitch[def], observed.count == row.startField {
+        target.field.places = observed.places
+      } else if let pitch = rec.pitch[def], pitch.count == row.startField {
         target.field.places = pitch
       } else {
         // An inkast can move kubbs left over on the receiving half. Without a
@@ -218,6 +294,10 @@ public struct GameReplay: Identifiable, Sendable {
           target.base.fell(base, at: bases)
           if f > 0 { target.field.confirm(Array(futureField)) }
           if base > 0 { target.base.confirm(Array(futureBase)) }
+          if let layouts = observations[row.turn]?.after, layouts.indices.contains(i),
+             let surviving = layouts[i][def], surviving.count == target.field.count {
+            target.field.places = surviving.places
+          }
           board[def] = target
         }
         if b.kind == "king" || b.kind == "illegalking" || b.e == true { king = false }

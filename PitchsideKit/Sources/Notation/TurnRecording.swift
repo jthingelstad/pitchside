@@ -9,6 +9,8 @@ public struct TurnRecording: Decodable, Sendable {
     public let mark: String?
     /// Set by replay when a later fall supplies a standing location.
     public var inferredFromFall = false
+    /// Added by Pitchside when a local journal supplies an approximate tap.
+    public var tapped = false
 
     private enum CodingKeys: String, CodingKey { case across, depth, cell, mark }
 

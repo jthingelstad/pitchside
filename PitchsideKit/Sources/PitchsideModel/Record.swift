@@ -21,6 +21,11 @@ public struct RecordPoint: Codable, Sendable, Hashable {
     self.mark = mark
   }
 
+  /// Record mode includes both far edges in the last metre cell.
+  public var metreCell: RecordPoint {
+    RecordPoint(across: min(4, floor(across)), depth: min(3, floor(depth)))
+  }
+
   /// The point as an event field.
   public var json: JSONValue {
     var o: [String: JSONValue] = ["across": .number(across), "depth": .number(depth)]
@@ -30,11 +35,13 @@ public struct RecordPoint: Codable, Sendable, Hashable {
 
   /// Extra provenance on observed points stays in the journal. The v1.1 writer reads
   /// across and depth from this object and emits the supported cell or stance.
-  public func tap(in half: Side) -> JSONValue {
-    .object([
+  public func tap(in half: Side, placementID: String? = nil) -> JSONValue {
+    var value: [String: JSONValue] = [
       "across": .number(across), "depth": .number(depth),
       "half": .string(half.rawValue.lowercased()), "approximate": true, "source": "tap",
-    ])
+    ]
+    if let placementID { value["placement"] = .string(placementID) }
+    return .object(value)
   }
 
 }
