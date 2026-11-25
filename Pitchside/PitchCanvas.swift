@@ -17,6 +17,8 @@ struct PitchCanvas: View {
   struct Piece: Identifiable {
     enum Kind { case field, base, owed, king }
     let id: String
+    var placementID: String? = nil
+    var drawingID: String { placementID ?? id }
     let kind: Kind
     let side: Side
     let at: PitchFrame.World
@@ -36,15 +38,13 @@ struct PitchCanvas: View {
         PitchGround(geo: geo, target: screen.over ? nil : screen.placingHalf,
                     placing: screen.isInkast || screen.placing || screen.punishPending)
           .frame(width: g.size.width, height: g.size.height, alignment: .topLeading)
-        ForEach(Array(screen.fallen.enumerated()), id: \.offset) { i, at in
-          let group = screen.fallen.indices.filter { screen.fallen[$0] == at }
-          let location = spread(at, index: group.firstIndex(of: i) ?? 0, count: group.count)
+        ForEach(Array(screen.fallen.enumerated()), id: \.offset) { _, at in
           RoundedRectangle(cornerRadius: 3).fill(Color.psKubbRest)
             .overlay(RoundedRectangle(cornerRadius: 3).strokeBorder(Color.psKubbInk, lineWidth: 2))
             .frame(width: 26, height: 12).rotationEffect(.degrees(screen.view.isSideways ? 62 : 28))
-            .position(geo.point(location)).accessibilityHidden(true).allowsHitTesting(false)
+            .position(geo.point(at)).accessibilityHidden(true).allowsHitTesting(false)
         }
-        ForEach(pieces) { piece in kubb(piece, geo) }
+        ForEach(pieces, id: \.drawingID) { piece in kubb(piece, geo) }
         if screen.isInkast && !screen.placing && !screen.punishPending, screen.positionsOn {
           let ghost = geo.half(screen.defender)
           Circle().strokeBorder(Color.psChalk, style: StrokeStyle(lineWidth: 2, dash: [3, 3]))
@@ -95,7 +95,12 @@ struct PitchCanvas: View {
       return dx <= 24 && dy <= 24 ? (target, dx * dx + dy * dy) : nil
     }
     if let hit = hits.min(by: { $0.1 < $1.1 }) {
-      screen.toggle(hit.0)
+      let tied = hits.filter { abs($0.1 - hit.1) < 0.001 }.map { $0.0 }
+      if tied.count > 1 {
+        screen.panel = .coincident(tied)
+      } else {
+        screen.toggle(hit.0)
+      }
     } else {
       screen.tap(geo.world(location))
     }
@@ -212,7 +217,8 @@ struct PitchCanvas: View {
               mark: nil, label: "Team \(side.rawValue) base kubb, place not recorded"))
         }
       }
-      // field kubbs in this side's half: several in one cell are spread out
+      // Prefer observed positions. Space out pieces that are known only to a cell.
+      let observed = screen.placements.aligned(in: side, state: st)
       var seen: [String: Int] = [:]
       for (i, c) in s.fieldPositions.enumerated() where screen.positionsOn {
         let key = "\(c.across),\(c.depth)"
@@ -220,16 +226,19 @@ struct PitchCanvas: View {
         seen[key] = k + 1
         let middle = PitchFrame.cellMiddle(c, half: side)
         let group = s.fieldPositions.filter { $0.across == c.across && $0.depth == c.depth }.count
-        let w = spread(middle, index: k, count: group)
+        let placement = observed[i]
+        let mark = placement != nil ? placement?.mark(in: st.turn) : c.mark
+        let w = placement.map { PitchFrame.world($0.point, half: side) } ?? spread(middle, index: k, count: group)
         out.append(
           Piece(
-            id: "f\(side)\(i)", kind: .field, side: side, at: w,
+            id: "f\(side)\(i)", placementID: placement?.id, kind: .field, side: side, at: w,
             target: isTarget && screen.positionsOn && screen.isBaton && !screen.placing
-              && !screen.punishPending ? .field(i) : nil, mark: c.mark,
+              && !screen.punishPending ? .field(i) : nil, mark: mark,
             label:
               "Field kubb in Team \(side.rawValue)'s half, across \(Int(c.across)), depth \(Int(c.depth))"
               + (group > 1 ? ", \(k + 1) of \(group) in this cell" : "")
-              + (c.mark == "p" ? ", the punishment kubb" : "")))
+              + (placement.map { ", tapped at " + screen.word($0.point) } ?? "")
+              + (mark == "p" ? ", the punishment kubb" : "")))
       }
       // kubbs whose place is owed
       let owed = screen.positionsOn ? max(0, s.field - s.fieldPositions.count) : 0

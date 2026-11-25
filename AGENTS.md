@@ -589,11 +589,15 @@ generated team names, the rules choice).
   reserved. New taps carry half, across, depth and their approximate tap provenance in the
   journal. `PitchFrame` maps the three viewing positions to a common centre-line origin.
   Record mode returns metre cells for kubbs and writes stance points to the centimetre.
-  Pieces in one cell are spread on screen so each is selectable. Pinch around a group
+  The live pitch uses journal taps at their original approximate positions. Coincident
+  targets offer an inline choice. Pieces known only to a cell share its drawing area. Pinch around a group
   to zoom the pitch up to 4×, then drag to pan. The header button zooms into the
   defending half or fits the pitch. A change of turn or view fits the pitch again.
-  Stable piece ids and original standing points in the returned state would let Pitchside draw a drilled
-  group at its observed spots. The observed advantage distance stays in the journal.
+  A field hit in the journal can carry `at[i].placement`, the ID of the toss or
+  punishment placement (or the pitch-event ID and slot). It identifies that standing
+  placement until it falls. An earlier unreferenced hit in a shared cell leaves the
+  surviving positions at cell precision. Native piece IDs and tapped points in
+  record mode remain an engine request. The observed advantage distance stays in the journal.
   On a baton with both located and unlocated hits, `knownFelled` keeps the available
   positions locally until the timeline editor can supply a complete felled word.
 - **Play by play.** `GameReplay` builds immutable pitch snapshots from the vendored
@@ -601,7 +605,10 @@ generated team names, the rules choice).
   Pitch and fall lines retain point or cell precision. A recorded fall can establish a
   standing position on a turn with no pitch line. An unidentified fall leaves uncertain
   survivors unlocated. Inkast totals are grouped because a notation file does not give
-  toss order. Lay and throwing-spot coordinates appear when the file contains them.
+  toss order. Local replay refines those rows with the folded journal and labels the
+  tapped positions. More → Play by play on the live scorer opens at the latest play
+  and returns to the pending throw. Shared text files use the released engine's cells.
+  Lay and throwing-spot coordinates appear when the file contains them.
 - **Build and test.**
   - `swift test --package-path PitchsideKit` runs model, frame, contrast, reader and
     engine tests. Node is needed to compare the reader with archived games read in

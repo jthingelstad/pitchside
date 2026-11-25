@@ -4,6 +4,8 @@ import SwiftUI
 
 /// The band, pitch and thumb controls stay in place through every turn.
 struct ScorerView: View {
+  @Environment(AppModel.self) private var model
+  @State private var replay: GameReplay?
   @State private var screen: ScorerScreen
   @State private var timeline = false
   @State private var viewport = PitchFrame.Viewport()
@@ -17,7 +19,11 @@ struct ScorerView: View {
 
   var body: some View {
     Group {
-      if timeline {
+      if let replay {
+        NavigationStack {
+          ReplayView(replay: replay, back: "Scoring", startAtLast: true) { self.replay = nil }
+        }
+      } else if timeline {
         TimelineView(screen: screen) {
           if screen.over { close() } else { timeline = false }
         }
@@ -225,6 +231,20 @@ struct ScorerView: View {
     @Bindable var s = screen
     VStack(alignment: .leading, spacing: 8) {
       switch screen.panel {
+      case .coincident(let targets):
+        Text("Which kubb fell?").psKick()
+        ForEach(targets, id: \.self) { target in
+          let title = switch target {
+          case .field(let i): "Field kubb \(i + 1)"
+          case .base(let i): "Base kubb \(i + 1)"
+          case .king: "King"
+          }
+          Button(screen.marked.contains(target) ? "\(title) · marked" : title) {
+            screen.panel = .none
+            screen.toggle(target)
+          }
+        }
+        Button("Cancel") { screen.panel = .none }
       case .rare:
         Text("More").psKick()
         LazyVGrid(columns: [.init(.flexible()), .init(.flexible())], spacing: 8) {
@@ -250,6 +270,13 @@ struct ScorerView: View {
           if screen.state.allows("note") { Button("Add a note") { screen.panel = .note } }
           if screen.scorer.captureAppliesNow && screen.state.allows("capture") {
             Button("What to record") { screen.panel = .capture }
+          }
+          if !screen.rows.isEmpty {
+            Button("Play by play") {
+              screen.panel = .none
+              do { replay = try model.playByPlay(screen.game) }
+              catch { screen.problem = error.localizedDescription }
+            }
           }
           Button("Timeline") {
             screen.panel = .none

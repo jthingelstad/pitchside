@@ -28,6 +28,7 @@ final class ScorerScreen {
     case resign
     case call
     case warnings
+    case coincident([Target])
   }
 
   @ObservationIgnored let scorer: LiveScorer
@@ -59,6 +60,7 @@ final class ScorerScreen {
     let punishment: Bool
   }
   private(set) var owed: [OwedPlace] = []
+  private(set) var placements = FieldPlacements()
   private(set) var fallen: [PitchFrame.World] = []
   var placingHalf: Side { placing ? owed.first?.half ?? defender : defender }
   var problem: String?
@@ -126,7 +128,8 @@ final class ScorerScreen {
     if let meters = state.advantage?.meters { return 4 - Double(meters) }
     let own = state.side(attacker)
     guard own.field > 0, own.fieldComplete, !own.fieldPositions.isEmpty else { return nil }
-    return own.fieldPositions.map { $0.depth + 0.5 }.min()
+    let observed = placements.aligned(in: attacker, state: state)
+    return zip(own.fieldPositions, observed).map { cell, placement in placement?.point.depth ?? cell.depth + 0.5 }.min()
   }
 
   var advantageShown: Bool {
@@ -261,6 +264,7 @@ final class ScorerScreen {
     if by, playersOn, let t = thrower { e["by"] = .string(t.id) }
     func observed(_ point: JSONValue, in half: Side) -> JSONValue {
       guard let x = point["across"]?.number, let d = point["depth"]?.number else { return point }
+      if point["source"] == "tap" { return point }
       return RecordPoint(across: x, depth: d).tap(in: half)
     }
     if let at = e["at"] {
@@ -483,15 +487,16 @@ final class ScorerScreen {
 
   func baton(illegal: Bool = false, king: Bool = false) {
     let side = state.side(defender)
-    var fields: [RecordPoint] = []
-    var bases: [RecordPoint] = []
+    let observed = placements.aligned(in: defender, state: state)
+    var fields: [JSONValue] = []
+    var bases: [JSONValue] = []
     for target in marked {
       switch target {
       case .field(let i) where side.fieldPositions.indices.contains(i):
         let c = side.fieldPositions[i]
-        fields.append(RecordPoint(across: c.across + 0.5, depth: c.depth + 0.5))
+        fields.append(observed[i]?.hit(in: defender) ?? RecordPoint(across: c.across + 0.5, depth: c.depth + 0.5).json)
       case .base(let i) where side.basePositions.indices.contains(i):
-        bases.append(RecordPoint(across: side.basePositions[i].across + 0.5, depth: 4))
+        bases.append(RecordPoint(across: side.basePositions[i].across + 0.5, depth: 4).tap(in: defender))
       default: break
       }
     }
@@ -499,13 +504,14 @@ final class ScorerScreen {
     let allLocated = countField + countBase == 0
     var event = RecordEvent.baton(
       field: fields.count + countField, base: bases.count + countBase, king: king, illegal: illegal,
-      at: positionsOn && allLocated ? spots : nil, stance: stanceOn ? stance : nil)
+      stance: stanceOn ? stance : nil)
+    if positionsOn && allLocated && !spots.isEmpty { event["at"] = .array(spots) }
     if !allLocated && !spots.isEmpty {
       // The writer needs a whole felled word. Keep the observed part locally for correction.
       let observedFields =
-        fields.map { $0.tap(in: defender) } + Array(repeating: .null, count: countField)
+        fields + Array(repeating: .null, count: countField)
       let observedBases =
-        bases.map { $0.tap(in: defender) } + Array(repeating: .null, count: countBase)
+        bases + Array(repeating: .null, count: countBase)
       event["knownFelled"] = .array(observedFields + observedBases)
     }
     add(event)
@@ -643,6 +649,7 @@ final class ScorerScreen {
 
   /// Only draw lying pieces the engine actually removed from known cells.
   private func trackFallen(_ event: [String: JSONValue], before: RecordState, after: RecordState) {
+    let hits = placements.apply(event, before: before, after: after)
     guard before.turn == after.turn else {
       fallen = []
       return
@@ -650,11 +657,15 @@ final class ScorerScreen {
     guard before.capture.pitch, event["type"] == "baton", let half = before.defender else { return }
     let old = before.side(half)
     let new = after.side(half)
+    var known = hits.keys.sorted().compactMap { hits[$0]?.point }
+    fallen.append(contentsOf: known.map { PitchFrame.world($0, half: half) })
     func removed(_ standing: [RecordPoint], remaining: [RecordPoint], base: Bool) {
       var cells = remaining
       for cell in standing {
-        if let i = cells.firstIndex(of: cell) {
+        if let i = cells.firstIndex(where: { $0.across == cell.across && $0.depth == cell.depth }) {
           cells.remove(at: i)
+        } else if !base, let i = known.firstIndex(where: { $0.metreCell == cell.metreCell }) {
+          known.remove(at: i)
         } else {
           let point = RecordPoint(across: cell.across + 0.5, depth: base ? 3.9 : cell.depth + 0.5)
           fallen.append(PitchFrame.world(point, half: half))
@@ -670,6 +681,7 @@ final class ScorerScreen {
   }
 
   private func restoreContext() {
+    placements = FieldPlacements()
     fallen = []
     owed = []
     pick = nil
@@ -678,19 +690,17 @@ final class ScorerScreen {
     punishLater = false
     stance = nil
     do {
-      for turn in try scorer.timeline() {
-        for (i, entry) in turn.events.enumerated() {
-          trackPlace(entry.event, before: entry.before)
-          guard turn.turn == state.turn else { continue }
-          let after = i + 1 < turn.events.count ? turn.events[i + 1].before : state
-          trackFallen(entry.event, before: entry.before, after: after)
-          if entry.type == "toss" { inkastBy = entry.event["by"]?.string }
-          if entry.type == "baton", entry.before.next.kingShot == state.next.kingShot,
-            let spot = entry.event["stance"], let x = spot["across"]?.number,
-            let d = spot["depth"]?.number
-          {
-            stance = RecordPoint(across: x, depth: d)
-          }
+      let events = try scorer.timeline().flatMap(\.events)
+      for (i, entry) in events.enumerated() {
+        trackPlace(entry.event, before: entry.before)
+        let after = i + 1 < events.count ? events[i + 1].before : state
+        trackFallen(entry.event, before: entry.before, after: after)
+        guard entry.turn == state.turn else { continue }
+        if entry.type == "toss" { inkastBy = entry.event["by"]?.string }
+        if entry.type == "baton", entry.before.next.kingShot == state.next.kingShot,
+          let spot = entry.event["stance"], let x = spot["across"]?.number,
+          let d = spot["depth"]?.number {
+          stance = RecordPoint(across: x, depth: d)
         }
       }
     } catch { problem = String(describing: error) }

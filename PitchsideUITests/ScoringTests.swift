@@ -217,6 +217,64 @@ final class ScoringTests: XCTestCase {
     }
   }
 
+  func testMiddleOfClusterSurvivesReopenAndReplay() {
+    launch("scorer", after: 28)
+    for (x, y) in [(2.14, 4.18), (2.41, 4.42), (2.72, 4.69)] { spot(x, y) }
+    let fields = (0..<3).map { app.buttons["fB" + String($0)] }
+    func tapLocation(_ button: XCUIElement) -> String {
+      button.label.components(separatedBy: "tapped at ").last ?? ""
+    }
+    let places = fields.map(tapLocation)
+    XCTAssertEqual(Set(places).count, 3)
+    let centres = fields.map { $0.frame.midX }
+    tap("fB1")
+    tap("1 down")
+    tap("Back to Games")
+    tap("Resume scoring, Wobbly Towers versus Birch Batons")
+    XCTAssertEqual(tapLocation(fields[0]), places[0])
+    XCTAssertEqual(tapLocation(fields[1]), places[2])
+    XCTAssertEqual(fields[0].frame.midX, centres[0], accuracy: 1)
+    XCTAssertEqual(fields[1].frame.midX, centres[2], accuracy: 1)
+    tap("More")
+    tap("Play by play") // Opens at the latest recorded throw.
+    tap("Jump to turn")
+    tap("Turn 5")
+    tap("Details")
+    func standing(_ count: Int) -> XCUIElement {
+      app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Field · " + String(count) + " standing")).firstMatch
+    }
+    let all = standing(3).label
+    XCTAssertTrue(places.allSatisfy { all.contains($0 + " (tapped)") }, all)
+    tap("Back to Play by play")
+    tap("Next") // Advantage
+    tap("Next") // First baton
+    tap("Zoom in on pitch")
+    shot("Cluster-replay")
+    tap("Details")
+    let fallen = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Felled in Team'")).firstMatch.label
+    XCTAssertTrue(fallen.contains(places[1] + " (tapped)"), fallen)
+    XCTAssertTrue(standing(2).label.contains(places[0]) && standing(2).label.contains(places[2]))
+    tap("Back to Play by play")
+    tap("Previous")
+    tap("Details")
+    XCTAssertTrue(standing(3).label.contains(places[1]))
+    tap("Back to Play by play")
+    tap("Back to Scoring")
+    XCTAssertEqual(tapLocation(fields[1]), places[2])
+  }
+
+  func testChooseOneOfThreeCoincidentPlacements() {
+    launch("scorer", after: 28)
+    for _ in 0..<3 { spot(2.5, 5.25) }
+    tap("fB1")
+    tap("Field kubb 2")
+    XCTAssertEqual(app.buttons["fB1"].value as? String, "marked down")
+    XCTAssertEqual(app.buttons["fB0"].value as? String, "standing")
+    tap("1 down")
+    XCTAssertTrue(app.buttons["fB1"].exists)
+    XCTAssertFalse(app.buttons["fB2"].exists)
+  }
+
   func testEarlierEdit() {
     launch("scorer", after: 33)
     tap("More")

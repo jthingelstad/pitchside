@@ -166,7 +166,15 @@ struct ScoreSheetView: View {
   }
 
   @ViewBuilder private func reviewActions(_ read: GameRead) -> some View {
-    Button { replay = GameReplay(read.analysis) } label: {
+    Button {
+      guard let game = model.game(id) else { return }
+      do { replay = try model.playByPlay(game, analysis: read.analysis) }
+      catch {
+        problem = "Showing positions from the game file. \(error.localizedDescription)"
+        let fileReplay = GameReplay(read.analysis)
+        if !fileReplay.steps.isEmpty { replay = fileReplay }
+      }
+    } label: {
       Label("Play by play", systemImage: "rectangle.stack")
     }
     .buttonStyle(.ps)
