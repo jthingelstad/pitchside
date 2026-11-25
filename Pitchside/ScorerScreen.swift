@@ -145,12 +145,10 @@ final class ScorerScreen {
 
   func n(_ count: Int, _ word: String) -> String { "\(count) \(word)\(count == 1 ? "" : "s")" }
 
-  var header: String {
-    let t = "Turn \(state.turn) · "
-    if over { return "Turn \(state.turn) · game over" }
-    if isInkast { return t + "inkast · \(state.inkast?.left ?? 0) to throw" }
-    let b = "baton \(state.next.n ?? 1) of \(state.next.of ?? 6)"
-    return t + b + (isKingShot ? " · king" : "")
+  /// The handoff stays visible until the first baton is recorded, including after a resume or undo.
+  var firstBatonAfterInkast: Bool {
+    state.next.kind == "baton" && state.next.n == 1 && (state.inkast?.dueAtStart ?? 0) > 0
+      && !punishPending && !placing
   }
 
   var kick: String {

@@ -3,7 +3,9 @@
 Pitchside is an iPhone scorekeeper for real games of kubb. Tap the kubbs that fell,
 record a miss, or mark where a throw landed. Pinch to zoom into a drilled group
 and tap the individual kubb that fell. Locally scored games remember each
-standing placement for replay. Undo a throw in one tap or correct an
+standing placement for replay. Each entry shows the turn, player, and action in order.
+When you track who threw, tap the suggested player beside the action to change it. “Inkast complete”
+stays visible until you record the first baton. Undo a throw in one tap or correct an
 earlier turn in the timeline, even after the game finishes. Switch between Games,
 Roster and Stats while scoring, then return to the throw you were marking.
 In locally scored games, each inkast throw, rethrow and punishment placement has its
