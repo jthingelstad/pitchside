@@ -39,7 +39,7 @@ import Testing
     func shots() throws -> (GameReplay.Step, GameReplay.Step) {
       let analysis = try NotationReader().read(reopened.text).analysis
       let replay = try GameReplay(analysis, journal: store.log(s.game.id))
-      return (try #require(replay.steps.first { $0.turn == 2 && $0.phase == "Inkast" }),
+      return (try #require(replay.steps.first { $0.turn == 2 && $0.phase == "Inkast · throw 3" }),
               try #require(replay.steps.first { $0.turn == 2 && $0.phase == "Baton 1" }))
     }
     let (standing, down) = try shots()

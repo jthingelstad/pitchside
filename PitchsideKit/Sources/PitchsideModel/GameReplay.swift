@@ -18,7 +18,7 @@ extension ReplayPlace {
   }
 }
 
-/// Immutable pitch states after the events the file actually distinguishes.
+/// Immutable pitch states after each play the journal or notation can distinguish.
 public struct GameReplay: Identifiable, Sendable {
   public let id = UUID()
   public let names: [Side: String]
@@ -123,6 +123,7 @@ public struct GameReplay: Identifiable, Sendable {
     public var inferredFalls: [ReplayPlace] = []
     public var unlocatedFalls = 0
     public var lays: [TurnRecording.Lay] = []
+    public var placed: ReplayPlace?
     public var stance: ReplayPlace?
     public var advantage = false
     public var advantageDepth: Double?
@@ -130,60 +131,122 @@ public struct GameReplay: Identifiable, Sendable {
     public var result: String?
   }
 
-  private struct FieldSnapshot {
-    var count: Int
-    var places: [ReplayPlace]
-  }
-
   private struct ObservedTurn {
-    var pitch: [Side: FieldSnapshot] = [:]
+    var inkast: [Step] = []
+    var tosses = 0
+    var skipped = 0
+    var showAdvantage = false
+    var pitch: [Side: Standing] = [:]
     var batons: [[Int: FieldPlacements.Placement]] = []
-    var after: [[Side: FieldSnapshot]] = []
-  }
+    var after: [[Side: Standing]] = []
+    private var capture: RecordState.Switches?
 
-  /// Use the phone's saved approximate placements when its journal accompanies the file.
-  /// The notation reader remains the source of the turns, tokens and result.
-  public init(_ a: Analysis, journal: EventLog) throws {
-    var turns: [Int: ObservedTurn] = [:]
-    var field = FieldPlacements()
-    func snapshot(_ state: RecordState, turn: Int) -> [Side: FieldSnapshot] {
-      guard state.capture.pitch else { return [:] }
-      var result: [Side: FieldSnapshot] = [:]
+    mutating func record(_ entry: TimelineEvent, after state: RecordState, field: inout FieldPlacements) {
+      let before = entry.before
+      let baton = entry.type == "baton"
+      // Record mode freezes capture at the first throw. A later change applies next turn.
+      let active = capture ?? before.capture
+      if baton || (entry.type == "toss" && before.allows("toss")) { capture = active }
+      if baton && batons.isEmpty { pitch = snapshot(before, turn: entry.turn, capture: active, field: field) }
+      let hits = field.apply(entry.event, before: before, after: state, capturePitch: active.pitch)
+      let fields = snapshot(state, turn: entry.turn, capture: active, field: field)
+      if baton {
+        batons.append(hits)
+        after.append(fields)
+      } else if batons.isEmpty {
+        pitch = fields
+      }
+      if let step = GameReplay.inkastStep(entry, after: state, fields: fields, placements: field,
+                                          capture: active, throwNumber: tosses + 1) {
+        inkast.append(step)
+        if entry.type == "toss" { tosses += 1 }
+        showAdvantage = false
+      } else if baton || state.over {
+        showAdvantage = true
+        if let left = before.inkast?.left, left > 0 { skipped = left }
+      } else if entry.type == "advantage", state.phase == "batons" {
+        showAdvantage = true
+      }
+    }
+
+    private func snapshot(_ state: RecordState, turn: Int, capture: RecordState.Switches,
+                          field: FieldPlacements) -> [Side: Standing] {
+      var result: [Side: Standing] = [:]
       for half in Side.allCases {
         let side = state.side(half)
         let observed = field.aligned(in: half, state: state)
-        guard observed.contains(where: { $0 != nil }) else { continue }
-        let places: [ReplayPlace] = zip(side.fieldPositions, observed).map { cell, placement in
+        let places: [ReplayPlace] = capture.pitch ? zip(side.fieldPositions, observed).map { cell, placement in
           let p = placement?.point ?? cell
           var place = ReplayPlace(across: p.across, depth: p.depth, cell: placement == nil,
                                   mark: placement != nil ? placement?.mark(in: turn) : cell.mark)
           place.tapped = placement != nil
           return place
-        }
-        result[half] = FieldSnapshot(count: side.field, places: places)
+        } : []
+        result[half] = Standing(count: side.field, places: places)
       }
       return result
     }
+  }
+
+  /// Use the journal for the order and outcomes of observed tosses. The reader supplies
+  /// the turn rows, baton tokens and result, including for games opened from text alone.
+  public init(_ a: Analysis, journal: EventLog) throws {
+    var turns: [Int: ObservedTurn] = [:]
+    var field = FieldPlacements()
     if let setup = journal.events.first(where: { $0.kind == GameEvent.Kind.start })?.payload["setup"] {
       try RecordScorer.walk(setup: setup, records: RecordScorer.fold(journal.events)) { entry, after in
         guard !entry.before.over else { return }
-        let n = entry.turn
-        if entry.type == "baton" {
-          if turns[n, default: ObservedTurn()].batons.isEmpty {
-            turns[n, default: ObservedTurn()].pitch = snapshot(entry.before, turn: n)
-          }
-          let hits = field.apply(entry.event, before: entry.before, after: after)
-          turns[n, default: ObservedTurn()].batons.append(hits)
-          turns[n, default: ObservedTurn()].after.append(snapshot(after, turn: n))
-        } else {
-          field.apply(entry.event, before: entry.before, after: after)
-          if turns[n, default: ObservedTurn()].batons.isEmpty {
-            turns[n, default: ObservedTurn()].pitch = snapshot(after, turn: n)
-          }
-        }
+        turns[entry.turn, default: ObservedTurn()].record(entry, after: after, field: &field)
       }
     }
     self.init(a, observations: turns)
+  }
+
+  private static func inkastStep(_ entry: TimelineEvent, after: RecordState, fields: [Side: Standing],
+                                 placements: FieldPlacements, capture: RecordState.Switches, throwNumber: Int) -> Step? {
+    let before = entry.before
+    let def = entry.side.other
+    let phase: String
+    var title: String
+    var details: [String] = []
+    switch entry.type {
+    case "toss" where before.next.kind == "toss":
+      phase = "Inkast · throw \(throwNumber)"
+      let rethrow = before.next.rethrow == true
+      if after.king == "down" { title = "King felled by a kubb" }
+      else if entry.event["result"] == "out" { title = rethrow ? "Rethrow out · punishment due" : "Kubb out" }
+      else { title = rethrow ? "Rethrow in" : "Kubb in" }
+      if capture.players, let id = entry.event["by"]?.string,
+         let player = before.side(entry.side).players.first(where: { $0.id == id }) {
+        title = "\(player.name) · \(title)"
+      }
+      if let remaining = after.inkast?.rescuable, let previous = before.inkast?.rescuable, previous > remaining {
+        details.append("\(previous - remaining) rescued")
+      } else if entry.event["rescueAttempt"] == true && !rethrow,
+                after.inkast != nil || (entry.event["rescued"]?.number ?? 0) == 0 {
+        details.append("Failed rescue")
+      }
+      if entry.event["onTop"] == true { details.append("Landed on another kubb") }
+    case "punish" where before.allows("punish") && before.inkast?.punishPlaced != after.inkast?.punishPlaced:
+      phase = "Inkast · placement"
+      title = "Punishment kubb placed"
+    default: return nil
+    }
+    var board: [Side: Half] = [:]
+    for half in Side.allCases {
+      let side = after.side(half)
+      let bases = side.basePositions.map { ReplayPlace(across: $0.across + 0.5, depth: 4) }
+      board[half] = Half(base: Standing(count: side.base, places: bases), field: fields[half] ?? Standing())
+    }
+    var step = Step(turn: entry.turn, team: entry.side, phase: phase, title: title, token: "",
+                    board: board, kingStanding: after.king != "down")
+    if capture.pitch, let p = placements.aligned(in: def, state: after).compactMap({ $0 }).first(where: { $0.id == entry.id }) {
+      var place = ReplayPlace(across: p.point.across, depth: p.point.depth, mark: p.mark(in: entry.turn))
+      place.tapped = true
+      step.placed = place
+    }
+    if !details.isEmpty { step.note = details.joined(separator: " · ") }
+    return step
   }
 
   public init(_ a: Analysis) { self.init(a, observations: [:]) }
@@ -230,10 +293,13 @@ public struct GameReplay: Identifiable, Sendable {
       }
 
       turnStarts.append(steps.count)
+      let observedTurn = observations[row.turn]
+      let inkast = observedTurn?.inkast ?? []
+      steps.append(contentsOf: inkast)
       if let own = rec.pitch[att], own.count == board[att]?.field.count {
         board[att, default: Half()].field.places = own
       }
-      if let own = observations[row.turn]?.pitch[att], own.count == board[att]?.field.count {
+      if let own = observedTurn?.pitch[att], own.places.contains(where: \.tapped), own.count == board[att]?.field.count {
         board[att]?.field.places = own.places
       }
       if !rec.lays.isEmpty {
@@ -246,7 +312,7 @@ public struct GameReplay: Identifiable, Sendable {
       }
       var target = board[def, default: Half()]
       target.field.count = row.startField
-      if let observed = observations[row.turn]?.pitch[def], observed.count == row.startField {
+      if let observed = observedTurn?.pitch[def], observed.places.contains(where: \.tapped), observed.count == row.startField {
         target.field.places = observed.places
       } else if let pitch = rec.pitch[def], pitch.count == row.startField {
         target.field.places = pitch
@@ -262,12 +328,16 @@ public struct GameReplay: Identifiable, Sendable {
       board[def] = target
       if row.ink?.E == true { king = false }
       let hasInkast = row.inkastRecorded || row.inkast > 0
-      steps.append(frame(hasInkast ? "Inkast" : (row.turn == 1 ? "Opening pitch" : "Start of turn"),
-                         hasInkast ? Self.inkastTitle(row) : "\(a.name(att)) to throw",
-                         rec.inkasts.joined(separator: " ")))
+      if inkast.isEmpty {
+        steps.append(frame(hasInkast ? "Inkast" : (row.turn == 1 ? "Opening pitch" : "Start of turn"),
+                           hasInkast ? Self.inkastTitle(row) : "\(a.name(att)) to throw",
+                           rec.inkasts.joined(separator: " ")))
+      } else if let skipped = observedTurn?.skipped, skipped > 0 {
+        steps.append(frame("Inkast", "\(skipped) unrecorded \(skipped == 1 ? "throw" : "throws") counted in"))
+      }
 
       var line: Double?
-      if row.advantage && king {
+      if row.advantage && king && (inkast.isEmpty || observedTurn?.showAdvantage == true) {
         let own = board[att, default: Half()].field
         if let m = rec.advantageMeters, (0...4).contains(m) { line = 4 - m }
         else if own.unknown == 0, own.places.allSatisfy({ !$0.cell }) { line = own.places.map(\.depth).min() }
@@ -296,7 +366,7 @@ public struct GameReplay: Identifiable, Sendable {
           if f > 0 { target.field.confirm(Array(futureField)) }
           if base > 0 { target.base.confirm(Array(futureBase)) }
           if let layouts = observations[row.turn]?.after, layouts.indices.contains(i),
-             let surviving = layouts[i][def], surviving.count == target.field.count {
+             let surviving = layouts[i][def], surviving.places.contains(where: \.tapped), surviving.count == target.field.count {
             target.field.places = surviving.places
           }
           board[def] = target
@@ -320,7 +390,10 @@ public struct GameReplay: Identifiable, Sendable {
         step.advantageDepth = step.advantage ? line : nil
         steps.append(step)
       }
-      steps[steps.count - 1].note = row.note
+      if let note = row.note, !note.isEmpty {
+        let last = steps.count - 1
+        steps[last].note = [steps[last].note, note].compactMap { $0 }.joined(separator: " · ")
+      }
     }
     if let w = a.winner, !steps.isEmpty {
       steps[steps.count - 1].result = "\(a.name(w)) won · \(a.resultDetail)"
