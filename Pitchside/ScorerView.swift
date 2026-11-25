@@ -9,11 +9,13 @@ struct ScorerView: View {
   @State private var screen: ScorerScreen
   @State private var timeline = false
   @State private var viewport = PitchFrame.Viewport()
+  let initialTurn: Int?
   let close: () -> Void
 
   init(session: ScoringSession, close: @escaping () -> Void) {
     _screen = State(initialValue: ScorerScreen(scorer: session.scorer))
     _timeline = State(initialValue: session.showTimeline)
+    initialTurn = session.initialTurn
     self.close = close
   }
 
@@ -24,7 +26,7 @@ struct ScorerView: View {
           ReplayView(replay: replay, back: "Scoring", startAtLast: true) { self.replay = nil }
         }
       } else if timeline {
-        TimelineView(screen: screen) {
+        TimelineView(screen: screen, initialTurn: initialTurn) {
           if screen.over { close() } else { timeline = false }
         }
       } else {
@@ -195,10 +197,13 @@ struct ScorerView: View {
 
   var bottomBar: some View {
     HStack(spacing: 8) {
-      Button("Undo") {
-        screen.panel = .none
-        screen.undo()
-      }.buttonStyle(.quiet).fixedSize(horizontal: true, vertical: false)
+      if screen.redoAction != nil {
+        icon("arrow.uturn.backward", "Undo", action: screen.undo).disabled(screen.undoAction == nil)
+        icon("arrow.uturn.forward", "Redo", action: screen.redo)
+      } else {
+        Button("Undo", action: screen.undo).buttonStyle(.quiet)
+          .fixedSize(horizontal: true, vertical: false).disabled(screen.undoAction == nil)
+      }
       Button(screen.primaryTitle) {
         screen.panel = .none
         if screen.over { close() } else { screen.primary() }

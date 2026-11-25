@@ -138,7 +138,8 @@ struct RootView: View {
   @ViewBuilder func destination(_ route: Route, back: String) -> some View {
     switch route {
     case .sheet(let id):
-      ScoreSheetView(id: id, engineNotes: engineNotes[id] ?? []) { session in
+      ScoreSheetView(id: id, engineNotes: engineNotes[id] ?? [], updateNotes: { engineNotes[id] = $0 }) { session in
+        tab = .games
         gamesPath = []
         scoring = session
       }
@@ -152,7 +153,9 @@ final class ScoringSession: Identifiable {
   let scorer: LiveScorer
   var id: UUID { scorer.game.id }
   let showTimeline: Bool
-  init(_ scorer: LiveScorer, showTimeline: Bool = false) {
+  let initialTurn: Int?
+  init(_ scorer: LiveScorer, showTimeline: Bool = false, initialTurn: Int? = nil) {
+    self.initialTurn = initialTurn
     self.scorer = scorer
     self.showTimeline = showTimeline
   }

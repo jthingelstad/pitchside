@@ -10,56 +10,88 @@ struct TimelineView: View {
   @State private var selected: TimelineEvent?
   @State private var problem: String?
 
+  @State private var focusTurn: Int?
+
+  init(screen: ScorerScreen, initialTurn: Int?, close: @escaping () -> Void) {
+    self.screen = screen
+    self.close = close
+    _expanded = State(initialValue: initialTurn)
+    _focusTurn = State(initialValue: initialTurn)
+  }
+
   var body: some View {
-    Screen(title: "Timeline", back: screen.over ? "Score sheet" : "Scoring", onBack: close) {
-      if let problem { Text(problem) }
-      if turns.isEmpty { Text("The first observation will appear here.").psHelp() }
-      ForEach(turns) { turn in
-        VStack(alignment: .leading, spacing: 6) {
-          Button {
-            selected = nil
-            expanded = expanded == turn.turn ? nil : turn.turn
-          } label: {
-            HStack(spacing: 8) {
-              Text("\(turn.turn)").font(PSFont.body(16, .bold))
-              TeamMarker(turn.side, size: 20)
-              VStack(alignment: .leading, spacing: 4) {
-                Text(screen.teamName(turn.side)).font(PSFont.body(16, .semibold))
-                Text(tokens(turn)).font(PSFont.mono(14))
-              }
-              Spacer()
-              Image(systemName: expanded == turn.turn ? "chevron.up" : "chevron.down")
-            }.frame(minHeight: 48).contentShape(Rectangle())
-          }.buttonStyle(.plain).accessibilityLabel(
-            "Turn \(turn.turn), \(screen.teamName(turn.side)), \(tokens(turn))")
-          if turn.events.contains(where: { !$0.warnings.isEmpty }) { Chip("Needs a look") }
-          if expanded == turn.turn {
-            if selected == nil {
-              FlowLayout(spacing: 6) {
-                ForEach(turn.events) { e in
-                  Button {
-                    selected = e
-                  } label: {
-                    Text(shortTitle(e)).font(PSFont.body(14, .bold))
-                      .padding(.horizontal, 8).frame(minWidth: 48, minHeight: 48).psBox()
-                  }.buttonStyle(.plain).accessibilityLabel(eventTitle(e))
-                }
-              }
-            }
-            if let e = selected, e.turn == turn.turn {
-              ObservationEditor(screen: screen, entry: e) { next in
-                selected = nil
+    ScrollViewReader { proxy in
+      Screen(title: "Timeline", back: screen.over ? "Score sheet" : "Scoring", onBack: close) {
+        if selected == nil {
+          HStack {
+            Button(screen.undoAction == .correction ? "Undo edit" : "Undo") {
+              screen.undo()
+              load()
+            }.buttonStyle(.quiet).disabled(screen.undoAction == nil)
+            if let action = screen.redoAction {
+              Button(action == .correction ? "Redo edit" : "Redo") {
+                screen.redo()
                 load()
-                expanded = next ?? turn.turn
-              }.id(e.id)
+              }.buttonStyle(.quiet)
             }
           }
-        }.padding(.horizontal, 10).padding(.vertical, 5)
-          .psCard()
+        }
+        if let message = problem ?? screen.problem { Text(message) }
+        if turns.isEmpty { Text("The first observation will appear here.").psHelp() }
+        ForEach(turns) { turn in
+          VStack(alignment: .leading, spacing: 6) {
+            Button {
+              selected = nil
+              expanded = expanded == turn.turn ? nil : turn.turn
+            } label: {
+              HStack(spacing: 8) {
+                Text("\(turn.turn)").font(PSFont.body(16, .bold))
+                TeamMarker(turn.side, size: 20)
+                VStack(alignment: .leading, spacing: 4) {
+                  Text(screen.teamName(turn.side)).font(PSFont.body(16, .semibold))
+                  Text(tokens(turn)).font(PSFont.mono(14))
+                }
+                Spacer()
+                Image(systemName: expanded == turn.turn ? "chevron.up" : "chevron.down")
+              }.frame(minHeight: 48).contentShape(Rectangle())
+            }.buttonStyle(.plain).accessibilityLabel(
+              "Turn \(turn.turn), \(screen.teamName(turn.side)), \(tokens(turn))")
+            if turn.events.contains(where: { !$0.warnings.isEmpty }) { Chip("Needs a look") }
+            if expanded == turn.turn {
+              if selected == nil {
+                FlowLayout(spacing: 6) {
+                  ForEach(turn.events) { e in
+                    Button {
+                      selected = e
+                    } label: {
+                      Text(shortTitle(e)).font(PSFont.body(14, .bold))
+                        .padding(.horizontal, 8).frame(minWidth: 48, minHeight: 48).psBox()
+                    }.buttonStyle(.plain).accessibilityLabel(eventTitle(e))
+                  }
+                }
+              }
+              if let e = selected, e.sheetTurn == turn.turn {
+                ObservationEditor(screen: screen, entry: e) { next in
+                  selected = nil
+                  load()
+                  expanded = next ?? turn.turn
+                  focusTurn = next
+                }.id(e.id)
+              }
+            }
+          }.padding(.horizontal, 10).padding(.vertical, 5)
+            .psCard().id(turn.turn)
+        }
+      }
+      .foregroundStyle(Color.psText)
+      .onAppear(perform: load)
+      .task(id: focusTurn) {
+        guard let turn = focusTurn else { return }
+        await Task.yield()
+        proxy.scrollTo(turn, anchor: .top)
+        focusTurn = nil
       }
     }
-    .foregroundStyle(Color.psText)
-    .onAppear(perform: load)
   }
 
   func load() {
@@ -168,6 +200,7 @@ private struct ObservationEditor: View {
           }.buttonStyle(.psSolid)
         }
       } else {
+        Button("Cancel edit") { finished(nil) }.buttonStyle(.quiet)
         Menu("Other edits") {
           Button("Insert a kubb thrown in before this") {
             insert = true
@@ -389,7 +422,7 @@ private struct ObservationEditor: View {
     let after = result.sheet?.rows ?? []
     let numbers = Set(before.rows.map(\.turn) + after.map(\.turn)).sorted()
     var changes: [Impact] = []
-    for turn in numbers where turn >= entry.turn {
+    for turn in numbers where turn >= min(entry.turn, entry.sheetTurn) {
       let old = before.rows.first { $0.turn == turn }
       let new = after.first { $0.turn == turn }
       if turn > entry.turn && old != new {
@@ -431,11 +464,11 @@ private struct ObservationEditor: View {
         ), at: 0)
     }
     if s.winner != before.state.winner || s.over != before.state.over {
-      changes.append(
+      changes.insert(
         Impact(
           turn: s.turn,
           text: s.winner.map { "\(screen.teamName($0)) would win." }
-            ?? "The game would still be on the pitch."))
+            ?? "The game would still be on the pitch."), at: 0)
     }
     return changes
   }

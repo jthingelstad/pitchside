@@ -47,6 +47,8 @@ jobs:
           -only-testing:PitchsideUITests/ScoringTests/testStepThroughAnImportedGame
           -only-testing:PitchsideUITests/ScoringTests/testWholeGame
           -only-testing:PitchsideUITests/ScoringTests/testCorrectACompletedGameWithoutUndoingTheResult
+          -only-testing:PitchsideUITests/ScoringTests/testUndoRedoAcrossTurnAndNewThrow
+          -only-testing:PitchsideUITests/ScoringTests/testRemoveWinningThrowFromSheetAndRestoreIt
           -only-testing:PitchsideUITests/ScoringTests/testPrintableScoreSheet
           -only-testing:PitchsideUITests/ScoringTests/testResumeAnOlderUnfinishedGame
           CODE_SIGNING_ALLOWED=NO test

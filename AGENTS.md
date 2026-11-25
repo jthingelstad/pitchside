@@ -578,8 +578,11 @@ generated team names, the rules choice).
   each game has a `games/<uuid>/` directory. In `events.jsonl` the start entry pins
   setup, including typed names and explicit player ids. Each observation has its record
   fields and id at the top level. The reserved `_log` object carries journal metadata.
-  Undo drops the last effective observation. A correction replaces, inserts or removes
-  an observation by id. Both append journal lines and replay the effective history.
+  A correction replaces, inserts or removes an observation by id. Undo and redo append
+  the sequence number of the observation or correction they reverse or restore. A new
+  observation or correction starts a fresh branch. Earlier journals with id-based undo
+  keep their original meaning. The score sheet opens a local turn directly for editing.
+  Undoing a correction to a finished game keeps the sheet open when the result still stands.
   A newline terminates each synced entry. The next append truncates a torn tail.
   `game.json` keeps the game summary and `game.txt` is the engine's current notation,
   a draft until `state.over`. Opening the app repairs stale exports from the journal.

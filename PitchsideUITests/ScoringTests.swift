@@ -133,15 +133,17 @@ final class ScoringTests: XCTestCase {
     tap("Miss")
     tap("King down")
     XCTAssertTrue(app.staticTexts["Wobbly Towers beat Birch Batons"].waitForExistence(timeout: 5))
+    let originalFile = app.staticTexts["The game file"].value as? String
     tap("Undo last event")
     XCTAssertTrue(
       app.buttons.matching(NSPredicate(format: "label ==[c] 'King down'")).firstMatch
         .waitForExistence(timeout: 5))
-    tap("King down")
+    tap("Redo")
     XCTAssertTrue(
       app.buttons.matching(NSPredicate(format: "label ==[c] 'Undo last event'")).firstMatch
         .waitForExistence(timeout: 5))
     let notation = app.staticTexts["The game file"].value as? String ?? ""
+    XCTAssertEqual(notation, originalFile)
     XCTAssertTrue(notation.contains("5. k:3I A k:3F d:B o:B k:B d:= o:K"))
     XCTAssertTrue(notation.contains(#"[Scored by "Kubb: Pitchside "#))
     let export = XCTAttachment(string: notation)
@@ -316,6 +318,28 @@ final class ScoringTests: XCTestCase {
     XCTAssertTrue(app.buttons["Change view"].exists)
   }
 
+  func testUndoRedoAcrossTurnAndNewThrow() {
+    launch("scorer", after: 1)
+    tap("Miss")
+    XCTAssertTrue(app.buttons["Later"].exists)
+    tap("Undo")
+    XCTAssertFalse(app.buttons["Later"].exists)
+    XCTAssertTrue(app.buttons["Redo"].isHittable)
+    shot("Redo-throw")
+    tap("Redo")
+    XCTAssertTrue(app.buttons["Later"].exists)
+    tap("Undo")
+    tap("bB0")
+    tap("1 down")
+    XCTAssertFalse(app.buttons["Redo"].exists)
+    tap("More")
+    tap("Timeline")
+    tap("Undo")
+    tap("Redo")
+    tap("Back to Scoring")
+    XCTAssertTrue(app.buttons["Later"].exists)
+  }
+
   /// The screenshot command runs this journey with the simulator itself in dark mode.
   func testMarkedPitchInSystemAppearance() {
     launch("scorer", after: 31)
@@ -424,9 +448,10 @@ final class ScoringTests: XCTestCase {
   func testCorrectACompletedGameWithoutUndoingTheResult() {
     launch("scorer", after: 37)
     tap("King down")
-    tap("Edit timeline")
-    let turn = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Turn 5,'")).firstMatch
-    turn.tap()
+    let original = app.staticTexts["The game file"].value as? String
+    let row = app.buttons["editTurn5"]
+    for _ in 0..<6 where !row.isHittable { app.swipeUp() }
+    tap("editTurn5")
     tap("Baton 5 · a miss")
     tap("More options")
     tap("Edit thrower")
@@ -436,6 +461,41 @@ final class ScoringTests: XCTestCase {
     XCTAssertTrue(app.staticTexts["Wobbly Towers beat Birch Batons"].waitForExistence(timeout: 5))
     let notation = app.staticTexts["The game file"].value as? String ?? ""
     XCTAssertTrue(notation.contains(" = o:K"), notation)
+    XCTAssertNotEqual(notation, original)
+    tap("Undo edit")
+    XCTAssertTrue(app.staticTexts["Wobbly Towers beat Birch Batons"].exists)
+    XCTAssertEqual(app.staticTexts["The game file"].value as? String, original)
+    shot("Sheet-redo-edit")
+    tap("Redo edit")
+    XCTAssertEqual(app.staticTexts["The game file"].value as? String, notation)
+    XCTAssertTrue(app.buttons["editTurn5"].exists)
+  }
+
+  func testRemoveWinningThrowFromSheetAndRestoreIt() {
+    launch("scorer", after: 37)
+    tap("King down")
+    let original = app.staticTexts["The game file"].value as? String
+    let row = app.buttons["editTurn5"]
+    for _ in 0..<6 where !row.isHittable { app.swipeUp() }
+    tap("editTurn5")
+    tap("Baton 6 · king down")
+    tap("Other edits")
+    tap("Remove this observation")
+    XCTAssertTrue(app.staticTexts["The game would still be on the pitch."].exists)
+    tap("Keep original")
+    tap("Baton 6 · king down")
+    tap("Other edits")
+    tap("Remove this observation")
+    tap("Change, review turn 5")
+    tap("Back to Scoring")
+    XCTAssertTrue(app.buttons["King down"].exists)
+    tap("Undo")
+    XCTAssertEqual(app.staticTexts["The game file"].value as? String, original)
+    tap("Redo edit")
+    XCTAssertTrue(app.buttons["King down"].exists)
+    tap("King down")
+    XCTAssertTrue(app.buttons["Undo last event"].exists)
+    XCTAssertFalse(app.buttons["Redo edit"].exists)
   }
 
   func testSectionsKeepScoringAndTimelineInPlace() {
@@ -482,6 +542,8 @@ final class ScoringTests: XCTestCase {
 
   func testStepThroughAnImportedGame() {
     launch("imported", after: 0)
+    XCTAssertFalse(app.buttons["editTurn1"].exists)
+    XCTAssertFalse(app.buttons["Edit timeline"].exists)
     tap("Play by play")
     let previous = app.buttons.matching(NSPredicate(format: "label ==[c] 'Previous'")).firstMatch
     XCTAssertFalse(previous.isEnabled)
