@@ -108,7 +108,7 @@ final class ScoringTests: XCTestCase {
     tap("1 down")
     XCTAssertEqual(turn.label, "Turn 2")
     XCTAssertEqual(player.value as? String, "Sam")
-    XCTAssertTrue(app.staticTexts["Inkast"].exists)
+    XCTAssertTrue(app.staticTexts["entry-action"].label.hasPrefix("Inkast · "))
     spot(1.2, 1.6)
     spot(3.6, 2.9)
     tap("fA0")
@@ -253,12 +253,12 @@ final class ScoringTests: XCTestCase {
     let pitch = app.descendants(matching: .any).matching(identifier: "pitch").firstMatch
     let thrower = app.buttons["Change who throws"]
     let turn = app.descendants(matching: .any)["entry-turn"]
-    let inkast = app.staticTexts["Inkast"]
+    let action = app.staticTexts["entry-action"]
     XCTAssertEqual(turn.label, "Turn 5")
-    XCTAssertTrue(inkast.exists)
+    XCTAssertEqual(action.label, "Inkast · 3 left")
     // The strip reads across at standard sizes and down at accessibility sizes.
     XCTAssertTrue(turn.frame.maxX <= thrower.frame.minX || turn.frame.maxY <= thrower.frame.minY)
-    XCTAssertTrue(thrower.frame.maxX <= inkast.frame.minX || thrower.frame.maxY <= inkast.frame.minY)
+    XCTAssertTrue(thrower.frame.maxX <= action.frame.minX || thrower.frame.maxY <= action.frame.minY)
     XCTAssertEqual(thrower.value as? String, "Kim")
     XCTAssertGreaterThanOrEqual(thrower.frame.minX, pitch.frame.maxX - 1)
     tap("Change who throws")
@@ -272,10 +272,10 @@ final class ScoringTests: XCTestCase {
     let point = CGVector(dx: frame.midX - 2 * unit, dy: frame.midY - unit)
     let landing = app.coordinate(withNormalizedOffset: .zero).withOffset(point)
     for _ in 0..<2 { landing.tap() }
-    XCTAssertTrue(app.staticTexts["Inkast"].exists)
+    XCTAssertEqual(action.label, "Inkast · 1 left")
     XCTAssertEqual(thrower.value as? String, "Dana")
     landing.tap()
-    XCTAssertTrue(app.staticTexts["Baton throws"].exists)
+    XCTAssertEqual(action.label, "Baton 1 of 6")
     XCTAssertTrue(app.staticTexts["Inkast complete"].exists)
     XCTAssertEqual(thrower.value as? String, "Kim")
     tap("Fit whole pitch")
@@ -462,7 +462,7 @@ final class ScoringTests: XCTestCase {
     tap("Out again")
     XCTAssertTrue(
       app.buttons.matching(NSPredicate(format: "label ==[c] 'Place it later'")).firstMatch.exists)
-    XCTAssertTrue(app.staticTexts["Inkast"].exists)
+    XCTAssertEqual(app.staticTexts["entry-action"].label, "Place punishment kubb")
     XCTAssertFalse(app.staticTexts["Inkast complete"].exists)
     XCTAssertFalse(app.buttons["Change who throws"].exists)
     tap("Place it later")
@@ -492,7 +492,10 @@ final class ScoringTests: XCTestCase {
     tap("What to record")
     app.switches.matching(NSPredicate(format: "label BEGINSWITH[c] 'Where kubbs stand'")).firstMatch
       .tap()
+    app.switches.matching(NSPredicate(format: "label BEGINSWITH[c] 'Who threw'")).firstMatch.tap()
     tap("Done")
+    XCTAssertFalse(app.buttons["Change who throws"].exists)
+    XCTAssertEqual(app.staticTexts["entry-team"].label, "Wobbly Towers")
     tap("All 3 in")
     tap("Count field kubbs")
     tap("Count field kubbs")
@@ -607,6 +610,7 @@ final class ScoringTests: XCTestCase {
     XCTAssertLessThanOrEqual(pitch.frame.maxX, history.frame.minX + 1)
     XCTAssertEqual(app.buttons["Change who throws"].value as? String, "Ole")
     XCTAssertEqual(app.buttons["fB0"].value as? String, "marked down")
+    XCTAssertFalse(app.buttons["Show latest turn"].exists)
     let older = app.buttons["history-turn-2"]
     for _ in 0..<8 where !older.isHittable { history.swipeUp() }
     older.tap()

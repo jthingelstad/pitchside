@@ -162,22 +162,22 @@ struct PitchCanvas: View {
     } else {
       pos = CGPoint(x: base.x, y: base.y + (base.y < geo.rect.midY ? -out : out))
     }
-    return HStack(spacing: 6) {
-      TeamMarker(side, size: 18)
-      Text(
-        typeSize.isAccessibilitySize ? "\(s.base + s.field) up" : geo.view.isSideways
-          ? "\(screen.teamName(side)) · \(s.base + s.field)"
-          : "\(screen.teamName(side)) · \(s.base + s.field) standing"
-      )
-      .font(PSFont.body(14, .bold)).lineLimit(2)
+    let standing = s.base + s.field
+    return HStack(spacing: 4) {
+      TeamMarker(side, size: 16)
+      if !typeSize.isAccessibilitySize {
+        Text(screen.teamName(side)).lineLimit(1)
+      }
+      Text(typeSize.isAccessibilitySize ? "\(standing) up" : "· \(standing) up").layoutPriority(1)
     }
+    .font(PSFont.body(14, .medium))
     .foregroundStyle(Color.psText)
-    .padding(.horizontal, 8)
-    .padding(.vertical, 3)
-    .background(Color.psPlate, in: RoundedRectangle(cornerRadius: 6))
-    .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 1))
+    .padding(.horizontal, 6).padding(.vertical, 2)
+    .background(Color.psPlate, in: RoundedRectangle(cornerRadius: 4))
     .fixedSize(horizontal: false, vertical: true)
-    .frame(maxWidth: geo.view.isSideways ? geo.rect.width * 0.5 : geo.rect.width)
+    .frame(maxWidth: geo.view.isSideways ? geo.rect.width * 0.5 : geo.size.width - 12)
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel("\(screen.teamName(side)), \(standing) standing")
     .position(pos)
     .allowsHitTesting(false)
   }
