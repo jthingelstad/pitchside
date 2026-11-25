@@ -409,8 +409,16 @@ final class ScoringTests: XCTestCase {
     XCTAssertFalse(app.buttons["Redo"].exists)
     tap("More")
     tap("Timeline")
-    tap("Undo")
+    expectLandscape(false)
+    let turn = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Turn 1,'")).firstMatch
+    XCTAssertTrue(turn.waitForExistence(timeout: 4))
+    let beforeUndo = turn.label
+    app.scrollViews.buttons["Undo"].tap()
+    let changed = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "label != %@", beforeUndo), object: turn)
+    XCTAssertEqual(XCTWaiter.wait(for: [changed], timeout: 4), .completed)
     tap("Redo")
+    XCTAssertEqual(turn.label, beforeUndo)
     tap("Back to Scoring")
     XCTAssertTrue(app.buttons["Later"].exists)
   }
