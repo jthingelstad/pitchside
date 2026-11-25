@@ -219,7 +219,16 @@ final class ScoringTests: XCTestCase {
 
   func testMiddleOfClusterSurvivesReopenAndReplay() {
     launch("scorer", after: 28)
-    for (x, y) in [(2.14, 4.18), (2.41, 4.42), (2.72, 4.69)] { spot(x, y) }
+    spot(2.14, 4.18)
+    tap("Out")
+    tap("More")
+    tap("Play by play")
+    XCTAssertTrue(app.staticTexts["Inkast · throw 2"].exists)
+    XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label ENDSWITH 'Kubb out'")).firstMatch.exists)
+    XCTAssertFalse(app.buttons["Next"].isEnabled)
+    tap("Back to Scoring")
+    spot(2.41, 4.42)
+    spot(2.72, 4.69) // The rethrow.
     let fields = (0..<3).map { app.buttons["fB" + String($0)] }
     func tapLocation(_ button: XCUIElement) -> String {
       button.label.components(separatedBy: "tapped at ").last ?? ""
@@ -239,6 +248,15 @@ final class ScoringTests: XCTestCase {
     tap("Play by play") // Opens at the latest recorded throw.
     tap("Jump to turn")
     tap("Turn 5")
+    XCTAssertTrue(app.staticTexts["Inkast · throw 1"].exists)
+    tap("Next")
+    XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label ENDSWITH 'Kubb out'")).firstMatch.exists)
+    tap("Next")
+    tap("Next")
+    XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label ENDSWITH 'Rethrow in'")).firstMatch.exists)
+    tap("Zoom in on pitch")
+    shot("Inkast-replay")
+    tap("Fit whole pitch")
     tap("Details")
     func standing(_ count: Int) -> XCUIElement {
       app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Field · " + String(count) + " standing")).firstMatch

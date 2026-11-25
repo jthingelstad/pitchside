@@ -6,6 +6,10 @@ and tap the individual kubb that fell. Locally scored games remember each
 standing placement for replay. Undo a throw in one tap or correct an
 earlier turn in the timeline, even after the game finishes. Switch between Games,
 Roster and Stats while scoring, then return to the throw you were marking.
+In locally scored games, each inkast throw, rethrow and punishment placement has its
+own replay step. A ring marks the kubb just placed when its spot was recorded.
+Imported games show the inkast detail present in their notation file.
+
 Open **More → Play by play** to review the latest throw while scoring, or use
 **Play by play** on a score sheet to step through the pitch in either direction
 or jump to a turn, including games imported from Throwing Wood.
