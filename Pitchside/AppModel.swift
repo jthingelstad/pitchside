@@ -79,6 +79,17 @@ final class AppModel {
     reads[game.id]?.read
   }
 
+  /// Read the last saved throw, including a draft on the pitch, without opening a scorer.
+  func playByPlay(_ game: Game, analysis cached: Analysis? = nil) throws -> GameReplay {
+    let analysis: Analysis
+    if let cached { analysis = cached }
+    else if let reader, let text = store.fileText(game.id) { analysis = try reader.read(text).analysis }
+    else { throw NotationError.notAGame("The game file could not be read.") }
+    let replay = game.isImported ? GameReplay(analysis) : try GameReplay(analysis, journal: store.log(game.id))
+    guard !replay.steps.isEmpty else { throw NotationError.notAGame("There are no recorded plays yet.") }
+    return replay
+  }
+
   /// Opens a game file from elsewhere. Throws a refusal the user can read.
   func open(url: URL) throws -> Game {
     let scoped = url.startAccessingSecurityScopedResource()

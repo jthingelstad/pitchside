@@ -5,17 +5,26 @@ import SwiftUI
 
 struct ReplayView: View {
   let replay: GameReplay
+  let back: String
+  let close: (() -> Void)?
   @Environment(\.dismiss) private var dismiss
   @State private var index = 0
   @State private var details = false
   @State private var view = PitchFrame.View.behindA
   @State private var viewport = PitchFrame.Viewport()
 
+  init(replay: GameReplay, back: String = "Score sheet", startAtLast: Bool = false, close: (() -> Void)? = nil) {
+    self.replay = replay
+    self.back = back
+    self.close = close
+    _index = State(initialValue: startAtLast ? max(0, replay.steps.count - 1) : 0)
+  }
+
   private var step: GameReplay.Step { replay.steps[index] }
 
   var body: some View {
     VStack(spacing: 0) {
-      ScreenHeader("Play by play", back: "Score sheet") { dismiss() }
+      ScreenHeader("Play by play", back: back) { if let close { close() } else { dismiss() } }
       HStack(spacing: 8) {
         Menu {
           ForEach(replay.turnStarts, id: \.self) { i in
@@ -133,7 +142,7 @@ struct ReplayView: View {
 
   private func locations(_ places: [ReplayPlace]) -> String {
     places.map { p in
-      p.label + (p.inferredFromFall ? " (from a later fall)" : "") + (p.mark == "p" ? " (punishment)" : p.mark == "s" ? " (carried over)" : "")
+      p.label + (p.tapped ? " (tapped)" : "") + (p.inferredFromFall ? " (from a later fall)" : "") + (p.mark == "p" ? " (punishment)" : p.mark == "s" ? " (carried over)" : "")
     }.joined(separator: " · ")
   }
 
