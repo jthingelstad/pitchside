@@ -37,7 +37,8 @@ public struct FieldPlacements: Sendable {
 
   /// The return value identifies individual field falls by their slot in the baton event.
   @discardableResult public mutating func apply(_ event: [String: JSONValue], before: RecordState,
-                                              after: RecordState) -> [Int: Placement] {
+                                              after: RecordState, capturePitch: Bool? = nil) -> [Int: Placement] {
+    let recordsPitch = capturePitch ?? before.capture.pitch
     guard !before.over, let defender = before.defender else { return [:] }
     let type = event["type"]?.string
     let half = type == "pitch" ? event["half"]?.string.flatMap(Side.init(rawValue:)) : defender
@@ -53,7 +54,7 @@ public struct FieldPlacements: Sendable {
       let points = values.compactMap { Self.point($0) }
       guard points.count == values.count, points.count == before.side(half).field,
         points.map(\.metreCell) == newCells else { return [:] }
-      observed[half] = before.capture.pitch ? points.enumerated().map { index, point in
+      observed[half] = recordsPitch ? points.enumerated().map { index, point in
         Placement(id: "\(id)/\(index)", point: point, turn: before.turn,
                   initialMark: half == before.attacker ? "s" : values[index]["mark"]?.string)
       } : []
@@ -97,7 +98,7 @@ public struct FieldPlacements: Sendable {
         known.removeAll { $0.point.metreCell == cell }
       }
     }
-    if before.capture.pitch, let id, let point = Self.point(event["at"]),
+    if recordsPitch, let id, let point = Self.point(event["at"]),
       (type == "toss" && event["result"] == "in" && event["king"] != true && before.allows("toss"))
         || (type == "punish" && before.allows("punish")) {
       let cell = point.metreCell
