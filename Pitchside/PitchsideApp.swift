@@ -11,7 +11,7 @@ struct PitchsideApp: App {
     #if DEBUG
       // `-PitchsideDemo`: a separate folder filled with invented games, for screenshots.
       if ProcessInfo.processInfo.arguments.contains("-PitchsideDemo") {
-        store = Demo.store()
+        store = Demo.store(reopen: ProcessInfo.processInfo.arguments.contains("-PitchsideReopenDemo"))
       } else {
         store = (try? GameStore.standard()) ?? Demo.scratchStore()
       }

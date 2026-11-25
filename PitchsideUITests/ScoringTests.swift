@@ -462,10 +462,16 @@ final class ScoringTests: XCTestCase {
     let notation = app.staticTexts["The game file"].value as? String ?? ""
     XCTAssertTrue(notation.contains(" = o:K"), notation)
     XCTAssertNotEqual(notation, original)
+    app.terminate()
+    app.launchArguments = ["-PitchsideDemo", "-PitchsideReopenDemo", "-PitchsideScreen", "sheet"]
+    app.launch()
+    XCTAssertEqual(app.staticTexts["The game file"].value as? String, notation)
     tap("Undo edit")
     XCTAssertTrue(app.staticTexts["Wobbly Towers beat Birch Batons"].exists)
     XCTAssertEqual(app.staticTexts["The game file"].value as? String, original)
     shot("Sheet-redo-edit")
+    app.terminate()
+    app.launch()
     tap("Redo edit")
     XCTAssertEqual(app.staticTexts["The game file"].value as? String, notation)
     XCTAssertTrue(app.buttons["editTurn5"].exists)
