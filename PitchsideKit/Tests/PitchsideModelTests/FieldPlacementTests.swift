@@ -57,6 +57,8 @@ import Testing
     try reopened.edit(.replace(id: eventID, event: hit))
     #expect(try shots().1.board[half]?.field.places.map(\.depth) == [points[1].depth, points[2].depth])
     try reopened.undo()
+    #expect(try shots().1.board[half]?.field.places.map(\.depth) == [points[0].depth, points[2].depth])
+    try reopened.undo()
     try reopened.add(RecordEvent.baton())
     #expect(try shots().1.board[half]?.field.places.map(\.depth) == points.map(\.depth))
   }

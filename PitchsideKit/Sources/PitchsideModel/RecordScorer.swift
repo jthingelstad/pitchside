@@ -7,7 +7,9 @@ import KubbEngine
 ///
 ///     start   {"setup": {...}}                  the game as record mode takes it
 ///     record  {"type": "baton", "id": "e7", "time": {...}, ...}   one record event
-///     undo    {"id": "e7"}                      the last record event dropped
+///     undo    {"change": 7}                     reverse the last observation or edit
+///     redo    {"change": 7}                     reapply the last undone action
+///     undo    {"id": "e7"}                      legacy removal of a named observation
 ///     edit    {"replace": "e4", "event": {...}} an earlier event rewritten
 ///             {"insert": "e4", "event": {...}}  one put in before e4
 ///             {"remove": "e4"}                  one taken out
@@ -36,6 +38,7 @@ public final class RecordScorer: LiveScorer {
   public enum Kind {
     public static let record = "record"
     public static let undo = "undo"
+    public static let redo = "redo"
     public static let edit = "edit"
   }
 
@@ -44,7 +47,10 @@ public final class RecordScorer: LiveScorer {
   public private(set) var warnings: [RecordWarning] = []
   public private(set) var lastWarnings: [RecordWarning] = []
   public private(set) var rows: [RecordRow] = []
-  public private(set) var records: [[String: JSONValue]] = []
+  private var history: ScoreHistory
+  public var records: [[String: JSONValue]] { history.records }
+  public var undoAction: ScoreAction? { history.undoAction }
+  public var redoAction: ScoreAction? { history.redoAction }
   public private(set) var text: String = ""
   /// The setup record mode was given (from the log's start line).
   public let setup: JSONValue
@@ -74,9 +80,9 @@ public final class RecordScorer: LiveScorer {
     let client = "\(appVersion) (\(engine.engineVersion))"
     let savedSetup = log.events.first { $0.kind == GameEvent.Kind.start && $0.payload["setup"] != nil }
     setup = savedSetup?.payload["setup"] ?? given ?? Self.setup(for: game, client: client, zone: zone)
-    records = Self.fold(log.events)
+    history = ScoreHistory(log.events)
     let result = try Self.decode(
-      engine.call("record.rebuild", json: Self.args(["game": setup, "events": .array(records.map(JSONValue.object)), "want": Self.want])))
+      engine.call("record.rebuild", json: Self.args(["game": setup, "events": .array(history.records.map(JSONValue.object)), "want": Self.want])))
     state = result.state
     take(result)
     if savedSetup == nil {
@@ -141,29 +147,7 @@ public final class RecordScorer: LiveScorer {
 
   /// The record events a log comes to.
   public static func fold(_ events: [GameEvent]) -> [[String: JSONValue]] {
-    var out: [[String: JSONValue]] = []
-    func index(_ id: String?) -> Int? { id.flatMap { id in out.firstIndex { $0["id"]?.string == id } } }
-    for e in events {
-      switch e.kind {
-      case Kind.record:
-        if let o = e.payload.object { out.append(o) }
-      case Kind.undo:
-        if let i = index(e.payload["id"]?.string) { out.remove(at: i) }
-      case Kind.edit:
-        if let i = index(e.payload["replace"]?.string), let new = e.payload["event"]?.object {
-          var event = new
-          event["id"] = out[i]["id"]
-          if event["time"] == nil { event["time"] = out[i]["time"] }
-          out[i] = event
-        } else if let i = index(e.payload["insert"]?.string), let new = e.payload["event"]?.object {
-          out.insert(new, at: i)
-        } else if let i = index(e.payload["remove"]?.string) {
-          out.remove(at: i)
-        }
-      default: break
-      }
-    }
-    return out
+    ScoreHistory(events).records
   }
 
   private func nextId() -> String { "e\(log.nextSeq)" }
@@ -184,7 +168,7 @@ public final class RecordScorer: LiveScorer {
       try rebuild()
       throw error
     }
-    records.append(event)
+    history.apply(kind: Kind.record, payload: .object(event), sequence: log.nextSeq - 1)
     take(result)
     lastWarnings = result.added?.warnings ?? []
     try settle()
@@ -192,47 +176,64 @@ public final class RecordScorer: LiveScorer {
   }
 
   public func undo() throws {
-    guard let last = records.last else { return }
-    try log.append(kind: Kind.undo, capture: game.capture, payload: .object(["id": last["id"] ?? .null]), at: clock())
-    records.removeLast()
-    take(try Self.decode(engine.call("record.undo", json: Self.args(["want": Self.want]))))
-    lastWarnings = []
-    try settle()
+    guard let seq = history.undoSequence else { return }
+    try commitChange(Kind.undo, payload: .object(["change": .number(Double(seq))]))
+  }
+
+  public func redo() throws {
+    guard let seq = history.redoSequence else { return }
+    try commitChange(Kind.redo, payload: .object(["change": .number(Double(seq))]))
+  }
+
+  private func payload(for edit: RecordEdit) throws -> JSONValue {
+    let id: String
+    let payload: [String: JSONValue]
+    switch edit {
+    case .replace(let target, let event):
+      id = target
+      payload = ["replace": .string(id), "event": .object(event)]
+    case .insert(let target, var event):
+      id = target
+      event["id"] = .string(nextId())
+      payload = ["insert": .string(id), "event": .object(event)]
+    case .remove(let target):
+      id = target
+      payload = ["remove": .string(id)]
+    }
+    guard records.contains(where: { $0["id"]?.string == id }) else { throw HistoryError.missingEntry }
+    return .object(payload)
+  }
+
+  private enum HistoryError: LocalizedError {
+    case missingEntry
+    var errorDescription: String? { "This observation is no longer in the game." }
   }
 
   public func edit(_ edit: RecordEdit) throws {
-    let payload: [String: JSONValue]
-    switch edit {
-    case .replace(let id, let event): payload = ["replace": .string(id), "event": .object(event)]
-    case .insert(let id, var event):
-      event["id"] = .string(nextId())
-      payload = ["insert": .string(id), "event": .object(event)]
-    case .remove(let id): payload = ["remove": .string(id)]
+    try commitChange(Kind.edit, payload: payload(for: edit))
+  }
+
+  private func commitChange(_ kind: String, payload: JSONValue) throws {
+    var next = history
+    guard next.apply(kind: kind, payload: payload, sequence: log.nextSeq) else { return }
+    let result: RecordResult
+    do {
+      result = try build("record.rebuild", history: next)
+      try log.append(kind: kind, capture: game.capture, payload: payload, at: clock())
+    } catch {
+      try rebuild()
+      throw error
     }
-    try log.append(kind: Kind.edit, capture: game.capture, payload: .object(payload), at: clock())
-    records = Self.fold(log.events)
-    try rebuild()
+    history = next
+    take(result)
     lastWarnings = []
     try settle()
   }
 
   public func preview(_ edit: RecordEdit) throws -> RecordResult {
-    var list = records
-    switch edit {
-    case .replace(let id, var event):
-      if let i = list.firstIndex(where: { $0["id"]?.string == id }) {
-        event["id"] = list[i]["id"]
-        if event["time"] == nil { event["time"] = list[i]["time"] }
-        list[i] = event
-      }
-    case .insert(let id, var event):
-      event["id"] = "preview"
-      if let i = list.firstIndex(where: { $0["id"]?.string == id }) { list.insert(event, at: i) }
-    case .remove(let id):
-      list.removeAll { $0["id"]?.string == id }
-    }
-    return try Self.decode(
-      engine.call("record.build", json: Self.args(["game": setup, "events": .array(list.map(JSONValue.object)), "want": Self.want])))
+    var next = history
+    next.apply(kind: Kind.edit, payload: try payload(for: edit), sequence: log.nextSeq)
+    return try build("record.build", history: next)
   }
 
   public func setCapture(_ capture: Capture) throws {
@@ -250,7 +251,7 @@ public final class RecordScorer: LiveScorer {
   public func timeline() throws -> [TimelineTurn] {
     var events: [TimelineEvent] = []
     try Self.walk(setup: setup, records: records) { entry, _ in events.append(entry) }
-    let byTurn = Dictionary(grouping: events, by: \.turn)
+    let byTurn = Dictionary(grouping: events, by: \.sheetTurn)
     let rowByTurn = Dictionary(rows.map { ($0.turn, $0) }, uniquingKeysWith: { a, _ in a })
     let turns = Set(byTurn.keys).union(rowByTurn.keys).sorted()
     return turns.map { n in
@@ -269,7 +270,8 @@ public final class RecordScorer: LiveScorer {
       side = before.attacker ?? side
       let r = try decode(scratch.call("record.add", json: args(["event": .object(event)])))
       let entry = TimelineEvent(id: event["id"]?.string ?? "\(i)", index: i, event: event,
-                                turn: before.turn, side: side, before: before, warnings: r.added?.warnings ?? [])
+                                turn: before.turn, sheetTurn: !before.over && r.state.over ? r.state.turn : before.turn,
+                                side: side, before: before, warnings: r.added?.warnings ?? [])
       visit(entry, r.state)
       before = r.state
     }
@@ -285,13 +287,13 @@ public final class RecordScorer: LiveScorer {
     try JSONDecoder().decode(RecordResult.self, from: Data(text.utf8))
   }
 
-  private func rebuild() throws {
-    take(
-      try Self.decode(
-        engine.call(
-          "record.rebuild",
-          json: Self.args(["game": setup, "events": .array(records.map(JSONValue.object)), "want": Self.want]))))
+  private func build(_ call: String, history: ScoreHistory) throws -> RecordResult {
+    try Self.decode(engine.call(call, json: Self.args([
+      "game": setup, "events": .array(history.records.map(JSONValue.object)), "want": Self.want,
+    ])))
   }
+
+  private func rebuild() throws { take(try build("record.rebuild", history: history)) }
 
   private func take(_ r: RecordResult) {
     state = r.state

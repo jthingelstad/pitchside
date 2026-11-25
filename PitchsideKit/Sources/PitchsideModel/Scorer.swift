@@ -61,8 +61,11 @@ public protocol LiveScorer: AnyObject {
   /// Records one event: the engine takes it, then it is appended to the log and synced.
   /// Returns the warnings it raised.
   @discardableResult func add(_ event: [String: JSONValue]) throws -> [RecordWarning]
-  /// Drops the last event and rebuilds. Nothing to undo is not an error.
+  var undoAction: ScoreAction? { get }
+  var redoAction: ScoreAction? { get }
+  /// Reverse or restore the last scoring action, including a timeline correction.
   func undo() throws
+  func redo() throws
   /// Rewrites the record events (an edit) and rebuilds.
   func edit(_ edit: RecordEdit) throws
   /// What the game would be after an edit, touching nothing.
@@ -86,7 +89,10 @@ public struct TimelineEvent: Sendable, Identifiable, Equatable {
   /// Its place among the record events (0-based).
   public let index: Int
   public let event: [String: JSONValue]
+  /// The turn in progress when the observation was made.
   public let turn: Int
+  /// The sheet row where the engine wrote it. A call or resignation can move to the other side’s row.
+  public let sheetTurn: Int
   public let side: Side
   /// The context of this observation, before applying it.
   public let before: RecordState
