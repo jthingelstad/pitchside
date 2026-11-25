@@ -248,29 +248,30 @@ public final class RecordScorer: LiveScorer {
   // MARK: The timeline
 
   public func timeline() throws -> [TimelineTurn] {
-    // A second engine, so the held game is not touched: each event added in turn, the
-    // turn it went into read before it.
-    let scratch = try Engine(appVersion: "0")
-    var before = try Self.decode(scratch.call("record.new", json: Self.args(["game": setup]))).state
     var events: [TimelineEvent] = []
-    var turnSide: [Int: Side] = [:]
-    for (i, e) in records.enumerated() {
-      let turn = before.turn
-      let side = before.attacker ?? (before.over ? (turnSide[turn] ?? .A) : .A)
-      turnSide[turn] = turnSide[turn] ?? side
-      let r = try Self.decode(scratch.call("record.add", json: Self.args(["event": .object(e)])))
-      events.append(
-        TimelineEvent(
-          id: e["id"]?.string ?? "\(i)", index: i, event: e, turn: turn, side: turnSide[turn]!,
-          before: before, warnings: r.added?.warnings ?? []))
-      before = r.state
-    }
+    try Self.walk(setup: setup, records: records) { entry, _ in events.append(entry) }
     let byTurn = Dictionary(grouping: events, by: \.turn)
     let rowByTurn = Dictionary(rows.map { ($0.turn, $0) }, uniquingKeysWith: { a, _ in a })
     let turns = Set(byTurn.keys).union(rowByTurn.keys).sorted()
     return turns.map { n in
       TimelineTurn(
-        turn: n, side: rowByTurn[n]?.side ?? turnSide[n] ?? .A, row: rowByTurn[n], events: byTurn[n] ?? [])
+        turn: n, side: rowByTurn[n]?.side ?? byTurn[n]?.first?.side ?? .A, row: rowByTurn[n], events: byTurn[n] ?? [])
+    }
+  }
+
+  /// Visit each effective event with the state on either side, without changing the game.
+  static func walk(setup: JSONValue, records: [[String: JSONValue]],
+                   visit: (TimelineEvent, RecordState) -> Void) throws {
+    let scratch = try Engine(appVersion: "0")
+    var before = try decode(scratch.call("record.new", json: args(["game": setup]))).state
+    var side = before.attacker ?? .A
+    for (i, event) in records.enumerated() {
+      side = before.attacker ?? side
+      let r = try decode(scratch.call("record.add", json: args(["event": .object(event)])))
+      let entry = TimelineEvent(id: event["id"]?.string ?? "\(i)", index: i, event: event,
+                                turn: before.turn, side: side, before: before, warnings: r.added?.warnings ?? [])
+      visit(entry, r.state)
+      before = r.state
     }
   }
 
