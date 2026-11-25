@@ -380,6 +380,7 @@ The notation file is derived; the log is kept **(inferred: a recommendation)**.
   and a log of actions for one physics match with seats; two scorers of one real game is
   a different problem (two people recording the same event) **(inferred)**.
 - Tournament mode: pools, brackets, a game clock (and `W` for a called game).
+  [Events in Pitchside](docs/events.md) explores joining teams and running scheduled matches on grass and in Throwing Wood.
 - Apple Watch tap-to-score.
 - Correcting tapped positions from the photos with vision.
 
