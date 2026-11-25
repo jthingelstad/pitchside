@@ -604,9 +604,11 @@ generated team names, the rules choice).
   reader’s turn rows. `ReplayView` uses the live pitch geometry, orientations and zoom.
   Pitch and fall lines retain point or cell precision. A recorded fall can establish a
   standing position on a turn with no pitch line. An unidentified fall leaves uncertain
-  survivors unlocated. Inkast totals are grouped because a notation file does not give
-  toss order. Local replay refines those rows with the folded journal and labels the
-  tapped positions. More → Play by play on the live scorer opens at the latest play
+  survivors unlocated. Local games show one step per accepted toss, rethrow and
+  punishment placement in the folded journal. Each step uses the engine state at that
+  instant. A ring marks the newly placed kubb when its spot was recorded. Imports keep
+  the grouped inkast and any lay line from the file. An inkast cut short by a baton
+  groups any outstanding throws counted in by record mode. More → Play by play on the live scorer opens at the latest play
   and returns to the pending throw. Shared text files use the released engine's cells.
   Lay and throwing-spot coordinates appear when the file contains them.
 - **Build and test.**

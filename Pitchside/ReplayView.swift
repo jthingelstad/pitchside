@@ -22,6 +22,17 @@ struct ReplayView: View {
 
   private var step: GameReplay.Step { replay.steps[index] }
 
+  private var zoomFocus: PitchFrame.World {
+    let half = step.team.other
+    if let placed = step.placed { return placed.world(in: half) }
+    let fallen = step.falls + step.inferredFalls
+    let sites = fallen.isEmpty ? (step.board[half]?.field.places ?? []) : fallen
+    guard !sites.isEmpty else { return .init(x: 2.5, y: half == .A ? 2 : 6) }
+    let points = sites.map { $0.world(in: half) }
+    return .init(x: points.map(\.x).reduce(0, +) / Double(points.count),
+                 y: points.map(\.y).reduce(0, +) / Double(points.count))
+  }
+
   var body: some View {
     VStack(spacing: 0) {
       ScreenHeader("Play by play", back: back) { if let close { close() } else { dismiss() } }
@@ -40,14 +51,7 @@ struct ReplayView: View {
         icon(viewport.scale == 1 ? "plus.magnifyingglass" : "arrow.down.right.and.arrow.up.left",
              viewport.scale == 1 ? "Zoom in on pitch" : "Fit whole pitch") {
           if viewport.scale == 1 {
-            let half = step.team.other
-            let fell = step.falls + step.inferredFalls
-            let sites = fell.isEmpty ? (step.board[half]?.field.places ?? []) : fell
-            let coords = sites.map { $0.world(in: half) }
-            let focus = coords.isEmpty ? PitchFrame.World(x: 2.5, y: half == .A ? 2 : 6)
-              : .init(x: coords.map(\.x).reduce(0, +) / Double(coords.count),
-                      y: coords.map(\.y).reduce(0, +) / Double(coords.count))
-            viewport.move(from: PitchFrame.screen(focus, in: view), to: .init(u: 0.5, v: 0.5), magnification: 3)
+            viewport.move(from: PitchFrame.screen(zoomFocus, in: view), to: .init(u: 0.5, v: 0.5), magnification: 3)
           } else { viewport = .init() }
         }
         icon("rectangle.2.swap", "Change view") { view = view.next; viewport = .init() }
@@ -67,6 +71,7 @@ struct ReplayView: View {
       VStack(alignment: .leading, spacing: 4) {
         HStack {
           Text(step.phase).psKick()
+          if step.placed != nil { Text("○ placed this play").psHelp() }
           if !step.inferredFalls.isEmpty { Text("× inferred falls").psHelp() }
           else if !step.falls.isEmpty { Text("× fell this play").psHelp() }
           Spacer()
@@ -113,6 +118,7 @@ struct ReplayView: View {
           }
         }
         if let note = step.note, !note.isEmpty { Text(note) }
+        if let placed = step.placed { Text("Placed in Team \(step.team.other.rawValue)’s half · \(locations([placed]))") }
         if !step.falls.isEmpty { Text("Felled in Team \(step.team.other.rawValue)’s half · \(locations(step.falls))") }
         if !step.inferredFalls.isEmpty { Text("Inferred falls in Team \(step.team.other.rawValue)’s half · \(locations(step.inferredFalls))") }
         if step.unlocatedFalls > 0 { Text("\(step.unlocatedFalls) fall positions unrecorded") }
@@ -208,9 +214,10 @@ struct ReplayView: View {
             marker(point(p, step.team.other), "", fill: .psKubbInk, ink: .psKubb, size: 16, fallen: true)
           }
           marker(geo.point(.init(x: 2.5, y: 4)), "K", fill: .psKubb, ink: .psKubbInk, size: 23, fallen: !step.kingStanding)
-          if let stance = step.stance {
-            let p = point(stance, step.team)
-            let ring = Path(ellipseIn: CGRect(x: p.x - 10, y: p.y - 10, width: 20, height: 20))
+          let highlight = step.placed.map { point($0, step.team.other) } ?? step.stance.map { point($0, step.team) }
+          if let p = highlight {
+            let radius: CGFloat = step.placed == nil ? 10 : 15
+            let ring = Path(ellipseIn: CGRect(x: p.x - radius, y: p.y - radius, width: 2 * radius, height: 2 * radius))
             ctx.stroke(ring, with: .color(.psKubbInk), lineWidth: 5)
             ctx.stroke(ring, with: .color(.psChalk), lineWidth: 2)
           }
