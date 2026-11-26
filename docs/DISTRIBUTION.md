@@ -63,7 +63,7 @@ writes:
 | Listing words and URLs | Drafted below | Jamie: approve them. The three pages at throwingwood.com/pitchside are live. |
 | Screenshots | Done (`docs/store/`, eight, 2026-11-26) | Nothing, unless a screen changes ("Screenshots"). |
 | Review notes | Drafted below | Jamie: a contact name, phone and email in App Review Information. |
-| The version | `0.1` | Jamie names it; ours: set `VERSION` to match ("The version"). |
+| The version | `1.0.0` (Jamie, 2026-11-26) | Ours, with the version page: change the record's "1.0" to match ("The version"). |
 | A build for the App Store | None yet | Jamie's go, then `scripts/testflight.sh --external` from a new commit on main. |
 | iOS 26.2 | Unverified on a phone | See "The iOS 26.2 simulator crash". One run on a phone with iOS 26 settles it. |
 
@@ -368,9 +368,10 @@ it.
 
 ## The version
 
-`VERSION` is `0.1`. The record's version is "1.0". Both must match before the external
-upload. Throwing Wood and its engine shipped as `1.0.0`, so `1.0.0` keeps the family
-alike (recommended). The record's version string can change before submission.
+`VERSION` is `1.0.0`, named by Jamie on 2026-11-26, as Throwing Wood and its engine
+shipped. The record's version still says "1.0". Its version string can change before
+submission, and it changes to `1.0.0` when the version page is filled in (step 11), so
+the build and the page match.
 
 ## Submission checklist
 
@@ -378,8 +379,7 @@ What is left, in order. Each line is one thing to do.
 
 **Jamie, before the build**
 
-1. Name the version (recommended `1.0.0`; the record says "1.0") and approve the
-   listing words above.
+1. Approve the listing words above. (The version is named: `1.0.0`, 2026-11-26.)
 2. Register the iCloud container `iCloud.com.throwingwood.pitchside` and turn on iCloud
    (Documents) for the App ID: in Xcode signed in (Signing & Capabilities lets
    automatic signing do it on the next build), or in the developer portal. The API key
@@ -389,7 +389,7 @@ What is left, in order. Each line is one thing to do.
 
 **Ours, after step 1** (small, under an hour, one pull request)
 
-4. Set `VERSION` to the chosen number.
+4. Set `VERSION` to the chosen number. (Done: `1.0.0`.)
 5. Copy Throwing Wood's `Config/Signing.local.xcconfig` and `Config/AppStoreConnect.local`
    into the checkout that uploads, then run `scripts/testflight.sh --dry-run --external`.
 
