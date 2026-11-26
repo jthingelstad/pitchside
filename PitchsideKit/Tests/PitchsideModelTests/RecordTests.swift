@@ -184,6 +184,23 @@ func replay(_ f: RecordFixture, useFixtureSetup: Bool) throws -> (RecordScorer, 
     #expect(turns[4].row?.line == "5. k:3I A k:3F d:B o:B k:B d:= o:K")
   }
 
+  @Test func liveScoreLineUsesTheRecordedThrowerEvenWhenTheFileOmitsSoloPrefixes() throws {
+    var game = RecordFixture.named("example").game
+    game.teams[.A] = Team(name: "North", players: [TeamPlayer(name: "Kim")])
+    game.teams[.B] = Team(name: "South", players: [TeamPlayer(name: "Sam")])
+    let scorer = try RecordScorer(game: game, store: scratch(), appVersion: "0.1")
+    try scorer.add(RecordEvent.baton(base: 1, by: "kim"))
+    try scorer.add(RecordEvent.baton())
+    try scorer.add(RecordEvent.toss(true, by: "sam"))
+    try scorer.add(RecordEvent.baton(field: 1, by: "sam"))
+    let first = try #require(scorer.rows.first)
+    let second = try #require(scorer.rows.last)
+    #expect(first.line == "1. B -")
+    #expect(first.displayLine(players: scorer.state.side(.A).players, inkasters: []) == "Kim:B -")
+    #expect(second.line == "2. I F")
+    #expect(second.displayLine(players: scorer.state.side(.B).players, inkasters: ["sam"]) == "Sam:I Sam:F")
+  }
+
   @Test func inkastMarksIncludeRethrowsAndPenaltiesWithoutPlayerPrefixes() throws {
     let (scorer, _) = try replay(RecordFixture.named("called"), useFixtureSetup: true)
     let turns = try scorer.timeline()

@@ -36,11 +36,12 @@ final class ScorerScreen {
   private(set) var redoAction: ScoreAction?
   private(set) var state: RecordState
   private(set) var rows: [RecordRow]
-  struct Play {
-    let text: String
-    let mark: String?
+  struct TurnHistory {
+    var entries: [String] = []
+    var inkasters: [String?] = []
+    var latestThrow: String?
   }
-  private(set) var playsByTurn: [Int: [Play]] = [:]
+  private(set) var history: [Int: TurnHistory] = [:]
   private(set) var lastWarnings: [RecordWarning] = []
   private(set) var game: Game
 
@@ -643,33 +644,44 @@ final class ScorerScreen {
     }
   }
 
-  /// Short descriptions for the live turn log. Rebuild on reopen or correction and
-  /// append from the same accepted record used for the pitch after an ordinary throw.
+  /// Record each observed throw for the expanded history. The collapsed score
+  /// uses the engine's grouped inkast words and its individual baton marks.
   private func rememberPlay(_ event: [String: JSONValue], before: RecordState, row: RecordRow?, inkastMark: String?) {
-    let action: String
-    var mark: String?
+    let turn = before.turn
+    let players = before.attacker.map { before.side($0).players } ?? []
+    let mark: String
+    let by: String?
     switch event["type"]?.string {
     case "baton":
-      guard !before.over else { return }
       let index = before.batons?.thrown ?? 0
-      action = "Baton \(index + 1)"
-      if let row, row.batons.indices.contains(index) { mark = row.batons[index].token }
+      guard !before.over, let row, row.batons.indices.contains(index) else { return }
+      let baton = row.batons[index]
+      mark = baton.token
+      by = baton.by
     case "toss":
-      action = before.next.rethrow == true ? "Rethrow" : "Inkast"
+      guard let inkastMark else { return }
       mark = inkastMark
-    case "punish": action = "Placement"
+      let recorded = row?.capture?.players ?? before.capture.players
+      by = recorded ? players.first { $0.id == event["by"]?.string }?.id : nil
+      if !history[turn, default: TurnHistory()].inkasters.contains(by) {
+        history[turn, default: TurnHistory()].inkasters.append(by)
+      }
+    case "punish":
+      history[turn, default: TurnHistory()].entries.append("Placement")
+      return
     case "note":
-      if let text = event["text"]?.string { playsByTurn[before.turn, default: []].append(Play(text: text, mark: nil)) }
+      if let text = event["text"]?.string { history[turn, default: TurnHistory()].entries.append("# " + text) }
       return
     default: return
     }
-    let player = before.attacker.flatMap { before.side($0).players.first { $0.id == event["by"]?.string } }
-    let line = [action, player?.name, Self.label(event)].compactMap { $0 }.joined(separator: " · ")
-    playsByTurn[before.turn, default: []].append(Play(text: line, mark: mark))
+    let name = players.first { $0.id == by }?.name
+    let word = name.map { "\($0):\(mark)" } ?? mark
+    history[turn, default: TurnHistory()].entries.append(word)
+    history[turn, default: TurnHistory()].latestThrow = word
   }
 
   private func restoreContext() {
-    playsByTurn = [:]
+    history = [:]
     placements = FieldPlacements()
     fallen = []
     owed = []

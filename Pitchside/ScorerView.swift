@@ -364,86 +364,74 @@ struct ScorerView: View {
 /// Browse earlier turns independently of the live pitch. Expand a turn for the
 /// throwers and outcomes; returning to the latest turn never changes a score.
 private struct TurnHistoryView: View {
+  @Environment(\.dynamicTypeSize) private var typeSize
   let screen: ScorerScreen
   @State private var expanded: Int?
   @State private var scrolledFromLatest = false
 
-  private func playLine(_ play: ScorerScreen.Play, size: CGFloat) -> Text {
-    let description = Text(verbatim: play.text).font(PSFont.body(size))
-    guard let mark = play.mark else { return description }
-    let notation = Text(verbatim: mark).font(PSFont.mono(size)).foregroundStyle(Color.psSolid)
-    return Text("\(notation)  \(description)")
-  }
-
   var body: some View {
     ScrollViewReader { scroll in
       VStack(alignment: .leading, spacing: 0) {
-        HStack {
-          Text("Turn history").font(PSFont.body(14, .semibold)).foregroundStyle(Color.psMuted).accessibilityAddTraits(.isHeader)
-          Spacer()
-          if !screen.rows.isEmpty && (expanded != nil || scrolledFromLatest) {
-            let latestMark = screen.rows.last.flatMap { screen.playsByTurn[$0.turn]?.last?.mark }
-            Button {
-              expanded = nil
-              if let latest = screen.rows.last { scroll.scrollTo(latest.turn, anchor: .top) }
-            } label: {
-              HStack(spacing: 5) {
-                Text("Latest").font(PSFont.body(14))
-                if let mark = latestMark {
-                  Text(verbatim: mark).font(PSFont.mono(14))
-                }
-              }
-              .frame(minWidth: 48, minHeight: 48).contentShape(Rectangle())
+        if let turn = screen.rows.last?.turn, expanded != nil || scrolledFromLatest {
+          let latest = screen.history[turn]?.latestThrow
+          Button {
+            expanded = nil
+            scroll.scrollTo(turn, anchor: .top)
+          } label: {
+            HStack(spacing: 6) {
+              Image(systemName: "arrow.up.to.line")
+              Text("Latest").font(PSFont.body(14))
+              if let latest { Text(verbatim: latest).font(PSFont.mono(14)) }
             }
-            .buttonStyle(.plain).foregroundStyle(Color.psSolid)
-            .accessibilityLabel("Show latest turn")
-            .accessibilityValue(latestMark ?? "")
+            .frame(minHeight: 44).contentShape(Rectangle())
           }
+          .frame(maxWidth: .infinity, alignment: .trailing)
+          .padding(.horizontal, 12)
+          .buttonStyle(.plain).foregroundStyle(Color.psSolid)
+          .accessibilityLabel("Show latest turn").accessibilityValue(latest ?? "")
         }
-        .padding(.horizontal, 12).frame(minHeight: 48)
         ScrollView {
           LazyVStack(alignment: .leading, spacing: 0) {
             if screen.rows.isEmpty {
               Text("No throws yet.").psHelp().padding(.horizontal, 12)
             }
             ForEach(screen.rows.reversed(), id: \.turn) { row in
-              let plays = screen.playsByTurn[row.turn] ?? []
-              let down = row.batons.reduce(0) { $0 + ScorerScreen.felled($1.token) }
-              VStack(alignment: .leading, spacing: 3) {
+              let history = screen.history[row.turn]
+              let score = row.displayLine(players: screen.state.side(row.side).players, inkasters: history?.inkasters ?? [])
+              let entries = history?.entries ?? []
+              let open = expanded == row.turn
+              VStack(alignment: .leading, spacing: 0) {
                 Button {
-                  expanded = expanded == row.turn ? nil : row.turn
-                  if expanded != nil { scroll.scrollTo(row.turn, anchor: .top) }
+                  expanded = open ? nil : row.turn
+                  if !open { scroll.scrollTo(row.turn, anchor: .top) }
                 } label: {
-                  VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 6) {
+                  let layout = typeSize.isAccessibilitySize
+                    ? AnyLayout(VStackLayout(alignment: .leading, spacing: 3))
+                    : AnyLayout(HStackLayout(alignment: .firstTextBaseline, spacing: 8))
+                  HStack {
+                    layout {
                       Text("Turn \(row.turn)").font(PSFont.body(14, .semibold))
-                      Text(screen.teamName(row.side)).font(PSFont.body(15))
-                        .lineLimit(expanded == row.turn ? nil : 1)
-                      Spacer(minLength: 2)
-                      if !row.batons.isEmpty {
-                        Text("\(down) down").font(PSFont.body(14)).foregroundStyle(Color.psMuted)
-                          .accessibilityLabel("\(down) down with \(screen.n(row.batons.count, "baton"))")
-                      }
-                      Image(systemName: expanded == row.turn ? "chevron.up" : "chevron.down")
-                        .font(.caption).foregroundStyle(Color.psMuted)
-                    }
-                    if expanded != row.turn {
-                      if row.turn == screen.rows.last?.turn, let last = plays.last {
-                        playLine(last, size: 14)
-                      } else {
-                        Text(verbatim: row.scoreWords.joined(separator: " ")).font(PSFont.mono(14))
-                          .foregroundStyle(Color.psMuted)
+                        .fixedSize(horizontal: true, vertical: false)
+                      if !open || entries.isEmpty {
+                        Text(verbatim: score).font(PSFont.mono(15))
+                          .fixedSize(horizontal: false, vertical: true)
                       }
                     }
+                    Spacer(minLength: 0)
+                    Image(systemName: open ? "chevron.up" : "chevron.down")
+                      .font(.caption).foregroundStyle(Color.psMuted)
                   }
                   .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
                   .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain).accessibilityIdentifier("history-turn-\(row.turn)")
-                .accessibilityValue(expanded == row.turn ? "Expanded" : "Collapsed")
-                if expanded == row.turn {
-                  ForEach(plays.indices, id: \.self) { i in
-                    playLine(plays[i], size: 15).padding(.leading, 8)
+                .accessibilityLabel("Turn \(row.turn), \(screen.teamName(row.side)), \(score)")
+                .accessibilityValue(open ? "Expanded" : "Collapsed")
+                if open {
+                  ForEach(entries.indices, id: \.self) { index in
+                    Text(verbatim: entries[index]).font(PSFont.mono(15))
+                      .frame(maxWidth: .infinity, alignment: .leading)
+                      .padding(.bottom, 4)
                   }
                 }
               }
