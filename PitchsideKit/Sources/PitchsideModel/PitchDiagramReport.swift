@@ -16,7 +16,7 @@ enum PitchDiagramReport {
       paper.begin(section)
       if located {
         paper.paragraph("A baseline at left, B at right. Dot = standing kubb, cross = fall, triangle = thrower, line = lay. Shading locates a 1 m cell.", size: 10)
-        paper.paragraph("Each panel shows its recorded locations. A dash means no position was supplied for that play.", size: 10)
+        paper.paragraph("Each panel shows its recorded locations. A number counts kubbs at the same spot. A dash means no position was supplied.", size: 10)
       }
       paper.space(4)
     }
@@ -32,7 +32,7 @@ enum PitchDiagramReport {
         let first = Plot(x: paper.left, top: paper.y, side: row.team, depth: depth, paper: paper)
         let hasStart = r.pitch.values.contains { !$0.isEmpty } || !r.lays.isEmpty
         first.frame("Before batons", located: hasStart)
-        for (half, places) in r.pitch { for place in places { first.mark(place, in: half, as: .standing) } }
+        for (half, places) in r.pitch { first.marks(places, in: half, as: .standing) }
         for lay in r.lays { first.lay(lay, in: row.team.other) }
         for (i, baton) in row.batons.enumerated() {
           if i > 0 && i.isMultiple(of: 6) {
@@ -45,7 +45,7 @@ enum PitchDiagramReport {
           let mark = baton.raw.split(separator: ":").last.map(String.init) ?? baton.raw
           let title = mark.count <= 8 ? "Baton \(i + 1) · \(mark)" : "Baton \(i + 1)"
           plot.frame(title, located: !falls.isEmpty || stance != nil, unthrown: baton.kind == "unthrown")
-          for place in falls { plot.mark(place, in: row.team.other, as: .fall) }
+          plot.marks(falls, in: row.team.other, as: .fall)
           if let stance { plot.mark(stance, in: row.team, as: .stance) }
         }
         paper.space(74)
@@ -99,6 +99,20 @@ enum PitchDiagramReport {
       c.setLineWidth(1.3)
       c.strokeLineSegments(between: [point(lay.first, half), point(lay.last, half)])
       c.restoreGState()
+    }
+
+    func marks(_ places: [TurnRecording.Place], in half: Side, as kind: Mark) {
+      let groups = Dictionary(grouping: places) {
+        TurnRecording.Place(across: $0.across, depth: $0.depth, cell: $0.cell)
+      }
+      for (place, group) in groups {
+        mark(place, in: half, as: kind)
+        if group.count > 1 {
+          let p = point(place, half)
+          paper.label("\(group.count)", x: place.cell ? p.x - 2 : min(x + 90, p.x + 3),
+                      y: place.cell ? p.y - 2.5 : p.y + 2, size: 7, bold: true)
+        }
+      }
     }
 
     func mark(_ place: TurnRecording.Place, in half: Side, as mark: Mark) {

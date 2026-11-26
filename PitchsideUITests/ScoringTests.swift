@@ -637,7 +637,8 @@ final class ScoringTests: XCTestCase {
     for _ in 0..<4 where !addNote.isHittable { history.swipeUp() }
     addNote.tap()
     let editor = app.textFields["Turn note"]
-    if editor.exists { editor.typeText("Tight cluster") } else { app.textViews.firstMatch.typeText("Tight cluster") }
+    editor.tap()
+    editor.typeText("Tight cluster")
     tap("Save note")
     XCTAssertEqual(app.buttons["Change who throws"].value as? String, "Ole")
     XCTAssertEqual(app.buttons["fB0"].value as? String, "marked down")
