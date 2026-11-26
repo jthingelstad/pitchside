@@ -21,10 +21,16 @@ public struct GameMirror: Sendable {
     public let kind: Kind
     /// The folder itself (the container's or the app's `Documents`).
     public let folder: URL
-    public init(_ kind: Kind, folder: URL) {
+    /// For iCloud, which account's container it is: what the app wrote in one
+    /// account's folder is never taken as its own in another's.
+    public let account: String?
+    public init(_ kind: Kind, folder: URL, account: String? = nil) {
       self.kind = kind
       self.folder = folder
+      self.account = account
     }
+    /// The key of this place's record in `mirror.json`.
+    var scope: String { account.map { "\(kind.rawValue):\($0)" } ?? kind.rawValue }
   }
 
   /// One game to keep a copy of.
@@ -73,7 +79,7 @@ public struct GameMirror: Sendable {
     var base: String
     var digest: String
   }
-  typealias Index = [Place.Kind: [UUID: Copy]]
+  typealias Index = [String: [UUID: Copy]]
 
   /// The app's record of what it wrote (in Application Support, never in the folder).
   public let indexURL: URL
@@ -128,7 +134,7 @@ public struct GameMirror: Sendable {
       report.problems.append("The folder could not be made: \(error.localizedDescription)")
       return report
     }
-    var mine = index[place.kind] ?? [:]
+    var mine = index[place.scope] ?? [:]
     let wanted = Set(entries.map(\.id))
 
     // Games deleted, or reopened by a correction.
@@ -167,11 +173,11 @@ public struct GameMirror: Sendable {
         }
       } catch { report.problems.append("\(base): \(error.localizedDescription)") }
     }
-    index[place.kind] = mine
+    index[place.scope] = mine
 
     // The other place: its copies go once this place has them.
-    for other in retiring where other.kind != place.kind {
-      var theirs = index[other.kind] ?? [:]
+    for other in retiring where other.scope != place.scope {
+      var theirs = index[other.scope] ?? [:]
       for (id, copy) in theirs where mine[id] != nil || !wanted.contains(id) {
         do {
           try remove(other.folder.appending(path: copy.name))
@@ -179,7 +185,7 @@ public struct GameMirror: Sendable {
           report.removed.append(copy.name)
         } catch { report.problems.append("\(copy.name): \(error.localizedDescription)") }
       }
-      index[other.kind] = theirs.isEmpty ? nil : theirs
+      index[other.scope] = theirs.isEmpty ? nil : theirs
     }
     return report
   }
@@ -255,18 +261,14 @@ public struct GameMirror: Sendable {
     guard let data = try? Data(contentsOf: indexURL),
       let stored = try? JSONDecoder().decode(Stored.self, from: data)
     else { return [:] }
-    var index: Index = [:]
-    for (kind, copies) in stored.places {
-      guard let k = Place.Kind(rawValue: kind) else { continue }
-      index[k] = Dictionary(uniqueKeysWithValues: copies.compactMap { id, c in UUID(uuidString: id).map { ($0, c) } })
+    return stored.places.mapValues { copies in
+      Dictionary(uniqueKeysWithValues: copies.compactMap { id, c in UUID(uuidString: id).map { ($0, c) } })
     }
-    return index
   }
 
   private func saveIndex(_ index: Index, _ report: inout Report) {
-    var places: [String: [String: Copy]] = [:]
-    for (kind, copies) in index {
-      places[kind.rawValue] = Dictionary(uniqueKeysWithValues: copies.map { ($0.key.uuidString, $0.value) })
+    let places = index.mapValues { copies in
+      Dictionary(uniqueKeysWithValues: copies.map { ($0.key.uuidString, $0.value) })
     }
     do {
       let e = JSONEncoder()
@@ -284,17 +286,17 @@ public struct GameMirror: Sendable {
 public final class GameMirrorService: @unchecked Sendable {
   private let mirror: GameMirror
   private let local: URL
-  private let cloud: @Sendable () -> URL?
+  private let cloud: @Sendable () -> GameMirror.Place?
   private let done: @Sendable (GameMirror.Report) -> Void
   private let queue = DispatchQueue(label: "com.throwingwood.pitchside.mirror", qos: .utility)
   private let lock = NSLock()
   private var pending: [GameMirror.Entry]?
   private var running = false
 
-  /// `cloud` finds the iCloud folder or nil (it may block: it runs on the mirror's
+  /// `cloud` finds the iCloud place or nil (it may block: it runs on the mirror's
   /// queue); `local` is the app's own Documents folder; `done` hears each pass.
   public init(
-    mirror: GameMirror, local: URL, cloud: @escaping @Sendable () -> URL?,
+    mirror: GameMirror, local: URL, cloud: @escaping @Sendable () -> GameMirror.Place?,
     done: @escaping @Sendable (GameMirror.Report) -> Void = { _ in }
   ) {
     self.mirror = mirror
@@ -306,8 +308,24 @@ public final class GameMirrorService: @unchecked Sendable {
   /// The iCloud Drive folder of the app's first ubiquity container, or nil when iCloud
   /// Drive is off, signed out, or the build has no iCloud entitlement (the simulator's
   /// unsigned builds). Blocks: never call it on the main thread.
-  @Sendable public static func iCloudDocuments() -> URL? {
-    FileManager.default.url(forUbiquityContainerIdentifier: nil)?.appending(path: "Documents", directoryHint: .isDirectory)
+  @Sendable public static func iCloudDocuments() -> GameMirror.Place? {
+    let fm = FileManager.default
+    guard let token = fm.ubiquityIdentityToken,
+      let container = fm.url(forUbiquityContainerIdentifier: nil)
+    else { return nil }
+    return GameMirror.Place(
+      .iCloud, folder: container.appending(path: "Documents", directoryHint: .isDirectory), account: account(token))
+  }
+
+  /// A short, stable name for the signed-in iCloud account: a digest of its archived
+  /// identity token (Apple's documented way to compare accounts across launches).
+  /// Should the archive ever change, the cost is small: a copy whose text matches is
+  /// adopted rather than duplicated.
+  static func account(_ token: any NSCoding & NSCopying & NSObjectProtocol) -> String {
+    guard let data = try? NSKeyedArchiver.archivedData(withRootObject: token, requiringSecureCoding: false) else {
+      return "unknown"
+    }
+    return String(GameMirror.digest(data.base64EncodedString()).prefix(16))
   }
 
   /// The app's own Documents folder (On My iPhone › Pitchside with file sharing on).
@@ -339,8 +357,8 @@ public final class GameMirrorService: @unchecked Sendable {
       guard let entries = next else { return }
       let localPlace = GameMirror.Place(.local, folder: local)
       let report: GameMirror.Report
-      if let folder = cloud() {
-        report = mirror.sync(entries, to: GameMirror.Place(.iCloud, folder: folder), retiring: [localPlace])
+      if let place = cloud() {
+        report = mirror.sync(entries, to: place, retiring: [localPlace])
       } else {
         report = mirror.sync(entries, to: localPlace)
       }
