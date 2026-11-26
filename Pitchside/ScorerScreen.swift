@@ -562,7 +562,7 @@ final class ScorerScreen {
   func annotate(turn: Int, text: String) throws {
     try scorer.annotate(turn: turn, text: text)
     refresh()
-    flash = "Note saved for turn \(turn)"
+
   }
 
   func observeLine(applies: Bool, meters: Int? = nil) {
