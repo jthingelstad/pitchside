@@ -36,7 +36,11 @@ final class ScorerScreen {
   private(set) var redoAction: ScoreAction?
   private(set) var state: RecordState
   private(set) var rows: [RecordRow]
-  private(set) var playsByTurn: [Int: [String]] = [:]
+  struct Play {
+    let text: String
+    let mark: String?
+  }
+  private(set) var playsByTurn: [Int: [Play]] = [:]
   private(set) var lastWarnings: [RecordWarning] = []
   private(set) var game: Game
 
@@ -227,6 +231,7 @@ final class ScorerScreen {
     }
     if let spot = e["stance"] { e["stance"] = observed(spot, in: attacker) }
     let before = state
+    let previousRow = rows.last
     let oldCount = scorer.records.count
     let turnBefore = state.turn
     run {
@@ -234,7 +239,10 @@ final class ScorerScreen {
     }
     guard scorer.records.count > oldCount, let saved = scorer.records.last else { return }
     if saved["type"] == "toss" { rescueAttempt = false }
-    rememberPlay(saved, before: before)
+    let row = rows.last { $0.turn == before.turn }
+    let inkastMark = saved["type"] == "toss" && before.allows("toss")
+      ? row?.changedInkastMark(since: previousRow) : nil
+    rememberPlay(saved, before: before, row: row, inkastMark: inkastMark)
     trackPlace(saved, before: before)
     trackFallen(saved, before: before, after: state)
     if state.turn != turnBefore || (!before.over && before.next.kingShot != true && isKingShot) {
@@ -637,20 +645,27 @@ final class ScorerScreen {
 
   /// Short descriptions for the live turn log. Rebuild on reopen or correction and
   /// append from the same accepted record used for the pitch after an ordinary throw.
-  private func rememberPlay(_ event: [String: JSONValue], before: RecordState) {
+  private func rememberPlay(_ event: [String: JSONValue], before: RecordState, row: RecordRow?, inkastMark: String?) {
     let action: String
+    var mark: String?
     switch event["type"]?.string {
-    case "baton": action = "Baton \(before.next.n ?? 1)"
-    case "toss": action = before.next.rethrow == true ? "Rethrow" : "Inkast"
+    case "baton":
+      guard !before.over else { return }
+      let index = before.batons?.thrown ?? 0
+      action = "Baton \(index + 1)"
+      if let row, row.batons.indices.contains(index) { mark = row.batons[index].token }
+    case "toss":
+      action = before.next.rethrow == true ? "Rethrow" : "Inkast"
+      mark = inkastMark
     case "punish": action = "Placement"
     case "note":
-      if let text = event["text"]?.string { playsByTurn[before.turn, default: []].append(text) }
+      if let text = event["text"]?.string { playsByTurn[before.turn, default: []].append(Play(text: text, mark: nil)) }
       return
     default: return
     }
     let player = before.attacker.flatMap { before.side($0).players.first { $0.id == event["by"]?.string } }
     let line = [action, player?.name, Self.label(event)].compactMap { $0 }.joined(separator: " · ")
-    playsByTurn[before.turn, default: []].append(line)
+    playsByTurn[before.turn, default: []].append(Play(text: line, mark: mark))
   }
 
   private func restoreContext() {
@@ -664,9 +679,11 @@ final class ScorerScreen {
     punishLater = false
     stance = nil
     do {
-      let events = try scorer.timeline().flatMap(\.events).sorted { $0.index < $1.index }
+      let turns = try scorer.timeline()
+      let rowsByTurn = Dictionary(uniqueKeysWithValues: rows.map { ($0.turn, $0) })
+      let events = turns.flatMap(\.events).sorted { $0.index < $1.index }
       for (i, entry) in events.enumerated() {
-        rememberPlay(entry.event, before: entry.before)
+        rememberPlay(entry.event, before: entry.before, row: rowsByTurn[entry.turn], inkastMark: entry.inkastMark)
         trackPlace(entry.event, before: entry.before)
         let after = i + 1 < events.count ? events[i + 1].before : state
         trackFallen(entry.event, before: entry.before, after: after)
@@ -686,8 +703,7 @@ final class ScorerScreen {
   /// This turn's tokens so far, without the turn number.
   var tokens: String {
     guard let row = rows.last(where: { $0.turn == state.turn }) else { return "" }
-    let line = row.line.split(separator: "#").first.map(String.init) ?? row.line
-    return line.split(separator: " ").dropFirst().joined(separator: " ")
+    return row.scoreWords.joined(separator: " ")
   }
 
 }

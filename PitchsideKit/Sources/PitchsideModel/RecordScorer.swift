@@ -262,7 +262,7 @@ public final class RecordScorer: LiveScorer {
 
   public func timeline() throws -> [TimelineTurn] {
     var events: [TimelineEvent] = []
-    try Self.walk(setup: setup, records: records) { entry, _ in events.append(entry) }
+    try Self.walk(setup: setup, records: records, includeInkastMarks: true) { entry, _ in events.append(entry) }
     let byTurn = Dictionary(grouping: events, by: \.sheetTurn)
     let rowByTurn = Dictionary(rows.map { ($0.turn, $0) }, uniquingKeysWith: { a, _ in a })
     let turns = Set(byTurn.keys).union(rowByTurn.keys).sorted()
@@ -273,17 +273,25 @@ public final class RecordScorer: LiveScorer {
   }
 
   /// Visit each effective event with the state on either side, without changing the game.
-  static func walk(setup: JSONValue, records: [[String: JSONValue]],
+  static func walk(setup: JSONValue, records: [[String: JSONValue]], includeInkastMarks: Bool = false,
                    visit: (TimelineEvent, RecordState) -> Void) throws {
     let scratch = try Engine(appVersion: "0")
     var before = try decode(scratch.call("record.new", json: args(["game": setup]))).state
     var side = before.attacker ?? .A
+    var lastInkastRow: RecordRow?
     for (i, event) in records.enumerated() {
       side = before.attacker ?? side
-      let r = try decode(scratch.call("record.add", json: args(["event": .object(event)])))
+      var arguments: [String: JSONValue] = ["event": .object(event)]
+      if includeInkastMarks && event["type"] == "toss" && before.allows("toss") {
+        arguments["want"] = .object(["sheet": true])
+      }
+      let r = try decode(scratch.call("record.add", json: args(arguments)))
+      let row = r.sheet?.rows.last { $0.turn == before.turn }
+      let inkastMark = row?.changedInkastMark(since: lastInkastRow)
+      if let row { lastInkastRow = row }
       let entry = TimelineEvent(id: event["id"]?.string ?? "\(i)", index: i, event: event,
                                 turn: before.turn, sheetTurn: !before.over && r.state.over ? r.state.turn : before.turn,
-                                side: side, before: before, warnings: r.added?.warnings ?? [])
+                                side: side, before: before, inkastMark: inkastMark, warnings: r.added?.warnings ?? [])
       visit(entry, r.state)
       before = r.state
     }

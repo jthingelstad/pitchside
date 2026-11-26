@@ -96,6 +96,8 @@ public struct TimelineEvent: Sendable, Identifiable, Equatable {
   public let side: Side
   /// The context of this observation, before applying it.
   public let before: RecordState
+  /// The thrower's inkast word immediately after this toss, when the sheet recorded one.
+  public let inkastMark: String?
   /// The warnings it raised.
   public let warnings: [RecordWarning]
 

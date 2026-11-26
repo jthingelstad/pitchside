@@ -368,22 +368,36 @@ private struct TurnHistoryView: View {
   @State private var expanded: Int?
   @State private var scrolledFromLatest = false
 
+  private func playLine(_ play: ScorerScreen.Play, size: CGFloat) -> Text {
+    let description = Text(verbatim: play.text).font(PSFont.body(size))
+    guard let mark = play.mark else { return description }
+    let notation = Text(verbatim: mark).font(PSFont.mono(size)).foregroundStyle(Color.psSolid)
+    return Text("\(notation)  \(description)")
+  }
+
   var body: some View {
     ScrollViewReader { scroll in
       VStack(alignment: .leading, spacing: 0) {
         HStack {
           Text("Turn history").font(PSFont.body(14, .semibold)).foregroundStyle(Color.psMuted).accessibilityAddTraits(.isHeader)
           Spacer()
-          if screen.rows.count > 1 && (expanded != nil || scrolledFromLatest) {
+          if !screen.rows.isEmpty && (expanded != nil || scrolledFromLatest) {
+            let latestMark = screen.rows.last.flatMap { screen.playsByTurn[$0.turn]?.last?.mark }
             Button {
               expanded = nil
               if let latest = screen.rows.last { scroll.scrollTo(latest.turn, anchor: .top) }
             } label: {
-              Text("Latest").font(PSFont.body(14))
-                .frame(minWidth: 48, minHeight: 48).contentShape(Rectangle())
+              HStack(spacing: 5) {
+                Text("Latest").font(PSFont.body(14))
+                if let mark = latestMark {
+                  Text(verbatim: mark).font(PSFont.mono(14))
+                }
+              }
+              .frame(minWidth: 48, minHeight: 48).contentShape(Rectangle())
             }
             .buttonStyle(.plain).foregroundStyle(Color.psSolid)
             .accessibilityLabel("Show latest turn")
+            .accessibilityValue(latestMark ?? "")
           }
         }
         .padding(.horizontal, 12).frame(minHeight: 48)
@@ -413,8 +427,13 @@ private struct TurnHistoryView: View {
                       Image(systemName: expanded == row.turn ? "chevron.up" : "chevron.down")
                         .font(.caption).foregroundStyle(Color.psMuted)
                     }
-                    if row.turn == screen.rows.last?.turn, expanded != row.turn, let last = plays.last {
-                      Text(last).psHelp()
+                    if expanded != row.turn {
+                      if row.turn == screen.rows.last?.turn, let last = plays.last {
+                        playLine(last, size: 14)
+                      } else {
+                        Text(verbatim: row.scoreWords.joined(separator: " ")).font(PSFont.mono(14))
+                          .foregroundStyle(Color.psMuted)
+                      }
                     }
                   }
                   .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
@@ -424,7 +443,7 @@ private struct TurnHistoryView: View {
                 .accessibilityValue(expanded == row.turn ? "Expanded" : "Collapsed")
                 if expanded == row.turn {
                   ForEach(plays.indices, id: \.self) { i in
-                    Text(plays[i]).font(PSFont.body(15)).padding(.leading, 8)
+                    playLine(plays[i], size: 15).padding(.leading, 8)
                   }
                 }
               }

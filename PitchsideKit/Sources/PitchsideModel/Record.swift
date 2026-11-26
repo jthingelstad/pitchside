@@ -168,6 +168,22 @@ public struct RecordRow: Decodable, Sendable, Equatable {
   public let advantage: Bool
   public let batons: [Baton]
   public let notes: [String]
+
+  /// The score as written by the engine, without the turn number or trailing notes.
+  public var scoreWords: [Substring] {
+    Array(line.prefix { $0 != "#" }.split(separator: " ").dropFirst())
+  }
+
+  /// A toss revises one thrower's inkast word in place (I, 2I, 3I, …).
+  /// Take that word from the saved line so rethrows, rescues and penalties follow the writer.
+  public func changedInkastMark(since previous: RecordRow?) -> String? {
+    let earlier = previous?.turn == turn ? previous?.scoreWords ?? [] : []
+    let inkast = scoreWords.dropLast(batons.count + (advantage ? 1 : 0))
+    for (index, word) in inkast.enumerated() where index >= earlier.count || earlier[index] != word {
+      return word.split(separator: ":").last.map(String.init)
+    }
+    return nil
+  }
 }
 
 /// `result`: what every record call but `options` and `events` returns.
