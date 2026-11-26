@@ -12,23 +12,19 @@ struct PitchGeometry {
   let unit: CGFloat
 
   init(size: CGSize, view: PitchFrame.View, viewport: PitchFrame.Viewport, including spot: PitchFrame.World? = nil) {
+    self.init(
+      size: size, view: view, viewport: viewport,
+      region: PitchFrame.Region.whole(in: view).including(spot))
+  }
+
+  /// Fit `region` (the whole pitch, or the half the live scorer frames) to the pane.
+  init(size: CGSize, view: PitchFrame.View, viewport: PitchFrame.Viewport, region: PitchFrame.Region) {
     self.size = size
     self.view = view
-    let pad: CGFloat = view.isSideways ? 20 : 34
-    let room = CGSize(
-      width: max(100, size.width - pad * 2), height: max(100, size.height - pad * 2))
-    let aspect: CGFloat = view.isSideways ? 8 / 5 : 5 / 8
-    let extra = spot.map { PitchFrame.screen($0, in: view) } ?? .init(u: 0.5, v: 0.5)
-    let u = min(0, extra.u), v = min(0, extra.v)
-    let spanU = max(1, extra.u) - u, spanV = max(1, extra.v) - v
-    let w = min(room.width / spanU, room.height * aspect / spanV)
-    let h = w / aspect
-    fitted = CGRect(
-      x: (size.width - w * spanU) / 2 - u * w, y: (size.height - h * spanV) / 2 - v * h,
-      width: w, height: h)
+    fitted = region.fit(in: size, view: view)
     rect = viewport.rect(fitted: fitted)
     // Markers keep their readable size as zoom separates the kubb centres.
-    unit = view.isSideways ? w / 8 : w / 5
+    unit = view.isSideways ? fitted.width / 8 : fitted.width / 5
   }
 
   func fittedPoint(_ p: CGPoint) -> PitchFrame.Screen {

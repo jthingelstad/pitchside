@@ -611,9 +611,16 @@ generated team names, the rules choice).
   journal. `PitchFrame` maps the three viewing positions to a common centre-line origin.
   Record mode returns metre cells for kubbs and writes stance points to the centimetre.
   The live pitch uses journal taps at their original approximate positions. Coincident
-  targets offer an inline choice. Pieces known only to a cell share its drawing area. Pinch around a group
-  to zoom the pitch up to 4×, then drag to pan. The header button zooms into the
-  defending half or fits the pitch. A change of turn or view fits the pitch again.
+  targets offer an inline choice. Pieces known only to a cell share its drawing area. The live pane frames
+  one half, the one the action lands in (`PitchFrame.Region.half`): the 5 by 4 m half
+  with room behind its baseline and outside its lines for "out" taps, and a metre past
+  the centre line for the king. On an iPhone 17 that is about 59 points a metre against
+  33 to 38 for the whole pitch. A new turn or placing half slides the frame there, so
+  the frame says whose turn it is; Reduce Motion swaps it in place. A tab on the
+  centre-line edge names the other half (team, standing kubbs, advantage line, throwing
+  spot) and opens it; a throwing spot tapped there returns to the action. The header
+  button shows the whole pitch or the active half. Pinch around a group to zoom up to
+  4×, then drag to pan. A change of turn or view resets the zoom.
   A field hit in the journal can carry `at[i].placement`, the ID of the toss or
   punishment placement (or the pitch-event ID and slot). It identifies that standing
   placement until it falls. An earlier unreferenced hit in a shared cell leaves the

@@ -46,6 +46,10 @@ final class ScorerScreen {
   private(set) var game: Game
 
   var view: PitchFrame.View
+  /// What the pitch pane frames. The half the action lands in by default; the other
+  /// half for a throwing spot or a look at the advantage line; or the whole pitch.
+  enum Framing: Equatable { case active, other, whole }
+  var framing: Framing = .active
   var marked: [Target] = []
   var countField = 0
   var countBase = 0
@@ -71,6 +75,16 @@ final class ScorerScreen {
   private(set) var placements = FieldPlacements()
   private(set) var fallen: [PitchFrame.World] = []
   var placingHalf: Side { placing ? owed.first?.half ?? defender : defender }
+  /// The half the pane shows, or nil for the whole pitch.
+  var framedHalf: Side? {
+    switch framing {
+    case .active: placingHalf
+    case .other: placingHalf.other
+    case .whole: nil
+    }
+  }
+  /// Whether the thrower's own half is out of the frame.
+  var ownHalfHidden: Bool { framedHalf == defender }
   var problem: String?
 
   init(scorer: LiveScorer) {
@@ -184,6 +198,9 @@ final class ScorerScreen {
     if isKingShot { return "Throw from the baseline." }
     if downCount > 0 { return nil }
     if stanceOn, let stance { return "Stance \(word(stance)) · Mark fallen kubbs." }
+    if stanceOn && ownHalfHidden {
+      return "Open Team \(attacker.rawValue)’s half to tap the throwing spot."
+    }
     if stanceOn {
       return positionsOn ? "Tap the throwing spot, then mark fallen kubbs."
                          : "Tap the throwing spot, then count fallen kubbs."

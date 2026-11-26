@@ -29,7 +29,14 @@ final class ScoringTests: XCTestCase {
     XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: 6), .completed, app.debugDescription, file: file, line: line)
   }
 
+  /// A new turn or frame slides the pitch for about a third of a second. XCUITest does
+  /// not wait for it, so a tap on the pitch waits for the slide to end.
+  func settle() { Thread.sleep(forTimeInterval: 0.5) }
+
   func tap(_ label: String, file: StaticString = #filePath, line: UInt = #line) {
+    if label == "king" || label.range(of: #"^[bfo][AB][0-9]$"#, options: .regularExpression) != nil {
+      settle()
+    }
     let button = app.buttons.matching(
       NSPredicate(format: "label ==[c] %@ OR identifier == %@", label, label)
     ).firstMatch
@@ -56,6 +63,7 @@ final class ScoringTests: XCTestCase {
   }
 
   func shot(_ name: String) {
+    Thread.sleep(forTimeInterval: 1)  // let a frame change finish its slide
     let attachment = XCTAttachment(data: screenImage().pngData()!, uniformTypeIdentifier: "public.png")
     attachment.name = name
     attachment.lifetime = .keepAlways
@@ -83,12 +91,41 @@ final class ScoringTests: XCTestCase {
     }
   }
 
+  /// Tap a point of the pitch in metres (x across, y from Team A's baseline). The pane
+  /// frames the whole pitch or the half the point is in (`PitchFrame.Region`), seen from
+  /// the current view, unzoomed.
   func spot(_ x: Double, _ y: Double) {
+    settle()
     let pitch = app.descendants(matching: .any).matching(identifier: "pitch").firstMatch
-    let frame = pitch.frame
-    let scale = min((frame.width - 68) / 5, (frame.height - 68) / 8)
-    let point = CGVector(dx: frame.midX + (x - 2.5) * scale, dy: frame.midY + (4 - y) * scale)
+    // The pane itself: the pitch container's frame also spans pieces drawn beyond it.
+    let width = pitch.frame.width
+    let frame = pitch.descendants(matching: .other).allElementsBoundByIndex.map(\.frame)
+      .first { abs($0.width - width) < 0.5 } ?? pitch.frame
+    let view = app.buttons["Change view"].value as? String ?? "Behind Team A"
+    let sideways = view == "Sideline"
+    let whole = app.buttons["Show active half"].exists
+    let (minX, maxX, minY, maxY, pad): (Double, Double, Double, Double, Double) =
+      whole ? (0, 5, 0, 8, sideways ? 20 : 34)
+      : y < 4 ? (-0.33, 5.33, -0.55, 5, 3) : (-0.33, 5.33, 3, 8.55, 3)
+    let across = maxX - minX, length = maxY - minY
+    let room = (max(100, frame.width - 2 * pad), max(100, frame.height - 2 * pad))
+    let scale = sideways
+      ? min(room.0 / length, room.1 / across) : min(room.0 / across, room.1 / length)
+    let dx = x - (minX + maxX) / 2, dy = y - (minY + maxY) / 2
+    let offset: (Double, Double) =
+      switch view {
+      case "Sideline": (dy, dx)
+      case "Behind Team B": (-dx, dy)
+      default: (dx, -dy)
+      }
+    let point = CGVector(dx: frame.midX + offset.0 * scale, dy: frame.midY + offset.1 * scale)
     app.coordinate(withNormalizedOffset: .zero).withOffset(point).tap()
+  }
+
+  /// The pitch button's value: what the pane frames, and the zoom.
+  var framing: String { frameButton.value as? String ?? "" }
+  var frameButton: XCUIElement {
+    app.buttons.matching(NSPredicate(format: "label IN %@", ["Show whole pitch", "Show active half"])).firstMatch
   }
 
   func testWorkedGameAndViews() {
@@ -159,9 +196,14 @@ final class ScoringTests: XCTestCase {
     tap("fB2")
     shot("Baton-marked-light")
     tap("3 down")
-    spot(3.9, 2.5)
-    tap("bB0")
+    // The throwing spot is in the thrower's own half: open it, tap, and the frame returns.
+    XCTAssertEqual(framing, "Team B’s half, 100 percent")
+    tap("other-half")
+    XCTAssertEqual(framing, "Team A’s half, 100 percent")
     shot("Thrown-from-light")
+    spot(3.9, 2.5)
+    XCTAssertEqual(framing, "Team B’s half, 100 percent")
+    tap("bB0")
     tap("1 down")
     tap("Change who throws")
     shot("Who-threw-light")
@@ -174,8 +216,12 @@ final class ScoringTests: XCTestCase {
     tap("bB0")
     tap("1 down")
     tap("Change view")  // behind A again
+    tap("other-half")
     spot(2.7, 0.12)
     shot("King-shot-light")
+    tap("Show whole pitch")
+    shot("Whole-pitch-light")
+    tap("Show active half")
     tap("Miss")
     tap("King down")
     XCTAssertTrue(app.staticTexts["Wobbly Towers beat Birch Batons"].waitForExistence(timeout: 5))
@@ -204,9 +250,13 @@ final class ScoringTests: XCTestCase {
     launch("scorer", after: 28)
     let pitch = app.descendants(matching: .any).matching(identifier: "pitch").firstMatch
     let overview = pitch.frame
+    // Pinch works on the framed half too. The header button then shows the whole pitch,
+    // where this cluster sits in the middle of the pane.
+    XCTAssertEqual(framing, "Team B’s half, 100 percent")
     pitch.pinch(withScale: 2.5, velocity: 2)
-    XCTAssertTrue(app.buttons["Fit whole pitch"].exists)
-    tap("Fit whole pitch")
+    XCTAssertTrue(framing.hasPrefix("Team B’s half") && !framing.hasSuffix(" 100 percent"), framing)
+    tap("Show whole pitch")
+    XCTAssertEqual(framing, "Whole pitch, 100 percent")
     // All three placements are still due after the pinch.
     spot(2.24, 4.33)
     spot(2.31, 4.48)
@@ -221,9 +271,10 @@ final class ScoringTests: XCTestCase {
     }
     for orientation in ["Behind Team A", "Sideline", "Behind Team B"] {
       XCTAssertEqual(app.buttons["Change view"].value as? String, orientation)
+      settle()  // a new view slides the frame
       let before = separation()
       pitch.pinch(withScale: 2.5, velocity: 2)
-      XCTAssertGreaterThan(separation(), before * 1.3)
+      XCTAssertGreaterThan(separation(), before * 1.3, "\(orientation) \(framing)")
       let x = field[0].frame.midX
       touch(overview.midX, overview.midY).press(forDuration: 0.08, thenDragTo: touch(overview.midX + 40, overview.midY + 20))
       XCTAssertGreaterThan(field[0].frame.midX, x + 10)
@@ -236,22 +287,24 @@ final class ScoringTests: XCTestCase {
       if orientation == "Behind Team B" {
         shot("Zoomed-cluster")
         tap("2 down")
-        XCTAssertTrue(app.buttons["Fit whole pitch"].exists)
-        tap("Fit whole pitch")
+        tap("Show whole pitch")
+        XCTAssertEqual(framing, "Whole pitch, 100 percent")
         XCTAssertEqual(app.buttons["fB0"].value as? String, "standing")
         XCTAssertFalse(app.buttons["fB1"].exists)
       } else {
         touch(field[1].frame.midX, field[1].frame.midY).tap()
         touch(field[2].frame.midX, field[2].frame.midY).tap()
         tap("Change view")
-        XCTAssertTrue(app.buttons["Zoom in on pitch"].exists)
+        // A new view fits the pitch again and keeps the whole-pitch frame.
+        XCTAssertEqual(framing, "Whole pitch, 100 percent")
       }
     }
   }
 
-  func testPlaceInkastOnZoomedPitch() {
+  func testPlaceInkastOnTheFramedHalf() {
     launch("scorer", after: 28)
     let pitch = app.descendants(matching: .any).matching(identifier: "pitch").firstMatch
+    _ = pitch.waitForExistence(timeout: 4)
     let thrower = app.buttons["Change who throws"]
     let turn = app.descendants(matching: .any)["entry-turn"]
     let action = app.staticTexts["entry-action"]
@@ -265,25 +318,32 @@ final class ScoringTests: XCTestCase {
     tap("Change who throws")
     tap("Dana")
     XCTAssertEqual(thrower.value as? String, "Dana")
-    let frame = pitch.frame
-    let unit = min((frame.width - 68) / 5, (frame.height - 68) / 8)
-    tap("Zoom in on pitch")
-    // The one-handed 2× view centres Team B's half. Three taps in cell (1, 2)
-    // must come back there after returning to the fitted pitch.
-    let point = CGVector(dx: frame.midX - 2 * unit, dy: frame.midY - unit)
-    let landing = app.coordinate(withNormalizedOffset: .zero).withOffset(point)
-    for _ in 0..<2 { landing.tap() }
+    // The pane frames Team B's half, where the kubbs land, at more than half again the
+    // whole pitch's scale. Three taps in cell (1, 2) must come back there on the whole pitch.
+    XCTAssertEqual(framing, "Team B’s half, 100 percent")
+    let tab = app.buttons["other-half"]
+    XCTAssertEqual(tab.label, "Show Team A’s half")
+    XCTAssertGreaterThanOrEqual(tab.frame.height, 44)
+    XCTAssertGreaterThan(tab.frame.minY, pitch.frame.midY)  // Team A's half is nearer the scorer.
+    for _ in 0..<2 { spot(1.5, 6.5) }
     XCTAssertTrue(app.buttons["history-turn-5"].label.contains("D:2I"))
     XCTAssertEqual(action.label, "Inkast · 1 left")
     XCTAssertEqual(thrower.value as? String, "Dana")
-    landing.tap()
+    spot(1.5, 6.5)
     let turnLine = app.buttons["history-turn-5"]
     let afterInkast = turnLine.label
     XCTAssertTrue(afterInkast.contains("D:3I"))
     XCTAssertEqual(action.label, "Baton 1 of 6")
     XCTAssertTrue(app.staticTexts["Inkast complete"].exists)
     XCTAssertEqual(thrower.value as? String, "Kim")
-    tap("Fit whole pitch")
+    XCTAssertTrue(app.staticTexts["Open Team A’s half to tap the throwing spot."].exists)
+    tap("other-half")
+    XCTAssertEqual(framing, "Team A’s half, 100 percent")
+    spot(3.9, 2.5)
+    XCTAssertEqual(framing, "Team B’s half, 100 percent")
+    XCTAssertTrue(
+      app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Stance 3.90,'")).firstMatch.exists)
+    tap("Show whole pitch")
     for i in 0..<3 {
       XCTAssertTrue(app.buttons["fB" + String(i)].label.contains("across 1, depth 2"))
     }
@@ -402,10 +462,15 @@ final class ScoringTests: XCTestCase {
 
   func testUndoRedoAcrossTurnAndNewThrow() {
     launch("scorer", after: 1)
+    XCTAssertEqual(framing, "Team B’s half, 100 percent")
     tap("Miss")
     XCTAssertTrue(app.buttons["Later"].exists)
+    // Team B's turn: the frame moves to Team A's half, where B's kubbs land.
+    XCTAssertEqual(framing, "Team A’s half, 100 percent")
+    XCTAssertEqual(app.buttons["other-half"].label, "Show Team B’s half")
     tap("Undo")
     XCTAssertFalse(app.buttons["Later"].exists)
+    XCTAssertEqual(framing, "Team B’s half, 100 percent")
     XCTAssertTrue(app.buttons["Redo"].isHittable)
     shot("Redo-throw")
     tap("Redo")
