@@ -23,7 +23,6 @@ final class ScorerScreen {
     case rare
     case pick
     case capture
-    case note
     case advantage
     case resign
     case call
@@ -61,7 +60,7 @@ final class ScorerScreen {
   var punishLater = false
   var rescueAttempt = false
   var flash: String?
-  var noteText = ""
+  var noteTurn: Int?
   struct OwedPlace {
     let id: String
     let half: Side
@@ -560,13 +559,10 @@ final class ScorerScreen {
     add(RecordEvent.call(winner: winner), by: false)
   }
 
-  func saveNote() {
-    let t = noteText.trimmingCharacters(in: .whitespacesAndNewlines)
-    panel = .none
-    guard !t.isEmpty else { return }
-    add(RecordEvent.note(t), by: false)
-    noteText = ""
-    flash = "Noted"
+  func annotate(turn: Int, text: String) throws {
+    try scorer.annotate(turn: turn, text: text)
+    refresh()
+    flash = "Note saved for turn \(turn)"
   }
 
   func observeLine(applies: Bool, meters: Int? = nil) {
@@ -671,8 +667,6 @@ final class ScorerScreen {
     case "punish":
       history[turn, default: TurnHistory()].entries.append("Placement")
       return
-    case "note":
-      if let text = event["text"]?.string { history[turn, default: TurnHistory()].entries.append("# " + text) }
       return
     default: return
     }

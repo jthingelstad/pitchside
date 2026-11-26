@@ -221,6 +221,8 @@ public struct Game: Codable, Sendable, Hashable, Identifiable {
   /// The file's player ids to saved-name keys, for stats across games. Filled when a
   /// Pitchside game writes its file.
   public var playerKeys: [String: UUID]
+  /// Notes added in Pitchside to an imported file, keyed by its reader turn.
+  public var importedTurnNotes: [Int: [String]]?
   /// The event (`[Event "..."]`), if one was typed: "Fall Open, pool 2".
   public var event: String?
   /// Where it was played (`[Location "..."]`), if typed: "Riverside Park, Pitch 4".

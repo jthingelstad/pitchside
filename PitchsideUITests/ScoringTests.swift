@@ -633,6 +633,14 @@ final class ScoringTests: XCTestCase {
     for _ in 0..<8 where !older.isHittable { history.swipeUp() }
     XCTAssertTrue(older.label.hasSuffix("S:2I S:2F L:B S:B L:-"), older.label)
     older.tap()
+    let addNote = app.buttons["Add turn note"]
+    for _ in 0..<4 where !addNote.isHittable { history.swipeUp() }
+    addNote.tap()
+    let editor = app.textFields["Turn note"]
+    if editor.exists { editor.typeText("Tight cluster") } else { app.textViews.firstMatch.typeText("Tight cluster") }
+    tap("Save note")
+    XCTAssertEqual(app.buttons["Change who throws"].value as? String, "Ole")
+    XCTAssertEqual(app.buttons["fB0"].value as? String, "marked down")
     let firstBaton = app.staticTexts["S:2F"]
     for _ in 0..<4 where !firstBaton.isHittable { history.swipeUp() }
     XCTAssertTrue(firstBaton.isHittable)
@@ -772,13 +780,21 @@ final class ScoringTests: XCTestCase {
   }
 
   func testPrintableScoreSheet() {
-    launch("sheet", after: 0)
+    launch("imported", after: 0)
+    let turn = app.buttons["annotateTurn2"]
+    for _ in 0..<5 where !turn.isHittable { app.swipeUp() }
+    turn.tap()
+    let note = app.textFields["Turn note"].firstMatch
+    if note.exists { note.tap(); note.typeText("Watch the second baton") }
+    else { let editor = app.textViews.firstMatch; editor.tap(); editor.typeText("Watch the second baton") }
+    tap("Save note")
+    XCTAssertTrue(app.staticTexts["Watch the second baton"].waitForExistence(timeout: 4))
     let export = app.buttons.matching(NSPredicate(format: "label ==[c] 'Score sheet PDF'")).firstMatch
-    for _ in 0..<6 where !export.isHittable { app.swipeUp() }
+    for _ in 0..<6 where !export.isHittable { app.swipeDown() }
     tap("Score sheet PDF")
     XCTAssertTrue(app.buttons["Share"].waitForExistence(timeout: 8), app.debugDescription)
     let page = app.descendants(matching: .any).matching(
-      NSPredicate(format: "label CONTAINS[c] 'Score sheet · Page 1' OR label CONTAINS[c] '1 of 1' OR value CONTAINS[c] '1 of 1'")
+      NSPredicate(format: "label CONTAINS[c] 'Score sheet · Page 1' OR label CONTAINS[c] '1 of ' OR value CONTAINS[c] '1 of '")
     ).firstMatch
     XCTAssertTrue(page.waitForExistence(timeout: 15), app.debugDescription)
     shot("Printable-score-sheet")

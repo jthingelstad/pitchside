@@ -115,3 +115,25 @@ public struct TimelineTurn: Sendable, Identifiable, Equatable {
   /// The turn's batons, in order.
   public var batons: [TimelineEvent] { events.filter { $0.type == "baton" } }
 }
+
+private struct MissingNoteTurn: LocalizedError {
+  var errorDescription: String? { "This turn is no longer in the game." }
+}
+
+extension LiveScorer {
+  /// An older turn's last observation can itself advance the turn. Insert the
+  /// note just before it. The engine still accepts notes on its final row.
+  public func annotate(turn: Int, text: String) throws {
+    let text = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !text.isEmpty else { return }
+    let event = RecordEvent.note(text)
+    if turn == state.turn {
+      try add(event)
+    } else {
+      let events = try timeline().flatMap(\.events)
+      guard let last = events.filter({ $0.turn == turn && !$0.before.over }).max(by: { $0.index < $1.index })
+      else { throw MissingNoteTurn() }
+      try edit(.insert(before: last.id, event: event))
+    }
+  }
+}

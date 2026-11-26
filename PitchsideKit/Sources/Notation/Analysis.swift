@@ -157,6 +157,11 @@ public struct Analysis: Decodable, Sendable {
     public let advTurns: Int
     public let advBatons: Int
     public let advHits: Int
+    public let misses: Int
+    public let kingMisses: Int
+    public let illegal: Int
+    public let hotStreak: Int
+    public let coldStreak: Int
     public let bestBlast: Int
     public let hitPct: Double?
     /// Sum of field kubbs felled by each turn's first baton over sum of kubbs thrown in
