@@ -88,6 +88,22 @@ import Testing
     }
   }
 
+  /// A video with an offset opens at the game, not at the start of the footage.
+  @Test func videoLinkStartsAtTheGame() throws {
+    var credit = ReferenceCredit(headers: [
+      "Video": "https://www.youtube.com/watch?v=xRK1nCUWhtY&feature=related", "Video offset": "53:10",
+    ])
+    #expect(credit.videoSeconds == 3190)
+    #expect(credit.videoLink?.absoluteString == "https://www.youtube.com/watch?v=xRK1nCUWhtY&feature=related&t=3190s")
+    credit = ReferenceCredit(headers: ["Video": "http://www.youtube.com/watch?v=kt13sGJPywA"])
+    #expect(credit.videoLink == credit.video)
+    credit = ReferenceCredit(headers: ["Video": "https://vimeo.com/1", "Video offset": "1:02:03"])
+    #expect(credit.videoSeconds == 3723)
+    #expect(credit.videoLink == credit.video, "another host's link is left alone")
+    credit = ReferenceCredit(headers: ["Video": "https://youtu.be/x", "Video offset": "soon"])
+    #expect(credit.videoSeconds == nil && credit.videoLink == credit.video)
+  }
+
   /// The collection is read from the bundle only: making its games writes nothing to the
   /// store, and its players never count under a saved name.
   @Test func neverTouchesTheStoreOrCrossGameStats() throws {

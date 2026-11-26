@@ -369,9 +369,9 @@ struct ReferenceCreditCard: View {
     Link(destination: entry.reference.archiveURL) { Label("Archive file", systemImage: "safari") }
       .buttonStyle(.quiet)
       .accessibilityHint("Opens this game's file in the Planet Kubb archive on GitHub")
-    if let video = credit.video {
+    if let video = credit.videoLink {
       Link(destination: video) {
-        Label(credit.videoOffset.map { "Video from \($0)" } ?? "Video", systemImage: "play.rectangle")
+        Label(credit.videoSeconds != nil ? "Video from \(credit.videoOffset!)" : "Video", systemImage: "play.rectangle")
       }
       .buttonStyle(.quiet)
       .accessibilityHint("Opens the video the game was scored from")

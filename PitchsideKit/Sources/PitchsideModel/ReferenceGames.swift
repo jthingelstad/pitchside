@@ -88,4 +88,23 @@ public struct ReferenceCredit: Sendable, Hashable {
     video = value("Video").flatMap(URL.init(string:))
     videoOffset = value("Video offset")
   }
+
+  /// The offset (`53:10`, `1:02:03`) in seconds, when it reads as one.
+  public var videoSeconds: Int? {
+    guard let videoOffset else { return nil }
+    let parts = videoOffset.split(separator: ":").map { Int($0) }
+    guard (1...3).contains(parts.count), parts.allSatisfy({ ($0 ?? -1) >= 0 }) else { return nil }
+    return parts.reduce(0) { $0 * 60 + $1! }
+  }
+
+  /// The video, opened at the game when the file gives an offset (YouTube's `t`; another
+  /// host's link is left as the file has it).
+  public var videoLink: URL? {
+    guard let video, let seconds = videoSeconds, let host = video.host?.lowercased(),
+      host.hasSuffix("youtube.com") || host == "youtu.be",
+      var parts = URLComponents(url: video, resolvingAgainstBaseURL: false)
+    else { return video }
+    parts.queryItems = (parts.queryItems ?? []).filter { $0.name != "t" } + [URLQueryItem(name: "t", value: "\(seconds)s")]
+    return parts.url ?? video
+  }
 }
