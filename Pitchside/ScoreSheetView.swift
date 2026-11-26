@@ -9,6 +9,7 @@ import SwiftUI
 struct ScoreSheetView: View {
   @Environment(AppModel.self) private var model
   let id: UUID
+  var back = "Games"
   var openSession: ((ScoringSession) -> Void)? = nil
   @State private var problem: String?
   @State private var history: ScoreHistory?
@@ -19,11 +20,12 @@ struct ScoreSheetView: View {
   @State private var replay: GameReplay?
 
   var body: some View {
-    PushedScreen(title: "Score sheet", back: "Games") {
+    PushedScreen(title: "Score sheet", back: back) {
       if let game = model.game(id) {
         let text = model.text(game)
         let read = model.read(game)
         result(game, read)
+        if game.isReference, let entry = model.reference(id) { ReferenceCreditCard(entry: entry) }
         if let read {
           ViewThatFits(in: .horizontal) {
             HStack(spacing: 8) { reviewActions(read).fixedSize(horizontal: true, vertical: false) }
@@ -92,7 +94,7 @@ struct ScoreSheetView: View {
       if let replay { ReplayView(replay: replay) }
     }
     .turnNoteEditor(turn: $noteTurn) { turn, text in
-      guard var game = model.game(id), game.isImported else { throw CocoaError(.fileNoSuchFile) }
+      guard var game = model.game(id), game.isImported, !game.isReference else { throw CocoaError(.fileNoSuchFile) }
       var notes = game.importedTurnNotes ?? [:]
       notes[turn, default: []].append(text)
       game.importedTurnNotes = notes
@@ -176,7 +178,7 @@ struct ScoreSheetView: View {
             .buttonStyle(.plain).accessibilityLabel(summary).accessibilityHint("Edit this turn")
             .accessibilityIdentifier("editTurn\(row.turn)")
         } else {
-          if game.isImported {
+          if game.isImported && !game.isReference {
             Button { noteTurn = row.turn } label: {
               HStack {
                 content
@@ -265,7 +267,9 @@ struct ScoreSheetView: View {
   /// The file under a readable name in the temporary folder, for the share sheet.
   func shareFile(_ game: Game, _ text: String) -> URL {
     let name: String
-    if case .file(let original) = game.origin, original.hasSuffix(".txt") { name = original } else {
+    switch game.origin {
+    case .file(let original) where original.hasSuffix(".txt"), .reference(let original): name = original
+    default:
       name = GameFile.fileName(for: game)
     }
     let url = FileManager.default.temporaryDirectory.appending(path: name)
@@ -312,6 +316,65 @@ private struct TurnNoteEditor: ViewModifier {
           .onAppear { editing = true }
         }
       }
+    }
+  }
+}
+
+/// Who a reference game belongs to: the event, day and place, who scored it, and where it
+/// was published, from the file's own headers. Shown on its sheet.
+struct ReferenceCreditCard: View {
+  let entry: ReferenceEntry
+
+  var body: some View {
+    let credit = entry.credit
+    let a = entry.read.analysis
+    VStack(alignment: .leading, spacing: 8) {
+      Text("Reference game").psKick()
+      Text("A real game from the Planet Kubb archive. Read only, and not counted in your stats.")
+        .font(PSFont.body(15)).foregroundStyle(Color.psText)
+        .fixedSize(horizontal: false, vertical: true)
+      VStack(alignment: .leading, spacing: 4) {
+        row("Event", credit.event)
+        row("Date", credit.date.map { archiveDay($0) ?? $0 })
+        row("Place", credit.location)
+        row("Teams", "\(a.name(.A)) v \(a.name(.B))")
+        row("Scored by", credit.scoredBy)
+        if credit.enteredBy != credit.scoredBy { row("Entered by", credit.enteredBy) }
+        row("Source", credit.source.map { _ in "Planet Kubb wiki" })
+      }
+      ViewThatFits(in: .horizontal) {
+        HStack(spacing: 8) { links(credit).fixedSize(horizontal: true, vertical: false) }
+        VStack(alignment: .leading, spacing: 8) { links(credit) }
+      }
+      Text(ReferenceGames.terms).psHelp()
+    }
+    .padding(16)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .psBox()
+    .accessibilityIdentifier("referenceCredit")
+  }
+
+  @ViewBuilder private func row(_ label: String, _ value: String?) -> some View {
+    if let value {
+      HStack(alignment: .firstTextBaseline, spacing: 8) {
+        Text(label).font(PSFont.body(14, .bold)).foregroundStyle(Color.psMuted).frame(width: 84, alignment: .leading)
+        Text(verbatim: value).font(PSFont.body(15)).foregroundStyle(Color.psText)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+      .accessibilityElement(children: .combine)
+    }
+  }
+
+  @ViewBuilder private func links(_ credit: ReferenceCredit) -> some View {
+    Link(destination: entry.reference.archiveURL) { Label("Archive file", systemImage: "safari") }
+      .buttonStyle(.quiet)
+      .accessibilityHint("Opens this game's file in the Planet Kubb archive on GitHub")
+    if let video = credit.video {
+      Link(destination: video) {
+        Label(credit.videoOffset.map { "Video from \($0)" } ?? "Video", systemImage: "play.rectangle")
+      }
+      .buttonStyle(.quiet)
+      .accessibilityHint("Opens the video the game was scored from")
     }
   }
 }

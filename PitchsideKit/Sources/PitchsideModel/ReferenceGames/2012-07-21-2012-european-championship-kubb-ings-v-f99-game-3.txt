@@ -1,0 +1,18 @@
+[Event "European Championship 2012"]
+[Location "Berlin, Germany"]
+[Start "2012-07-21"]
+[Surface "Grass"]
+[Team A "Kubb'Ings"]
+[Team B "Fortschritt99"]
+[First "Team A"]
+[Win "Team A"]
+[Scored by "Garrickvanburen"]
+[Entered by "Garrickvanburen"]
+[Video "https://www.youtube.com/watch?v=xRK1nCUWhtY&feature=related"]
+[Video offset "53:10"]
+[Stats "Yes"]
+[Source "https://wiki.planetkubb.com/wiki/Game:2012_European_Championship_-_Kubb'Ings_v._F99/Game_3"]
+
+1. 0I B - - - B B
+2. 3I 2F - F B B -
+3. 5I2R 4F F B - B K

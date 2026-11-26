@@ -1,0 +1,27 @@
+[Event "2011 VM"]
+[Location "Gotland, Sweden"]
+[Start "2011-08-06"]
+[Surface "Grass"]
+[Team A "Kubb'Ings"]
+[Team B "Chnebuchlepfter"]
+[First "Team A"]
+[Win "Team A"]
+[Scored by "Garrickvanburen"]
+[Entered by "Garrickvanburen"]
+[Video "https://www.youtube.com/watch?v=KwYDOhZOhLI&feature=related"]
+[Stats "Yes"]
+[Source "https://wiki.planetkubb.com/wiki/Game:2011_VM_Kubb'Ings_(Seven_Up)_vs_Chnebuchlepfer_Group_4"]
+
+1. 0I B B - B - -
+2. 3I 3F - B B - -
+3. 5IR F F F - F F
+4. 5I2R 2F - 2F F - -
+5. 5IRP F 3F - - - -
+6. 4IR A - - F F 2F -
+7. 4IR 2F F F - F -
+8. 5I 5F - - B - B
+9. 7I 3F 3F F - B -
+10. 8IRP 2F - 4F - - -
+11. 6IR A 2F F F F - F
+12. 6I3R 4F F - F F -
+13. 7I3R A - 6F F - B K

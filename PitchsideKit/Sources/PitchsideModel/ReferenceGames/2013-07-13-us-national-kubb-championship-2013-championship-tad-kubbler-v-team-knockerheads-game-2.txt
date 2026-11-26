@@ -1,0 +1,23 @@
+[Event "US National Kubb Championship 2013"]
+[Location "Eau Claire, WI"]
+[Event date "2013-07-13"]
+[Surface "Grass"]
+[Team A "Tad Kubbler"]
+[Team A Players "Cole Vryens (c), Anders Thorstenson (a), Eric Goplin (e)"]
+[Team B "Team Knockerheads"]
+[Team B Players "Josh Feathers (j), Grant Scott (g), Chris Hodges (h)"]
+[First "Team A"]
+[Win "Team B"]
+[Scored by "garrickvanburen"]
+[Stats "Yes"]
+[Scoresheet "scoresheets/2013Nationals-Knockerheads-TadKubbler-Game-2.pdf"]
+[Source "https://wiki.planetkubb.com/wiki/Game:US_National_Kubb_Championship_2013_Championship_Tad_Kubbler_v._Team_Knockerheads/Game_2"]
+
+1. 0I c:- c:B e:- e:B a:- a:-
+2. j:2I j:2F j:- h:- h:B g:B g:- # t1 nice double @ angle
+3. e:4IR c:2F c:F a:F e:- e:- a:B
+4. j:5I j:4F j:F h:- h:B g:- g:-
+5. e:6IRP c:2F c:2F a:F e:F e:- a:- # penalty on side baton from corner
+6. j:6I2R j:3F j:2F h:F h:- g:B g:B # t3 almost to baseline fb.
+7. e:8I3RP c:- c:- a:- e:- e:2F a:- # penalty on baseline, meltdown
+8. j:2I A j:2F g:= g:= h:K X X # 4m advantage. T3 & T4 thrown between legs

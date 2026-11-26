@@ -64,8 +64,11 @@ let package = Package(
       ]
     ),
     // Pitchside's own model: the roster, teams, a game and its event log, the files on
-    // this phone, the score sheet and the stats.
-    .target(name: "PitchsideModel", dependencies: ["Notation", "KubbEngine"]),
+    // this phone, the score sheet and the stats. ReferenceGames/ is archived games from
+    // the same pk-kubb-score release, vendored by scripts/vendor-notation.sh.
+    .target(
+      name: "PitchsideModel", dependencies: ["Notation", "KubbEngine"],
+      resources: [.copy("ReferenceGames")]),
     // The design system from docs/design/canvas/ps.css, light and dark.
     .target(name: "PitchsideDesign"),
     .testTarget(

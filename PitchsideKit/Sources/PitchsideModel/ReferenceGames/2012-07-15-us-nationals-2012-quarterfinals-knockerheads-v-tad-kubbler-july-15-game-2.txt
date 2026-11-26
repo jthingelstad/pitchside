@@ -1,0 +1,38 @@
+[Event "US National Kubb Championship 2012"]
+[Location "Eau Claire Soccer Fields"]
+[Start "2012-07-15 09:32"]
+[End "2012-07-15 10:31"]
+[Duration "59m"]
+[Team A "Tad Kubbler"]
+[Team A Players "Eric Goplin (e), Cole Vryens (c), Anders Thorstenson (a)"]
+[Team B "Team Knockerheads"]
+[Team B Players "Josh Feathers (j), Grant Scott (g), Dwayne Ballmer (d)"]
+[First "Team A"]
+[Win "Team B"]
+[Scored by "Thingles"]
+[Entered by "Garrickvanburen"]
+[Video "http://www.youtube.com/watch?v=HK1XMqXg0YQ"]
+[Stats "Yes"]
+[Scoresheet "scoresheets/Us2012-tadkubbler-v-knockerheads-game2.pdf"]
+[Source "https://wiki.planetkubb.com/wiki/Game:US_Nationals_2012,_Quarterfinals,_Knockerheads_v._Tad_Kubbler,_July_15/Game_2"]
+
+1. 0I c:- c:B a:- a:- e:- e:-
+2. j:I j:- j:- g:- g:F d:- d:- # 4 throws to clean single field kubb
+3. e:I c:- c:F a:- a:- e:- e:B
+4. j:2I j:- j:- g:F g:- d:F d:-
+5. e:2I c:F c:- a:F a:- e:- e:B
+6. j:3I j:3F j:B g:B g:- d:- d:B
+7. e:6I c:F c:- a:F a:F e:2F e:F # throw 5 was great, eric in clutch
+8. j:6I j:2F j:- g:F g:F d:F d:F # throw 2 hit sidepin, field kubb in throw 6 almost rolls to base kubb
+9. e:6I c:- c:4F a:- a:- e:F e:F # throw 1 straight into the air, field kubb in throw 6 almost rolls to base kubb
+10. j:6I j:2F j:2F g:- g:- d:F d:F
+11. e:6I2R c:2F c:- a:F a:F e:F e:F
+12. j:6I2RP j:2F j:F g:- g:F d:F d:F # throw 1 early (can't read scoresheet comment here), dwayne in clutch
+13. e:6I3R c:2F c:2F a:F a:F e:- e:-
+14. j:6IR j:5F j:F g:- g:- d:B d:- # great grouping
+15. e:7I c:- c:2F a:2F a:F e:F e:F # great group, eric in clutch
+16. j:7IR j:4F j:2F g:F g:- d:- d:B
+17. e:8IR c:4F c:F a:2F a:F e:B e:-
+18. j:9I3R j:5F j:2F g:F g:- d:- d:F # amazing drill
+19. e:9I4R c:3F c:- a:3F a:F e:- e:-
+20. j:7IR A j:5F j:F g:F d:K X X

@@ -1,0 +1,21 @@
+[Event "Minnesota Kubb Loppet Tournament 2013"]
+[Location "Lake Calhoun, Minneapolis, MN"]
+[Start "2013-02-02"]
+[Surface "Snow"]
+[Team A "Team Knockerheads"]
+[Team A Players "Josh Feathers (j), Chris Hodges (c), Grant Scott (g)"]
+[Team B "Kubby Doo"]
+[Team B Players "Mark Blazel (m), Luke Peikert (l), Zachary Brown (z)"]
+[First "Team A"]
+[Win "Team A"]
+[Scored by "Thingles"]
+[Entered by "Thingles"]
+[Stats "Yes"]
+[Scoresheet "scoresheets/Minnesota_Kubb_Loppet_Tournament_2013,_Quarterfinals,_Knockerheads_v._Kubby_Doo,_Game_3.pdf"]
+[Source "https://wiki.planetkubb.com/wiki/Game:Minnesota_Kubb_Loppet_Tournament_2013,_Quarterfinals,_Knockerheads_v._Kubby_Doo/Game_3"]
+
+1. 0I g:- g:B g:- c:- c:- c:-
+2. m:I z:- z:F m:- m:B l:B l:-
+3. j:3I j:2F j:F c:B c:B g:B g:B # ridiculous!
+4. m:7IR z:5F z:F m:F m:B l:- l:B # great t1
+5. j:9I3R j:4F j:2F c:F c:F g:F g:K # rethrow saved from penalty via a push on another kubb

@@ -133,23 +133,29 @@ public final class GameStore {
   /// reader's refusal (a Kid game, or no turns) before keeping anything.
   public func open(fileText text: String, named name: String, reader: NotationReader) throws -> Game {
     let read = try reader.read(text)
+    let game = Self.game(from: read, origin: .file(name))
+    try writeFile(text, for: game.id)
+    try save(game)
+    return game
+  }
+
+  /// A finished game as a file describes it: its teams, options and capture. Nothing is
+  /// saved; `open` keeps it, reference games stay in the bundle.
+  public static func game(from read: GameRead, origin: Game.Origin, id: UUID = UUID()) -> Game {
     let a = read.analysis
     var teams: [Side: Team] = [:]
     for side in Side.allCases {
       let players = a.players.filter { $0.side == side }.map { TeamPlayer(name: $0.name ?? $0.id) }
       teams[side] = Team(name: a.name(side), players: players)
     }
-    let created = Self.start(a.headers["Start"] ?? a.headers["Event date"]) ?? .now
+    let created = start(a.headers["Start"] ?? a.headers["Event date"]) ?? .now
     var options = GameOptions(first: a.first)
     if a.rules.opening.first == 6 || a.headers["Rules"]?.contains("six from the start") == true { options.opening = .six }
     if let s = a.headers["Surface"].flatMap({ GameOptions.Surface(rawValue: $0.lowercased()) }) { options.surface = s }
     let capture = a.headers[GameFile.captureKey].map(Capture.init(headerValue:)) ?? Capture(who: !a.players.isEmpty)
-    let game = Game(
-      created: created, origin: .file(name), status: .finished, teams: teams, options: options, capture: capture,
-      playerKeys: [:])
-    try writeFile(text, for: game.id)
-    try save(game)
-    return game
+    return Game(
+      id: id, created: created, origin: origin, status: .finished, teams: teams, options: options,
+      capture: capture, playerKeys: [:], event: a.headers["Event"], location: a.headers["Location"])
   }
 
   public func delete(_ id: UUID) throws {

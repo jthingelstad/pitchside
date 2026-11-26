@@ -1,0 +1,21 @@
+[Event "2015 U.S. Nationals Quarterfinals"]
+[Location "Eau Claire, WI"]
+[Start "2015-07-18"]
+[Team A "Damage Inc"]
+[Team A Players "Grant (grant), Darren (darren), Gregg (gregg)"]
+[Team B "King Pin"]
+[Team B Players "JP (jp), Pat (pat), Jeremiah (jeremiah)"]
+[First "Team A"]
+[Win "Team A"]
+[Scored by "garrickvanburen"]
+[Entered by "garrickvanburen"]
+[Stats "Yes"]
+[Source "https://wiki.planetkubb.com/wiki/Game:2015_U.S._Nationals_Quarterfinals_Damage_Inc_vs_King_Pin"]
+
+1. gregg:- darren:-
+2. pat:- jp:- jeremiah:- jeremiah:-
+3. grant:- grant:1B gregg:1B gregg:- darren:- darren:1B
+4. pat:3I2R pat:1F pat:2F jp:1B jp:1B jeremiah:- jeremiah:1B
+5. darren:6I3R grant:3F grant:1F gregg:1F gregg:1F darren:1B darren:-
+6. pat:7I1R pat:4F pat:1F jp:1F jp:1F jeremiah:- jeremiah:-
+7. darren:7I3R grant:4F grant:1F gregg:1F gregg:1F darren:1B darren:K

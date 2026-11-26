@@ -24,6 +24,9 @@ final class AppModel {
   private(set) var recoveryProblem: String?
   private(set) var games: [Game] = []
   private(set) var roster: [SavedName] = []
+  /// The bundled reference games, read once. Never in the store: not in `games`, the
+  /// roster or `totals()`.
+  let references: [ReferenceEntry]
   @ObservationIgnored private var reads: [UUID: (text: String, read: GameRead?)] = [:]
 
   /// `mirrored`: keep a copy of each finished game where Files shows it (the real store
@@ -45,6 +48,7 @@ final class AppModel {
     version = VersionLabel(app: app, engine: engineVersion, build: build)
     engineProblem = problem
     reader = try? NotationReader()
+    references = reader.map(Self.readReferences) ?? []
     scorers = RecordScorer.Factory(appVersion: app)
     for game in store.games() where store.needsReplay(game) {
       do { _ = try scorers.scorer(for: game, store: store) }
@@ -88,12 +92,23 @@ final class AppModel {
   /// Finished games, newest first.
   var finished: [Game] { games.filter { $0.status == .finished } }
 
-  func game(_ id: UUID) -> Game? { games.first { $0.id == id } ?? store.game(id) }
+  func game(_ id: UUID) -> Game? { games.first { $0.id == id } ?? store.game(id) ?? reference(id)?.game }
+
+  func reference(_ id: UUID) -> ReferenceEntry? { references.first { $0.id == id } }
+
+  /// Each listed game the reader reads; a file it refuses is left out.
+  private static func readReferences(_ reader: NotationReader) -> [ReferenceEntry] {
+    ReferenceGames.all().compactMap { reference in
+      guard let read = try? reader.read(reference.text) else { return nil }
+      return ReferenceEntry(reference: reference, game: ReferenceGames.game(reference, read: read), read: read)
+    }
+  }
 
   // MARK: Files and reading
 
   /// The game's notation: its file, or for a game on the pitch what its scorer has so far.
   func text(_ game: Game) -> String {
+    if game.isReference, let entry = reference(game.id) { return entry.reference.text }
     if let text = store.fileText(game.id) { return text }
     if game.status == .playing, let scorer = try? scorers.scorer(for: game, store: store) {
       return (try? scorer.notation()) ?? ""
@@ -103,13 +118,15 @@ final class AppModel {
 
   /// The game read by pk-kubb-score's reader (nil when it has no turns yet).
   func read(_ game: Game) -> GameRead? {
-    reads[game.id]?.read
+    if game.isReference { return reference(game.id)?.read }
+    return reads[game.id]?.read
   }
 
   /// Read the last saved throw, including a draft on the pitch, without opening a scorer.
   func playByPlay(_ game: Game, analysis cached: Analysis? = nil) throws -> GameReplay {
     let analysis: Analysis
     if let cached { analysis = cached }
+    else if game.isReference, let entry = reference(game.id) { analysis = entry.read.analysis }
     else if let reader, let text = store.fileText(game.id) { analysis = try reader.read(text).analysis }
     else { throw NotationError.notAGame("The game file could not be read.") }
     let replay = game.isImported ? GameReplay(analysis) : try GameReplay(analysis, journal: store.log(game.id))
@@ -195,4 +212,13 @@ final class AppModel {
   func scorer(for game: Game) throws -> LiveScorer {
     try scorers.scorer(for: game, store: store)
   }
+}
+
+/// A reference game with the game and reading the app shows for it.
+struct ReferenceEntry: Identifiable {
+  let reference: ReferenceGame
+  let game: Game
+  let read: GameRead
+  var id: UUID { reference.id }
+  var credit: ReferenceCredit { ReferenceCredit(headers: read.analysis.headers) }
 }
