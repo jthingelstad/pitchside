@@ -59,6 +59,7 @@ struct TimelineView: View {
             if turn.events.contains(where: { !$0.warnings.isEmpty }) { Chip("Needs a look") }
             if expanded == turn.turn {
               if selected == nil {
+                Button("Add turn note") { screen.noteTurn = turn.turn }.buttonStyle(.quiet)
                 FlowLayout(spacing: 6) {
                   ForEach(turn.events) { e in
                     Button {
@@ -85,6 +86,7 @@ struct TimelineView: View {
       }
       .foregroundStyle(Color.psText)
       .onAppear(perform: load)
+      .onChange(of: screen.noteTurn) { _, target in if target == nil { load() } }
       .task(id: focusTurn) {
         guard let turn = focusTurn else { return }
         await Task.yield()
@@ -118,6 +120,7 @@ struct TimelineView: View {
     if e.type == "baton" {
       return "Baton \((e.before.batons?.thrown ?? 0) + 1) · \(ScorerScreen.label(e.event))"
     }
+    if e.type == "note" { return "# " + (e.event["text"]?.string ?? "") }
     return ScorerScreen.label(e.event).capitalized
   }
 }

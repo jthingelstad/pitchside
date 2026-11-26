@@ -15,6 +15,7 @@ struct ScoreSheetView: View {
   @State private var engineNotes: [RecordWarning] = []
   @State private var copied = false
   @State private var pdf: URL?
+  @State private var noteTurn: Int?
   @State private var replay: GameReplay?
 
   var body: some View {
@@ -28,6 +29,20 @@ struct ScoreSheetView: View {
             HStack(spacing: 8) { reviewActions(read).fixedSize(horizontal: true, vertical: false) }
             VStack(spacing: 8) { reviewActions(read) }
           }
+          Button("Score sheet PDF") {
+            do {
+              let directory = FileManager.default.temporaryDirectory
+                .appending(path: "Score sheets").appending(path: game.id.uuidString)
+              try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+              let file = directory.appending(path: GameFile.fileName(for: game))
+                .deletingPathExtension().appendingPathExtension("pdf")
+              try ScoreSheetPDF.data(for: read, notation: text, inProgress: game.status == .playing, annotations: game.importedTurnNotes ?? [:])
+                .write(to: file, options: .atomic)
+              pdf = file
+            } catch { problem = "Could not create the score sheet. \(error.localizedDescription)" }
+          }
+          .buttonStyle(.ps)
+          .accessibilityHint("Preview, print or share the score sheet")
         }
         if !engineNotes.isEmpty {
           DisclosureGroup("Scorer notes (\(engineNotes.count))") {
@@ -53,20 +68,6 @@ struct ScoreSheetView: View {
           Text("Turn by turn").psKick()
           turns(read.analysis, game: game)
           Text("Right column: batons that hit, of batons thrown.").psHelp()
-          Button("Score sheet PDF") {
-            do {
-              let directory = FileManager.default.temporaryDirectory
-                .appending(path: "Score sheets").appending(path: game.id.uuidString)
-              try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-              let file = directory.appending(path: GameFile.fileName(for: game))
-                .deletingPathExtension().appendingPathExtension("pdf")
-              try ScoreSheetPDF.data(for: read.analysis, inProgress: game.status == .playing)
-                .write(to: file, options: .atomic)
-              pdf = file
-            } catch { problem = "Could not create the score sheet. \(error.localizedDescription)" }
-          }
-          .buttonStyle(.ps)
-          .accessibilityHint("Preview, print or share the score sheet")
           if read.analysis.turnWarnings + read.analysis.warnings.count > 0 { readerNotes(read.analysis) }
         }
         if let problem { Text(problem).psHelp() }
@@ -89,6 +90,14 @@ struct ScoreSheetView: View {
       get: { replay != nil }, set: { if !$0 { replay = nil } }
     )) {
       if let replay { ReplayView(replay: replay) }
+    }
+    .turnNoteEditor(turn: $noteTurn) { turn, text in
+      guard var game = model.game(id), game.isImported else { throw CocoaError(.fileNoSuchFile) }
+      var notes = game.importedTurnNotes ?? [:]
+      notes[turn, default: []].append(text)
+      game.importedTurnNotes = notes
+      try model.store.save(game)
+      model.refresh()
     }
     .quickLookPreview($pdf)
     .onAppear(perform: loadHistory)
@@ -167,7 +176,22 @@ struct ScoreSheetView: View {
             .buttonStyle(.plain).accessibilityLabel(summary).accessibilityHint("Edit this turn")
             .accessibilityIdentifier("editTurn\(row.turn)")
         } else {
-          content.accessibilityElement(children: .ignore).accessibilityLabel(summary)
+          if game.isImported {
+            Button { noteTurn = row.turn } label: {
+              HStack {
+                content
+                Image(systemName: "square.and.pencil").accessibilityHidden(true)
+              }.contentShape(Rectangle())
+            }.buttonStyle(.plain).accessibilityLabel(summary).accessibilityHint("Add a turn note")
+              .accessibilityIdentifier("annotateTurn\(row.turn)")
+          } else {
+            content.accessibilityElement(children: .ignore).accessibilityLabel(summary)
+          }
+        }
+        let notes = [row.note].compactMap { $0 }.filter { !$0.isEmpty } + (game.importedTurnNotes?[row.turn] ?? [])
+        ForEach(Array(notes.enumerated()), id: \.offset) { _, text in
+          Text(verbatim: text).font(PSFont.body(14)).frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.leading, 34).padding(.bottom, 6)
         }
       }
     }
@@ -247,5 +271,47 @@ struct ScoreSheetView: View {
     let url = FileManager.default.temporaryDirectory.appending(path: name)
     try? Data(text.utf8).write(to: url, options: .atomic)
     return url
+  }
+}
+
+/// Bind the editor to a specific turn, including while the live scorer is on a later turn.
+extension View {
+  func turnNoteEditor(turn: Binding<Int?>, save: @escaping (Int, String) throws -> Void) -> some View {
+    modifier(TurnNoteEditor(turn: turn, save: save))
+  }
+}
+
+private struct TurnNoteEditor: ViewModifier {
+  @Binding var turn: Int?
+  let save: (Int, String) throws -> Void
+  @State private var draft = ""
+  @State private var error: String?
+  @FocusState private var editing: Bool
+
+  func body(content: Content) -> some View {
+    content.sheet(isPresented: Binding(get: { turn != nil }, set: { if !$0 { turn = nil } }),
+                  onDismiss: { draft = ""; error = nil }) {
+      if let turn {
+        NavigationStack {
+          Form {
+            TextField("Turn note", text: $draft, axis: .vertical).focused($editing)
+            if let error { Text(error).foregroundStyle(.red) }
+          }
+          .navigationTitle("Note for turn \(turn)").navigationBarTitleDisplayMode(.inline)
+          .toolbar {
+            ToolbarItem(placement: .cancellationAction) { Button("Cancel") { self.turn = nil } }
+            ToolbarItem(placement: .confirmationAction) {
+              Button("Save note") {
+                do {
+                  try save(turn, draft.trimmingCharacters(in: .whitespacesAndNewlines))
+                  self.turn = nil
+                } catch { self.error = error.localizedDescription }
+              }.disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+          }
+          .onAppear { editing = true }
+        }
+      }
+    }
   }
 }

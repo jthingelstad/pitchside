@@ -31,6 +31,23 @@ the scorer chooses to share a file.
 
 <img src="docs/design/build-shots/Landscape-turn-history.png" width="700" alt="Live pitch on the left, with an earlier turn expanded above the current throw on the right">
 
+## Print a Throwing Wood game
+
+1. Open **Score sheet** in Throwing Wood. Use **Save** on iPhone or **Download** on the web. The text file includes the recorded positions even when the screen hides them.
+2. In Pitchside, choose **Games → Open file** and select that text file. Tap a turn to add a note. Pitchside keeps these notes with the imported game on this phone.
+3. Tap **Score sheet PDF**, then use **Share → Print** or **Save to Files** in the preview.
+
+The landscape Letter report pairs the two teams’ turns, compares team and player stats,
+diagrams the recorded positions, and includes the original notation. On the diagrams,
+each baton has its own panel. A shaded square shows a one-metre cell. A point or cross
+shows a recorded coordinate. The record at the end retains exact coordinates and
+multiple kubbs recorded at the same spot.
+
+While scoring on grass, expand a turn in the history and choose **Add turn note**.
+On a completed local game, tap the turn on the score sheet and choose **Add turn note**.
+These notes go into the turn’s notation and follow the usual timeline undo and redo.
+
+
 ## Run it
 
 Open `Pitchside.xcodeproj` in Xcode, select the **Pitchside** scheme and run on an

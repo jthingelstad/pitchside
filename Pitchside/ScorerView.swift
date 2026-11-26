@@ -31,6 +31,9 @@ struct ScorerView: View {
         TimelineView(screen: screen, initialTurn: initialTurn) {
           if screen.over { close() } else { timeline = false }
         }
+        .turnNoteEditor(turn: Binding(get: { screen.noteTurn }, set: { screen.noteTurn = $0 })) { turn, text in
+          try screen.annotate(turn: turn, text: text)
+        }
       } else {
         GeometryReader { area in
           HStack(spacing: 0) {
@@ -59,6 +62,14 @@ struct ScorerView: View {
                 }
                 .scrollBounceBehavior(.basedOnSize)
                 .frame(height: min(controlsHeight ?? area.size.height, area.size.height * 0.70))
+              }
+            }
+            .accessibilityHidden(screen.noteTurn != nil)
+            .overlay {
+              if let turn = screen.noteTurn {
+                LiveTurnNote(turn: turn, screen: screen)
+                  .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                  .background(Color.psGround)
               }
             }
           }
@@ -266,7 +277,6 @@ struct ScorerView: View {
   }
 
   @ViewBuilder var panel: some View {
-    @Bindable var s = screen
     VStack(alignment: .leading, spacing: 8) {
       switch screen.panel {
       case .coincident(let targets):
@@ -305,7 +315,7 @@ struct ScorerView: View {
           }
           if screen.state.allows("resign") { Button("Resign") { screen.panel = .resign } }
           if screen.state.allows("call") { Button("Game called") { screen.panel = .call } }
-          if screen.state.allows("note") { Button("Add a note") { screen.panel = .note } }
+          if screen.state.allows("note") { Button("Add a note") { screen.panel = .none; screen.noteTurn = screen.state.turn } }
           if screen.scorer.captureAppliesNow && screen.state.allows("capture") {
             Button("What to record") { screen.panel = .capture }
           }
@@ -341,10 +351,6 @@ struct ScorerView: View {
               .accessibilityLabel("\(m) metres from the baseline")
           }
         }
-      case .note:
-        TextField("Turn note", text: $s.noteText).textFieldStyle(.roundedBorder)
-          .frame(minHeight: 48).accessibilityLabel("Turn note").onSubmit(screen.saveNote)
-        Button("Save note", action: screen.saveNote)
       case .call, .resign:
         Text(screen.panel == .call ? "Which team won?" : "Which team resigned?").psKick()
         ForEach(Side.allCases, id: \.self) { side in
@@ -398,7 +404,7 @@ private struct TurnHistoryView: View {
             ForEach(screen.rows.reversed(), id: \.turn) { row in
               let history = screen.history[row.turn]
               let score = row.displayLine(names: screen.scorecardNames, inkasters: history?.inkasters ?? [])
-              let entries = history?.entries ?? []
+              let entries = (history?.entries ?? []) + row.notes.map { "# " + $0 }
               let open = expanded == row.turn
               VStack(alignment: .leading, spacing: 0) {
                 Button {
@@ -428,6 +434,8 @@ private struct TurnHistoryView: View {
                 .accessibilityLabel("Turn \(row.turn), \(screen.teamName(row.side)), \(score)")
                 .accessibilityValue(open ? "Expanded" : "Collapsed")
                 if open {
+                  Button("Add turn note") { screen.noteTurn = row.turn }
+                    .font(PSFont.body(15)).frame(minHeight: 44)
                   ForEach(entries.indices, id: \.self) { index in
                     Text(verbatim: entries[index]).font(PSFont.mono(15))
                       .frame(maxWidth: .infinity, alignment: .leading)
@@ -447,5 +455,41 @@ private struct TurnHistoryView: View {
         .accessibilityIdentifier("turn-history")
       }
     }
+  }
+}
+
+
+/// The notebook opens over the controls. The pitch and the selected turn stay in place.
+private struct LiveTurnNote: View {
+  let turn: Int
+  let screen: ScorerScreen
+  @State private var draft = ""
+  @State private var problem: String?
+  @FocusState private var editing: Bool
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 2) {
+      HStack(spacing: 6) {
+        TextField("Note for turn \(turn)", text: $draft).textFieldStyle(.roundedBorder)
+          .accessibilityLabel("Turn note").focused($editing).onSubmit(save)
+        Button("Save", action: save).accessibilityLabel("Save note")
+          .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        Button { screen.noteTurn = nil } label: {
+          Image(systemName: "xmark").frame(width: 44, height: 44)
+        }.accessibilityLabel("Cancel note")
+      }
+      if let problem { Text(problem).psHelp() }
+    }
+    .padding(.horizontal, 10)
+    .onAppear { editing = true }
+  }
+
+  private func save() {
+    let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !text.isEmpty else { return }
+    do {
+      try screen.annotate(turn: turn, text: text)
+      screen.noteTurn = nil
+    } catch { problem = error.localizedDescription }
   }
 }

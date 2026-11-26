@@ -226,6 +226,18 @@ public final class NotationReader {
           var a = PK.analyze(text);
           const turns = PK.parseGame(text).turns;
           a.rows.forEach((r, i) => { r.recording = recording(r, turns[i]); });
+          // Throwing Wood omits the thrower prefix on a one-player team.
+          // Attribute that side's throws only when its file names exactly one player.
+          if (/^Throwing Wood(?: |$)/.test(a.headers['Scored by'] || '')) {
+            for (const side of ['A', 'B']) {
+              const roster = a.headers['Team ' + side + ' Players'] || '';
+              const solo = /^([^,()]+?)\s+\(([^,()]+)\)$/.exec(roster);
+              if (!solo || a.players.some(p => p.side === side)) continue;
+              const s = a.stats[side];
+              a.players.push({id: solo[2], name: solo[1], side: side, batons: s.batons,
+                hits: s.hits, field: s.field, base: s.base, kings: s.kings, hitPct: s.hitPct});
+            }
+          }
           var rules = a.headers['Rules'] || '';
           return JSON.stringify({
             analysis: a,
