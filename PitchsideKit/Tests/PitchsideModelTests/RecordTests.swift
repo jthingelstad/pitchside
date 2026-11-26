@@ -178,8 +178,18 @@ func replay(_ f: RecordFixture, useFixtureSetup: Bool) throws -> (RecordScorer, 
     #expect(turns.map(\.turn) == [1, 2, 3, 4, 5])
     #expect(turns.map(\.side) == [.A, .B, .A, .B, .A])
     #expect(turns[0].events.count == 2)
+    #expect(turns[3].events.compactMap(\.inkastMark) == ["I", "2I", "I", "2I"])
+    #expect(turns[4].events.compactMap(\.inkastMark) == ["I", "2I", "3I"])
     #expect(turns[4].events.map(\.type) == ["toss", "toss", "toss", "advantage"] + Array(repeating: "baton", count: 6))
     #expect(turns[4].row?.line == "5. k:3I A k:3F d:B o:B k:B d:= o:K")
+  }
+
+  @Test func inkastMarksIncludeRethrowsAndPenaltiesWithoutPlayerPrefixes() throws {
+    let (scorer, _) = try replay(RecordFixture.named("called"), useFixtureSetup: true)
+    let turns = try scorer.timeline()
+    #expect(turns[1].events.compactMap(\.inkastMark).last == "3I2RP")
+    #expect(turns[2].events.compactMap(\.inkastMark).last == "2IN")
+    #expect(turns[3].events.compactMap(\.inkastMark).last == "3IYQ")
   }
 
   /// A rule breach is recorded as thrown and only warns.
