@@ -195,10 +195,37 @@ func replay(_ f: RecordFixture, useFixtureSetup: Bool) throws -> (RecordScorer, 
     try scorer.add(RecordEvent.baton(field: 1, by: "sam"))
     let first = try #require(scorer.rows.first)
     let second = try #require(scorer.rows.last)
+    let players = Side.allCases.flatMap { scorer.state.side($0).players }
     #expect(first.line == "1. B -")
-    #expect(first.displayLine(players: scorer.state.side(.A).players, inkasters: []) == "Kim:B -")
+    #expect(first.displayLine(players: players, inkasters: []) == "K:B -")
     #expect(second.line == "2. I F")
-    #expect(second.displayLine(players: scorer.state.side(.B).players, inkasters: ["sam"]) == "Sam:I Sam:F")
+    #expect(second.displayLine(players: players, inkasters: ["sam"]) == "S:I S:F")
+  }
+
+  @Test func scorecardDistinguishesAnOpponentEvenWhenTheyPlaySolo() throws {
+    var game = RecordFixture.named("example").game
+    game.teams[.A] = Team(name: "North", players: [TeamPlayer(name: "Kim")])
+    game.teams[.B] = Team(name: "South", players: [TeamPlayer(name: "Karl"), TeamPlayer(name: "Lee")])
+    let scorer = try RecordScorer(game: game, store: scratch(), appVersion: "0.1")
+    try scorer.add(RecordEvent.baton(base: 1, by: "kim"))
+    try scorer.add(RecordEvent.baton())
+    try scorer.add(RecordEvent.toss(true, by: "karl"))
+    try scorer.add(RecordEvent.baton(field: 1, by: "lee"))
+    let names = ScorecardNames(players: Side.allCases.flatMap { scorer.state.side($0).players })
+    let first = try #require(scorer.rows.first)
+    let second = try #require(scorer.rows.last)
+    #expect(first.displayLine(names: names, inkasters: []) == "Ki:B -")
+    #expect(second.line == "2. k:I l:F")
+    #expect(second.displayLine(names: names, inkasters: ["karl"]) == "Ka:I L:F")
+    #expect(names.word("I", by: "karl") == "Ka:I")
+  }
+
+  @Test func scorecardHandlesIdenticalNamesAndNamesThatArePrefixes() {
+    let labels = ["Jo", "jo", "Jo1", "Joanne", "林海", "林泉", "Zoë"]
+    let players = labels.enumerated().map { RecordState.Player(id: String($0.offset), name: $0.element, file: nil) }
+    let names = ScorecardNames(players: players)
+    #expect(players.map { names.word("I", by: $0.id) } == ["Jo2:I", "jo3:I", "Jo1:I", "Joa:I", "林海:I", "林泉:I", "Z:I"])
+    #expect(names.word("-", by: nil) == "-")
   }
 
   @Test func inkastMarksIncludeRethrowsAndPenaltiesWithoutPlayerPrefixes() throws {

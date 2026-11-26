@@ -151,6 +151,54 @@ public struct RecordWarning: Decodable, Sendable, Hashable {
   public let id: String?
 }
 
+/// Short display names for a game's scorecard. Both sides, including solo
+/// teams, participate even before a player has thrown.
+public struct ScorecardNames: Sendable {
+  private var byID: [String: String] = [:]
+  fileprivate var byFileID: [String: String] = [:]
+
+  public init(players: [RecordState.Player]) {
+    let names = players.map { player in
+      let letters = player.name.filter { $0.isLetter || $0.isNumber }
+      if !letters.isEmpty { return letters }
+      return player.name.isEmpty ? player.id : player.name
+    }
+    let distinct = Set(names.map { $0.lowercased() })
+    let prefixes = names.map { name in
+      let others = distinct.subtracting([name.lowercased()])
+      var prefix = ""
+      for letter in name {
+        prefix.append(letter)
+        if !others.contains(where: { $0.hasPrefix(prefix.lowercased()) }) { break }
+      }
+      return prefix
+    }
+
+    let groups = Dictionary(grouping: prefixes, by: { $0.lowercased() })
+    var reserved = Set(groups.keys)
+    var numbers: [String: Int] = [:]
+    for (player, prefix) in zip(players, prefixes) {
+      let key = prefix.lowercased()
+      var label = prefix
+      // Identical names have no distinguishing letter. Number them in roster
+      // order, skipping any label that another player's own name already uses.
+      if groups[key, default: []].count > 1 {
+        repeat {
+          numbers[key, default: 0] += 1
+          label = "\(prefix)\(numbers[key, default: 0])"
+        } while !reserved.insert(label.lowercased()).inserted
+      }
+      byID[player.id] = label
+      byFileID[player.file ?? player.id] = label
+    }
+  }
+
+  public func word(_ mark: String, by id: String?) -> String {
+    guard let id, let name = byID[id] else { return mark }
+    return "\(name):\(mark)"
+  }
+}
+
 /// One row of the score sheet (`sheet.rows`): a turn.
 public struct RecordRow: Decodable, Sendable, Equatable {
   public struct Baton: Decodable, Sendable, Equatable {
@@ -175,16 +223,20 @@ public struct RecordRow: Decodable, Sendable, Equatable {
     Array(line.prefix { $0 != "#" }.split(separator: " ").dropFirst())
   }
 
-  /// Expand the writer's prefixes for the live scorecard. A solo player has no
-  /// file prefix, so use the recorded attribution for those words as well.
+  /// Supply both rosters so the scorecard can distinguish teammates and opponents.
   public func displayLine(players: [RecordState.Player], inkasters: [String?]) -> String {
+    displayLine(names: ScorecardNames(players: players), inkasters: inkasters)
+  }
+
+  /// A solo player's throws have no file prefix, so use their recorded attribution.
+  public func displayLine(names: ScorecardNames, inkasters: [String?]) -> String {
     let words = scoreWords
     guard capture?.players != false else { return words.joined(separator: " ") }
     let firstBaton = words.count - batons.count
     return words.enumerated().map { index, word in
       if let colon = word.firstIndex(of: ":") {
-        guard let player = players.first(where: { $0.file == String(word[..<colon]) }) else { return String(word) }
-        return player.name + String(word[colon...])
+        guard let name = names.byFileID[String(word[..<colon])] else { return String(word) }
+        return name + String(word[colon...])
       }
       let by: String?
       if index >= firstBaton {
@@ -194,8 +246,7 @@ public struct RecordRow: Decodable, Sendable, Equatable {
       } else {
         by = nil
       }
-      guard let by, let player = players.first(where: { $0.id == by }) else { return String(word) }
-      return "\(player.name):\(word)"
+      return names.word(String(word), by: by)
     }.joined(separator: " ")
   }
 

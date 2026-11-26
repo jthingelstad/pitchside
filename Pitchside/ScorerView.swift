@@ -397,7 +397,7 @@ private struct TurnHistoryView: View {
             }
             ForEach(screen.rows.reversed(), id: \.turn) { row in
               let history = screen.history[row.turn]
-              let score = row.displayLine(players: screen.state.side(row.side).players, inkasters: history?.inkasters ?? [])
+              let score = row.displayLine(names: screen.scorecardNames, inkasters: history?.inkasters ?? [])
               let entries = history?.entries ?? []
               let open = expanded == row.turn
               VStack(alignment: .leading, spacing: 0) {

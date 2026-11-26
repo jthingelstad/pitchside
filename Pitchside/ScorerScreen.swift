@@ -32,6 +32,7 @@ final class ScorerScreen {
   }
 
   @ObservationIgnored let scorer: LiveScorer
+  let scorecardNames: ScorecardNames
   private(set) var undoAction: ScoreAction?
   private(set) var redoAction: ScoreAction?
   private(set) var state: RecordState
@@ -75,6 +76,7 @@ final class ScorerScreen {
 
   init(scorer: LiveScorer) {
     self.scorer = scorer
+    scorecardNames = ScorecardNames(players: Side.allCases.flatMap { scorer.state.side($0).players })
     undoAction = scorer.undoAction
     redoAction = scorer.redoAction
     state = scorer.state
@@ -674,8 +676,7 @@ final class ScorerScreen {
       return
     default: return
     }
-    let name = players.first { $0.id == by }?.name
-    let word = name.map { "\($0):\(mark)" } ?? mark
+    let word = scorecardNames.word(mark, by: by)
     history[turn, default: TurnHistory()].entries.append(word)
     history[turn, default: TurnHistory()].latestThrow = word
   }
