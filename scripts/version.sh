@@ -1,7 +1,7 @@
 #!/bin/bash
 # Pitchside's version number: the one in VERSION at the repo's root,
 # MAJOR.MINOR or MAJOR.MINOR.PATCH, set by hand when the owner names the next
-# release. It starts at 0.1.
+# release. It started at 0.1 and became 1.0.0 for the App Store.
 #
 #   scripts/version.sh                  the version a build carries
 #   scripts/version.sh test             checks VERSION is MAJOR.MINOR[.PATCH]
