@@ -50,6 +50,7 @@ struct HomeView: View {
       case .failure: break
       }
     }
+    .fileDialogDefaultDirectory(model.filesFolder)
     .alert("Not opened", isPresented: .constant(refusal != nil), presenting: refusal) { _ in
       Button("OK") { refusal = nil }
     } message: { Text($0) }
@@ -139,9 +140,21 @@ struct HomeView: View {
       if let problem = model.engineProblem {
         Text("The engine did not start: \(problem)").font(PSFont.body(14)).foregroundStyle(Color.psWarn)
       }
-      Text("Games and names stay on this phone. Pitchside sends nothing anywhere.").psHelp()
+      Text(privacy).psHelp()
     }
     .accessibilityElement(children: .combine)
     .padding(.top, 8)
+  }
+
+  /// What is kept where. Finished games are copied to the scorer's own iCloud Drive
+  /// folder (or the phone's, with iCloud Drive off); the roster never leaves the phone.
+  var privacy: String {
+    let folder = switch model.filesPlace {
+    case .iCloud: "iCloud Drive › Pitchside, in your own iCloud"
+    case .local: "On My iPhone › Kubb: Pitchside"
+    case nil: "a Pitchside folder"
+    }
+    return "Games are kept on this phone. Each finished game's file, with its team and player names, "
+      + "is also in Files under \(folder). The roster stays on this phone. Nothing is sent to us."
   }
 }

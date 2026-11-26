@@ -597,6 +597,13 @@ generated team names, the rules choice).
   A newline terminates each synced entry. The next append truncates a torn tail.
   `game.json` keeps the game summary and `game.txt` is the engine's current notation,
   a draft until `state.over`. Opening the app repairs stale exports from the journal.
+  `GameMirror` copies each finished game scored here (not opened files) as
+  `yyyy-MM-dd HHmm <A> v <B>.txt` into the iCloud container's `Documents/` (Files:
+  iCloud Drive › Pitchside), else the app's own `Documents/` (On My iPhone). One way
+  only, off the main thread, never on the scoring path; `mirror.json` beside the games
+  records what it wrote per place, so a copy deleted in Files comes back, files it did
+  not write are never touched, and moving between the two places neither loses nor
+  duplicates. The roster is never copied.
 - **Capture and coordinates.** New games record the turn and standing positions.
   The writer's released capture header names `players`, `pitch` and `stance` if used,
   or `turns` when only outcomes are recorded. A switch applies per turn. The lay row is
