@@ -6,6 +6,7 @@ import SwiftUI
 struct ScorerView: View {
   @Environment(AppModel.self) private var model
   @Environment(\.dynamicTypeSize) private var typeSize
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @State private var replay: GameReplay?
   @State private var screen: ScorerScreen
   @State private var timeline = false
@@ -79,13 +80,35 @@ struct ScorerView: View {
       }
     }
     .onChange(of: screen.view) { viewport = .init() }
-    .onChange(of: screen.state.turn) { viewport = .init() }
+    // A new turn, or catching up an earlier one, frames the half the action is in.
+    .onChange(of: screen.state.turn) { frameActiveHalf() }
+    .onChange(of: screen.placingHalf) { frameActiveHalf() }
+    .onChange(of: screen.framing) { viewport = .init() }
+    // A throwing spot tapped in the thrower's own half returns to the action.
+    .onChange(of: screen.stance) { _, spot in
+      if spot != nil && screen.framing == .other { screen.framing = .active }
+    }
     .onChange(of: screen.over) { _, over in if over { close() } }
   }
 
-  private var pitch: some View {
-    PitchCanvas(screen: screen, viewport: $viewport).frame(maxHeight: .infinity)
+  private var region: PitchFrame.Region {
+    screen.framedHalf.map(PitchFrame.Region.half) ?? .whole(in: screen.view)
   }
+
+  private var pitch: some View {
+    PitchCanvas(screen: screen, viewport: $viewport, region: region)
+      .frame(maxHeight: .infinity)
+      // The frame slides between halves; with Reduce Motion it changes in place.
+      .animation(reduceMotion ? nil : .easeInOut(duration: 0.35), value: region)
+  }
+
+  private func frameActiveHalf() {
+    screen.framing = .active
+    viewport = .init()
+  }
+
+  /// Whether the pane shows the whole pitch at its fitted size.
+  private var showsWholePitch: Bool { screen.framing == .whole && viewport.scale == 1 }
 
   private var additionalPanel: Bool { screen.panel != .none && screen.panel != .pick }
 
@@ -107,17 +130,16 @@ struct ScorerView: View {
       Spacer(minLength: 4)
       HStack(spacing: 4) {
         icon(
-          viewport.scale == 1 ? "plus.magnifyingglass" : "arrow.down.right.and.arrow.up.left",
-          viewport.scale == 1 ? "Zoom in on pitch" : "Fit whole pitch"
+          showsWholePitch ? "viewfinder" : "arrow.up.left.and.arrow.down.right",
+          showsWholePitch ? "Show active half" : "Show whole pitch"
         ) {
-          if viewport.scale == 1 {
-            let focus = PitchFrame.screen(.init(x: 2.5, y: screen.defender == .A ? 2 : 6), in: screen.view)
-            viewport.move(from: focus, to: .init(u: 0.5, v: 0.5), magnification: 2)
-          } else {
-            viewport = .init()
-          }
+          let next: ScorerScreen.Framing = showsWholePitch ? .active : .whole
+          viewport = .init()
+          screen.framing = next
         }
-        .accessibilityValue("\(Int((viewport.scale * 100).rounded())) percent")
+        .accessibilityValue(
+          (screen.framedHalf.map { "Team \($0.rawValue)’s half" } ?? "Whole pitch")
+            + ", \(Int((viewport.scale * 100).rounded())) percent")
         icon("rectangle.2.swap", "Change view", action: screen.nextView)
           .accessibilityValue(screen.view.title)
       }

@@ -9,10 +9,25 @@ import SwiftUI
 /// with the side's letter cue on the chips), the king, the thrower's spot, and each team's
 /// chip by its baseline. Taps on kubbs mark them; a tap anywhere else goes to the screen
 /// as a point on the pitch.
-struct PitchCanvas: View {
+///
+/// The pane frames `region`: by default the half the action lands in, with a tab at the
+/// centre-line edge for the other half. Changing the region animates, so a new turn
+/// slides the frame to the other half.
+struct PitchCanvas: View, @MainActor Animatable {
   @Environment(\.dynamicTypeSize) private var typeSize
   @Bindable var screen: ScorerScreen
   @Binding var viewport: PitchFrame.Viewport
+  var region: PitchFrame.Region
+
+  var animatableData: AnimatablePair<AnimatablePair<Double, Double>, AnimatablePair<AnimatablePair<Double, Double>, Double>> {
+    get { .init(.init(region.minX, region.maxX), .init(.init(region.minY, region.maxY), region.pad)) }
+    set {
+      region = .init(
+        minX: newValue.first.first, maxX: newValue.first.second,
+        minY: newValue.second.first.first, maxY: newValue.second.first.second,
+        pad: newValue.second.second)
+    }
+  }
 
   struct Piece: Identifiable {
     enum Kind { case field, base, owed, king }
@@ -29,7 +44,7 @@ struct PitchCanvas: View {
 
   var body: some View {
     GeometryReader { g in
-      let geo = PitchGeometry(size: g.size, view: screen.view, viewport: viewport)
+      let geo = PitchGeometry(size: g.size, view: screen.view, viewport: viewport, region: region)
       ZStack(alignment: .topLeading) {
         Color.psRough.contentShape(Rectangle())
           .accessibilityLabel("Pitch position")
@@ -37,14 +52,18 @@ struct PitchCanvas: View {
 
         PitchGround(geo: geo, target: screen.over ? nil : screen.placingHalf,
                     placing: screen.isInkast || screen.placing || screen.punishPending)
-          .frame(width: g.size.width, height: g.size.height, alignment: .topLeading)
+          .frame(width: g.size.width, height: g.size.height, alignment: .topLeading).clipped()
         ForEach(Array(screen.fallen.enumerated()), id: \.offset) { _, at in
           RoundedRectangle(cornerRadius: 3).fill(Color.psKubbRest)
             .overlay(RoundedRectangle(cornerRadius: 3).strokeBorder(Color.psKubbInk, lineWidth: 2))
             .frame(width: 26, height: 12).rotationEffect(.degrees(screen.view.isSideways ? 62 : 28))
             .position(geo.point(at)).accessibilityHidden(true).allowsHitTesting(false)
         }
-        ForEach(pieces, id: \.drawingID) { piece in kubb(piece, geo) }
+        // Only pieces at least partly in the frame are drawn; the tab names the others.
+        let pane = CGRect(origin: .zero, size: g.size)
+        ForEach(pieces.filter { pane.insetBy(dx: -16, dy: -16).contains(geo.point($0.at)) }, id: \.drawingID) {
+          piece in kubb(piece, geo)
+        }
         if screen.isInkast && !screen.placing && !screen.punishPending, screen.positionsOn {
           let ghost = geo.half(screen.defender)
           Circle().strokeBorder(Color.psChalk, style: StrokeStyle(lineWidth: 2, dash: [3, 3]))
@@ -63,6 +82,7 @@ struct PitchCanvas: View {
             .position(p)
             .allowsHitTesting(false)
             .accessibilityLabel("Throwing spot \(screen.word(s))")
+            .accessibilityHidden(!CGRect(origin: .zero, size: g.size).contains(p))
         }
         // Overlapping 48-point hit areas in a drilled group belong to the nearest
         // centre. Each piece also has its own named VoiceOver button below this layer.
@@ -72,10 +92,16 @@ struct PitchCanvas: View {
           viewport.move(from: geo.fittedPoint(start), to: geo.fittedPoint(end), magnification: factor)
         }
         .accessibilityHidden(true)
-        chip(screen.defender, geo)
-        chip(screen.attacker, geo)
         if screen.advantageShown && screen.isBaton && !screen.placing && !screen.punishPending {
           advantage(geo)
+            .frame(width: g.size.width, height: g.size.height, alignment: .topLeading).clipped()
+        }
+        if let shown = screen.framedHalf {
+          chip(shown, geo)
+          otherHalfTab(shown.other, geo)
+        } else {
+          chip(screen.defender, geo)
+          chip(screen.attacker, geo)
         }
       }
       .frame(width: g.size.width, height: g.size.height, alignment: .topLeading)
@@ -83,6 +109,7 @@ struct PitchCanvas: View {
     .clipped()
     .accessibilityElement(children: .contain)
     .accessibilityLabel(summary)
+    .accessibilityValue(screen.framedHalf.map { "Team \($0.rawValue)’s half" } ?? "Whole pitch")
     .accessibilityIdentifier("pitch")
   }
 
@@ -111,7 +138,9 @@ struct PitchCanvas: View {
     let placing = screen.placing || screen.punishPending || (screen.isInkast && screen.positionsOn)
     if placing || (screen.stanceOn && !screen.isInkast) {
       let side = placing ? screen.placingHalf : screen.attacker
-      ForEach(0..<5) { x in
+      // Only the half in the frame offers its cells; the tab opens the other half.
+      if screen.framedHalf == nil || screen.framedHalf == side {
+        ForEach(0..<5) { x in
         ForEach(0..<(placing ? 4 : 5), id: \.self) { d in
           Button("Team \(side.rawValue), across \(x), depth \(d)") {
             let point = RecordPoint(
@@ -119,6 +148,7 @@ struct PitchCanvas: View {
             screen.tap(PitchFrame.world(point, half: side))
           }
         }
+      }
       }
     }
   }
@@ -135,9 +165,10 @@ struct PitchCanvas: View {
           p.addLine(to: b)
         }
         .stroke(Color.psChalk, style: StrokeStyle(lineWidth: 3, dash: [9, 6]))
+        .accessibilityHidden(true)
         let onScreen = geo.view.isSideways
           ? (0...geo.size.width).contains(a.x) : (0...geo.size.height).contains(a.y)
-        if onScreen {
+        if onScreen && !screen.ownHalfHidden {
           let x = geo.view.isSideways ? a.x : geo.rect.minX + 65
           let y = geo.view.isSideways ? geo.rect.maxY + 16 : a.y + 16
           Chip("Advantage line").fixedSize()
@@ -145,7 +176,7 @@ struct PitchCanvas: View {
               x: min(geo.size.width - 65, max(65, x)),
               y: min(geo.size.height - 16, max(16, y)))
         }
-      } else {
+      } else if !screen.ownHalfHidden {
         Chip("Advantage in use").fixedSize().position(x: half.midX, y: half.midY)
       }
     }.allowsHitTesting(false)
@@ -154,7 +185,7 @@ struct PitchCanvas: View {
   func chip(_ side: Side, _ geo: PitchGeometry) -> some View {
     let s = screen.state.side(side)
     let base = geo.point(.init(x: 2.5, y: side == .A ? 0 : 8))
-    let out: CGFloat = 18
+    let out: CGFloat = geo.view.isSideways && screen.framedHalf != nil ? 11 : 18
     let pos: CGPoint
     if geo.view.isSideways {
       pos = CGPoint(
@@ -180,6 +211,86 @@ struct PitchCanvas: View {
     .accessibilityLabel("\(screen.teamName(side)), \(standing) standing")
     .position(pos)
     .allowsHitTesting(false)
+  }
+
+  /// The edge of the frame toward the half out of view: that team, its standing kubbs,
+  /// its advantage line and throwing spot. Tap it to frame that half; a throwing spot
+  /// tapped there brings the frame back.
+  func otherHalfTab(_ side: Side, _ geo: PitchGeometry) -> some View {
+    let centre = geo.point(.init(x: 2.5, y: 4))
+    let middle = geo.point(.init(x: 2.5, y: side == .A ? 6 : 2))
+    let sideways = geo.view.isSideways
+    // The tab sits on the pane edge beyond the centre line, toward the hidden half.
+    let toward: Edge = sideways
+      ? (centre.x < middle.x ? .leading : .trailing) : (centre.y < middle.y ? .top : .bottom)
+    let arrow = switch toward {
+    case .top: "chevron.up"
+    case .bottom: "chevron.down"
+    case .leading: "chevron.left"
+    case .trailing: "chevron.right"
+    }
+    let s = screen.state.side(side)
+    let standing = s.base + s.field
+    let attacking = side == screen.attacker && !screen.over
+    let line: String? = attacking && screen.advantageShown
+      ? screen.advantageDepth.map { String(format: "Line %.1f m", 4 - $0) } ?? "Advantage" : nil
+    let wantsSpot = attacking && screen.stanceOn && !screen.isInkast && !screen.placing
+      && !screen.punishPending
+    let spot = wantsSpot ? (screen.stance == nil ? "Throwing spot" : "Spot set") : nil
+    let width: CGFloat = sideways ? 56 : geo.size.width - 2 * PitchFrame.Region.halfPad
+    let height: CGFloat = sideways ? max(120, geo.size.height / 2 - 40) : 44
+    let pad = PitchFrame.Region.halfPad
+    let x: CGFloat = switch toward {
+    case .leading: pad + width / 2
+    case .trailing: geo.size.width - pad - width / 2
+    default: geo.size.width / 2
+    }
+    let y: CGFloat = switch toward {
+    case .top: pad + height / 2
+    case .bottom: geo.size.height - pad - height / 2
+    default: pad + height / 2
+    }
+    let label = Group {
+      Image(systemName: arrow).font(.system(size: 14, weight: .bold))
+      TeamMarker(side, size: 16)
+      if !sideways && !typeSize.isAccessibilitySize {
+        Text(screen.teamName(side)).lineLimit(1).truncationMode(.tail)
+      }
+      Text(sideways ? "\(standing) up" : "· \(standing) up").layoutPriority(1)
+      if !sideways { Spacer(minLength: 4) }
+      if let line {
+        Text(sideways ? "Line" : line).lineLimit(1).layoutPriority(1)
+      }
+      if let spot {
+        Image(systemName: screen.stance == nil ? "circle.dashed" : "smallcircle.filled.circle")
+          .accessibilityLabel(spot)
+      }
+    }
+    return Button {
+      screen.framing = screen.framing == .other ? .active : .other
+    } label: {
+      Group {
+        if sideways {
+          VStack(spacing: 6) { label }
+        } else {
+          HStack(spacing: 6) { label }
+        }
+      }
+      .font(PSFont.body(14, .medium))
+      .foregroundStyle(Color.psText)
+      .padding(.horizontal, sideways ? 2 : 10)
+      .frame(width: width, height: height)
+      .background(Color.psPlate.opacity(0.92), in: RoundedRectangle(cornerRadius: 6))
+      .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.psLine, lineWidth: 1))
+      .contentShape(Rectangle())
+    }
+    .buttonStyle(.plain)
+    .position(x: x, y: y)
+    .accessibilityIdentifier("other-half")
+    .accessibilityLabel("Show Team \(side.rawValue)’s half")
+    .accessibilityValue(
+      ["\(screen.teamName(side)), \(standing) standing", line.map { $0 == "Advantage" ? "advantage line in use" : "advantage " + $0.lowercased() }, spot?.lowercased()]
+        .compactMap { $0 }.joined(separator: ", "))
   }
 
   /// Separate pieces sharing a metre cell, including pieces this baton just felled.
@@ -274,6 +385,9 @@ struct PitchCanvas: View {
 
   @ViewBuilder func kubb(_ piece: Piece, _ geo: PitchGeometry) -> some View {
     let p = geo.point(piece.at)
+    // Pieces outside the frame (the other half, or beyond a zoom) leave the
+    // accessibility tree with the picture; the tab names that half's kubbs.
+    let hidden = !CGRect(origin: .zero, size: geo.size).contains(p)
     let size = max(20, geo.unit * 0.42)
     let marked = piece.target.map { screen.marked.contains($0) } ?? false
     let isTarget =
@@ -337,10 +451,12 @@ struct PitchCanvas: View {
       .accessibilityValue(marked ? "marked down" : "standing")
       .accessibilityHint(
         piece.kind == .king ? "Tap if the king fell" : "Tap if this baton knocked it over")
+      .accessibilityHidden(hidden)
     } else {
       drawn.position(p)
         .allowsHitTesting(false)
         .accessibilityLabel(piece.label)
+        .accessibilityHidden(hidden)
     }
   }
 

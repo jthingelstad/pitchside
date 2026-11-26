@@ -41,7 +41,7 @@ jobs:
           -derivedDataPath build/dd -parallel-testing-enabled NO
           -only-testing:PitchsideUITests/ScoringTests/testPinchPanAndScoreADrilledCluster
           -only-testing:PitchsideUITests/ScoringTests/testMiddleOfClusterSurvivesReopenAndReplay
-          -only-testing:PitchsideUITests/ScoringTests/testPlaceInkastOnZoomedPitch
+          -only-testing:PitchsideUITests/ScoringTests/testPlaceInkastOnTheFramedHalf
           -only-testing:PitchsideUITests/ScoringTests/testBrowseTurnsBesideThePitchWhileScoring
           -only-testing:PitchsideUITests/ScoringTests/testScoringUsesTheWholeScreenAndResumesFromGames
           -only-testing:PitchsideUITests/ScoringTests/testSectionsKeepDraftAndNameEditor

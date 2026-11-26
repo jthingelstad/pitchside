@@ -1,8 +1,10 @@
 # Kubb: Pitchside
 
 Pitchside is an iPhone scorekeeper for real games of kubb. Tap the kubbs that fell,
-record a miss, or mark where a throw landed. Pinch to zoom into a drilled group
-and tap the individual kubb that fell. Locally scored games remember each
+record a miss, or mark where a throw landed. The pitch frames the half where the
+action is and slides to the other half when the turn changes; a tab at its edge
+opens the thrower's half, and the header button shows the whole pitch. Pinch to
+zoom into a drilled group and tap the individual kubb that fell. Locally scored games remember each
 standing placement for replay.
 
 Start or resume scoring and the iPhone opens a full-screen landscape scorekeeper.
