@@ -536,13 +536,15 @@ final class ScoringTests: XCTestCase {
     let start = app.buttons.matching(NSPredicate(format: "label ==[c] 'Start scoring'")).firstMatch
     for _ in 0..<5 where !start.isHittable { app.swipeUp() }
     tap("Start scoring")
+    expectLandscape(true)
     tap("Back to Games")
+    expectLandscape(false)
     let older = app.buttons.matching(NSPredicate(format: "label ==[c] 'Resume scoring, Wobbly Towers versus Birch Batons'")).firstMatch
     XCTAssertTrue(older.waitForExistence(timeout: 5))
     XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label ==[c] 'Resume scoring, Mossy Stakes versus Crooked Crowns'")).firstMatch.exists)
     for _ in 0..<4 where !older.isHittable { app.swipeUp() }
     older.tap()
-    XCTAssertTrue(app.buttons["Change view"].waitForExistence(timeout: 5))
+    expectLandscape(true)
     XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label ==[c] 'Later'")).firstMatch.exists)
   }
 
