@@ -115,5 +115,8 @@ import Testing
     #expect(store.games().map(\.id) == [own.id])
     #expect(store.roster() == roster)
     #expect(NameTotals.across(pairs).isEmpty)
+    // Nor are they ever copied to Files or iCloud Drive.
+    let texts = Dictionary(uniqueKeysWithValues: ReferenceGames.all().map { ($0.id, $0.text) })
+    #expect(GameMirror.Entry.finished(pairs.map(\.0)) { texts[$0] }.isEmpty)
   }
 }
