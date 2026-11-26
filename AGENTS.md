@@ -554,6 +554,10 @@ generated team names, the rules choice).
   is public at `jthingelstad/pitchside`, with `main` as the default branch and an
   MIT license. Photos and lay-line entry are future work. Internal
   TestFlight builds use `com.throwingwood.pitchside` and the Dev tester group.
+  `scripts/testflight.sh` (internal, or `--external` for the App Store) and
+  `scripts/asc.swift` (GET only without `ASC_WRITE=1`) are for Jamie's go: every
+  upload and every change at Apple is Jamie's call. What a submission needs is in
+  `docs/DISTRIBUTION.md`; the store pictures come from `scripts/store-shots.sh`.
 - **Navigation and appearance.** The live pitch uses the full screen. Leaving it for Games,
   the timeline, play by play or a finished score sheet restores the section bar.
   Games, Roster and Stats are available during setup and browsing. Switching sections preserves drafts and
@@ -640,7 +644,9 @@ generated team names, the rules choice).
   - On the macOS 27.2.1 development host with Xcode 27.2, the local iOS 26.2
     simulator exits in JavaScriptCore during reader startup, including on a fresh
     simulator. The iOS 26.2 GitHub runner passes the scoring journeys, as does
-    the local iOS 27.2 simulator. Physical iOS 26.2 remains unverified.
+    the local iOS 27.2 simulator. Physical iOS 26.2 remains unverified. The cause
+    is inferred to be the simulator on this host, not the app (docs/DISTRIBUTION.md
+    "The iOS 26.2 simulator crash").
   - `scripts/vendor-engine.sh check` and `scripts/vendor-notation.sh check` check
     the tagged copies. Finish simulator work with `xcrun simctl shutdown all`.
 - **The engine is never edited here.** Not the vendored copy, not the kubb-engine checkout
