@@ -9,7 +9,8 @@ Start or resume scoring and the iPhone opens a full-screen landscape scorekeeper
 The pitch stays on the left. On the right, each entry shows the turn, player and
 action in order. Tap the suggested player to change who threw. “Inkast complete”
 marks the switch to batons and stays visible until you record the first baton.
-The history shows a score line for each turn, such as `Kim:3I A Kim:2F Dana:B Ole:-`.
+The history shows a score line for each turn, such as `K:3I A K:2F D:B O:-`.
+Names use the shortest prefix that distinguishes players across both teams.
 Tap a turn to see its individual throws. With player tracking off, the line uses bare marks.
 
 Games, setup, Roster, Stats, score sheets, the timeline and play by play use
