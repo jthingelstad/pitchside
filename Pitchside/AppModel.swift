@@ -15,12 +15,20 @@ final class AppModel {
   @ObservationIgnored private let reader: NotationReader?
   @ObservationIgnored let scorers: ScorerFactory
 
+  /// Where Files shows the finished games' copies, once the first pass has run.
+  private(set) var filesPlace: GameMirror.Place.Kind?
+  /// That folder, where Open file starts.
+  private(set) var filesFolder: URL?
+  @ObservationIgnored private var mirror: GameMirrorService?
+
   private(set) var recoveryProblem: String?
   private(set) var games: [Game] = []
   private(set) var roster: [SavedName] = []
   @ObservationIgnored private var reads: [UUID: (text: String, read: GameRead?)] = [:]
 
-  init(store: GameStore) {
+  /// `mirrored`: keep a copy of each finished game where Files shows it (the real store
+  /// only, never the demo's invented games).
+  init(store: GameStore, mirrored: Bool = false) {
     self.store = store
     let info = Bundle.main.infoDictionary ?? [:]
     let app = info["CFBundleShortVersionString"] as? String ?? "0.1"
@@ -42,6 +50,17 @@ final class AppModel {
       do { _ = try scorers.scorer(for: game, store: store) }
       catch { recoveryProblem = "Could not rebuild a saved game. \(error)" }
     }
+    if mirrored, let local = try? GameMirrorService.localDocuments() {
+      mirror = GameMirrorService(
+        mirror: GameMirror(index: store.root.appending(path: "mirror.json")), local: local,
+        cloud: GameMirrorService.iCloudDocuments
+      ) { [weak self] report in
+        Task { @MainActor in
+          self?.filesPlace = report.place
+          self?.filesFolder = report.folder
+        }
+      }
+    }
     refresh()
   }
 
@@ -54,6 +73,14 @@ final class AppModel {
     }
     games = saved
     roster = store.roster().sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    syncFiles()
+  }
+
+  /// Brings the copies in Files up to date, off the main thread. Called after every
+  /// refresh, when the app comes back to the front and when the iCloud account changes.
+  func syncFiles() {
+    guard let mirror else { return }
+    mirror.update(GameMirror.Entry.finished(games) { [reads] in reads[$0]?.text })
   }
 
   /// Every unfinished game, newest first.

@@ -8,6 +8,7 @@ import Notation
 ///     games/<uuid>/game.json   a game: teams, options, capture, status
 ///     games/<uuid>/events.jsonl  its append-only event log (EventLog)
 ///     games/<uuid>/game.txt    its Planet Kubb Notation file (opened, or regenerated after every action)
+///     mirror.json              the copies of finished games written where Files shows them (GameMirror)
 ///
 /// Not thread safe: use one from one place (the app's main actor).
 public final class GameStore {

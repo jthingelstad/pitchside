@@ -9,17 +9,24 @@ struct PitchsideApp: App {
 
   init() {
     let store: GameStore
+    var mirrored = false
     #if DEBUG
       // `-PitchsideDemo`: a separate folder filled with invented games, for screenshots.
       if ProcessInfo.processInfo.arguments.contains("-PitchsideDemo") {
         store = Demo.store(reopen: ProcessInfo.processInfo.arguments.contains("-PitchsideReopenDemo"))
       } else {
-        store = (try? GameStore.standard()) ?? Demo.scratchStore()
+        if let standard = try? GameStore.standard() {
+          store = standard
+          mirrored = true
+        } else {
+          store = Demo.scratchStore()
+        }
       }
     #else
       store = try! GameStore.standard()
+      mirrored = true
     #endif
-    _model = State(initialValue: AppModel(store: store))
+    _model = State(initialValue: AppModel(store: store, mirrored: mirrored))
   }
 
   var body: some Scene {
@@ -133,8 +140,12 @@ struct RootView: View {
       if scenePhase == .active { PitchsideDelegate.showLivePitch(live) }
     }
     .onChange(of: scenePhase) { _, phase in
-      if phase == .active { PitchsideDelegate.showLivePitch(livePitchVisible) }
+      if phase == .active {
+        PitchsideDelegate.showLivePitch(livePitchVisible)
+        model.syncFiles()
+      }
     }
+    .onReceive(NotificationCenter.default.publisher(for: .NSUbiquityIdentityDidChange)) { _ in model.syncFiles() }
     .background(Color.psGround)
     #if DEBUG
       .onAppear(perform: openForScreenshot)

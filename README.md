@@ -26,8 +26,10 @@ Tap a turn on a locally scored sheet to correct a throw. Pitchside previews chan
 to later turns. Undo and redo work for both throws and corrections, even after reopening a game.
 
 Each game produces a plain-text Planet Kubb Notation file, a printable PDF score sheet
-and player stats. Games and roster names stay on the phone until
-the scorer chooses to share a file.
+and player stats. Games are kept on the phone. Each finished game's file, with its
+team and player names, is also in the Files app under iCloud Drive › Pitchside, in
+the scorer's own iCloud (On My iPhone › Kubb: Pitchside when iCloud Drive is off).
+The roster stays on the phone. Nothing is sent to us.
 
 <img src="docs/design/build-shots/Landscape-turn-history.png" width="700" alt="Live pitch on the left, with an earlier turn expanded above the current throw on the right">
 
