@@ -7,7 +7,9 @@ import Testing
 /// temporary folders: real iCloud is not reachable from a test.
 @Suite struct MirrorTests {
   let dir = FileManager.default.temporaryDirectory.appending(path: "pitchside-mirror-\(UUID().uuidString)")
-  var cloud: GameMirror.Place { GameMirror.Place(.iCloud, folder: dir.appending(path: "cloud/Documents")) }
+  var cloud: GameMirror.Place {
+    GameMirror.Place(.iCloud, folder: dir.appending(path: "cloud/Documents"), account: "first")
+  }
   var local: GameMirror.Place { GameMirror.Place(.local, folder: dir.appending(path: "local/Documents")) }
   var mirror: GameMirror {
     GameMirror(index: dir.appending(path: "support/mirror.json"), zone: TimeZone(identifier: "America/Chicago")!)
@@ -137,7 +139,7 @@ import Testing
     try Data().write(to: local.folder)
     let r = mirror.sync([entry()], to: local)
     #expect(!r.problems.isEmpty)
-    #expect(mirror.loadIndex()[.local] == nil)
+    #expect(mirror.loadIndex()["local"] == nil)
   }
 
   @Test func movingBetweenICloudAndThePhoneNeitherLosesNorDuplicates() throws {
@@ -164,6 +166,24 @@ import Testing
     #expect(names(local).isEmpty)
   }
 
+  @Test func anotherICloudAccountsFilesAreNeverTakenAsOurs() throws {
+    let id = UUID()
+    mirror.sync([entry(id, text: "ours\n")], to: cloud)
+    // Signed in to another account whose folder has a file of the same name.
+    let other = GameMirror.Place(.iCloud, folder: dir.appending(path: "other/Documents"), account: "second")
+    try FileManager.default.createDirectory(at: other.folder, withIntermediateDirectories: true)
+    let name = "2026-11-21 1405 Mossy Stakes v Crooked Crowns.txt"
+    try Data("theirs\n".utf8).write(to: other.folder.appending(path: name))
+    mirror.sync([entry(id, text: "ours\n")], to: other)
+    #expect(read(other, name) == "theirs\n")
+    #expect(read(other, "2026-11-21 1405 Mossy Stakes v Crooked Crowns 2.txt") == "ours\n")
+    // Deleting the game removes only the copy written in that account.
+    mirror.sync([], to: other)
+    #expect(names(other) == [name])
+    // And the first account's record still knows its own copy.
+    #expect(mirror.loadIndex()["icloud:first"]?[id]?.name == name)
+  }
+
   @Test func aSlowOrFailingMirrorNeverHoldsUpTheJournal() throws {
     let store = try scratch()
     let game = try sampleGame(store)
@@ -174,7 +194,7 @@ import Testing
       mirror: mirror, local: dir.appending(path: "nowhere"),
       cloud: {
         gate.wait()  // iCloud taking its time
-        return URL(fileURLWithPath: "/dev/null/Documents")  // and then failing
+        return GameMirror.Place(.iCloud, folder: URL(fileURLWithPath: "/dev/null/Documents"))  // and failing
       })
     let before = Date()
     service.update([entry()])
