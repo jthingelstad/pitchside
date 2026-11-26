@@ -91,7 +91,7 @@ struct ScoreSheetView: View {
     .navigationDestination(isPresented: Binding(
       get: { replay != nil }, set: { if !$0 { replay = nil } }
     )) {
-      if let replay { ReplayView(replay: replay) }
+      if let replay { ReplayView(replay: replay, startAt: demoReplayStep) }
     }
     .turnNoteEditor(turn: $noteTurn) { turn, text in
       guard var game = model.game(id), game.isImported, !game.isReference else { throw CocoaError(.fileNoSuchFile) }
@@ -102,7 +102,29 @@ struct ScoreSheetView: View {
       model.refresh()
     }
     .quickLookPreview($pdf)
-    .onAppear(perform: loadHistory)
+    .onAppear {
+      loadHistory()
+      openDemoReplay()
+    }
+  }
+
+  /// `-PitchsideScreen replay` (DEBUG demo): open this sheet's play by play at once.
+  private var demoReplayStep: Int? {
+    #if DEBUG
+      Demo.replayStep
+    #else
+      nil
+    #endif
+  }
+
+  private func openDemoReplay() {
+    #if DEBUG
+      let args = ProcessInfo.processInfo.arguments
+      guard replay == nil, let i = args.firstIndex(of: "-PitchsideScreen"), args.dropFirst(i + 1).first == "replay",
+        let game = model.game(id), let read = model.read(game)
+      else { return }
+      replay = (try? model.playByPlay(game, analysis: read.analysis)) ?? GameReplay(read.analysis)
+    #endif
   }
 
   private func loadHistory() {

@@ -20,7 +20,7 @@ struct Screen<Content: View>: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      ScreenHeader(title, back: back, action: onBack)
+      ScreenHeader(title, back: back, action: onBack).clearsWindowControls()
       ScrollView {
         VStack(alignment: .leading, spacing: 16) { content }
           .padding(.horizontal, 16)
@@ -96,4 +96,57 @@ func resultDetail(_ game: Game, _ read: GameRead?) -> String {
     parts.append(game.capture.summary)
   }
   return parts.joined(separator: " · ")
+}
+
+/// iPadOS draws its window controls in the top leading corner of the window, also
+/// over an iPhone app running on an iPad, where they would cover a header's back
+/// button. A header steps clear of them. Only on an iPad: on an iPhone the gap is zero.
+/// A page header (`plate`) carries its plate and rule under the controls.
+struct WindowControlsClearance: ViewModifier {
+  let plate: Bool
+  @State private var leading: CGFloat = 0
+
+  func body(content: Content) -> some View {
+    if UIDevice.current.model.hasPrefix("iPad") {
+      content
+        .padding(.leading, leading)
+        .background(plate ? Color.psPlate.ignoresSafeArea(edges: .top) : nil)
+        .overlay(alignment: .bottom) { if plate { Divider() } }
+        .background(CornerProbe { if abs($0 - leading) > 0.5 { leading = $0 } })
+    } else {
+      content
+    }
+  }
+
+  private struct CornerProbe: UIViewRepresentable {
+    let report: (CGFloat) -> Void
+    func makeUIView(context: Context) -> ProbeView { ProbeView(report: report) }
+    func updateUIView(_ view: ProbeView, context: Context) { view.report = report }
+  }
+
+  final class ProbeView: UIView {
+    var report: (CGFloat) -> Void
+    init(report: @escaping (CGFloat) -> Void) {
+      self.report = report
+      super.init(frame: .zero)
+      isUserInteractionEnabled = false
+    }
+    required init?(coder: NSCoder) { nil }
+
+    override func safeAreaInsetsDidChange() {
+      super.safeAreaInsetsDidChange()
+      setNeedsLayout()
+    }
+
+    override func layoutSubviews() {
+      super.layoutSubviews()
+      let corner = directionalEdgeInsets(for: .safeArea(cornerAdaptation: .horizontal)).leading
+      let gap = max(0, corner - directionalEdgeInsets(for: .safeArea()).leading)
+      DispatchQueue.main.async { self.report(gap) }
+    }
+  }
+}
+
+extension View {
+  func clearsWindowControls(plate: Bool = true) -> some View { modifier(WindowControlsClearance(plate: plate)) }
 }

@@ -196,6 +196,11 @@ struct RootView: View {
       case "sheet": if let game { gamesPath = [.sheet(game.id)] }
       case "stats": if let game { gamesPath = [.sheet(game.id), .stats(game.id)] }
       case "imported": if let g = model.finished.first(where: \.isImported) { gamesPath = [.sheet(g.id)] }
+      // The play by play of the demo's game with recorded spots (`-PitchsideStoreShot`
+      // plays it to the end), else of the opened Throwing Wood file.
+      case "replay":
+        let spotted = model.finished.first { !$0.isImported && $0.capture.stand }
+        if let g = spotted ?? model.finished.first(where: \.isImported) { gamesPath = [.sheet(g.id)] }
       case "references": gamesPath = [.references]
       case "reference":
         if let i = args.firstIndex(of: "-PitchsideReference"), i + 1 < args.count,

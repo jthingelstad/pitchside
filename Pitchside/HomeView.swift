@@ -16,7 +16,7 @@ struct HomeView: View {
 
   var body: some View {
     VStack(spacing: 0) {
-      ScreenHeader("Games", brand: "Pitchside")
+      ScreenHeader("Games", brand: "Pitchside").clearsWindowControls()
       ScrollView {
         VStack(alignment: .leading, spacing: 16) {
           if let problem = model.recoveryProblem { Text(problem).psHelp() }
@@ -172,10 +172,12 @@ struct HomeView: View {
   /// screen yet.)
   var footer: some View {
     VStack(alignment: .leading, spacing: 4) {
-      Text("Pitchside \(model.version.text)")
-        .font(PSFont.body(14, .bold))
-        .foregroundStyle(Color.psMuted)
-      if let detail = model.version.detail { Text(detail).psHelp() }
+      if showsVersion {
+        Text("Pitchside \(model.version.text)")
+          .font(PSFont.body(14, .bold))
+          .foregroundStyle(Color.psMuted)
+        if let detail = model.version.detail { Text(detail).psHelp() }
+      }
       if let problem = model.engineProblem {
         Text("The engine did not start: \(problem)").font(PSFont.body(14)).foregroundStyle(Color.psWarn)
       }
@@ -185,10 +187,23 @@ struct HomeView: View {
     .padding(.top, 8)
   }
 
+  /// The store pictures leave out the version and build (`-PitchsideStoreShot`).
+  var showsVersion: Bool {
+    #if DEBUG
+      !Demo.storeShot
+    #else
+      true
+    #endif
+  }
+
   /// What is kept where. Finished games are copied to the scorer's own iCloud Drive
   /// folder (or the phone's, with iCloud Drive off); the roster never leaves the phone.
   var privacy: String {
-    let folder = switch model.filesPlace {
+    var place = model.filesPlace
+    #if DEBUG
+      if Demo.storeShot { place = .iCloud }
+    #endif
+    let folder = switch place {
     case .iCloud: "iCloud Drive › Pitchside, in your own iCloud"
     case .local: "On My iPhone › Kubb: Pitchside"
     case nil: "a Pitchside folder"

@@ -17,7 +17,7 @@ cd "$root"
 
 requested="iPhone .* Pro Max"
 if [[ $# -gt 0 && ! $1 =~ ^[0-9]+$ ]]; then requested=$1; shift; fi
-want=" ${*:-1 2 3 4 5 6} "
+want=" ${*:-1 2 3 4 5 6 7 8} "
 
 device=$(xcrun simctl list -j devices available | python3 -c '
 import json, re, sys
@@ -52,19 +52,22 @@ xcrun simctl ui "$device" appearance light
 
 out=build/store-set
 mkdir -p "$out" docs/store
-# number, name, the demo screen (-PitchsideScreen), seconds to settle. The first three
-# are the ones a search result shows: the pitch as the input, the score sheet it
-# writes, and the numbers behind it.
-shots='1 scorer scorer 5
+# number, name, the demo screen (-PitchsideScreen), seconds to settle, and any more
+# launch arguments. The first three are the ones a search result shows.
+shots='1 scorer scorer 5 -PitchsideDemoAt 32
 2 sheet sheet 4
-3 stats stats 4
+3 replay replay 5 -PitchsideReplayStep 13
 4 games home 4
-5 teams teams 4
-6 players statstab 4'
-echo "$shots" | while read -r n name screen wait; do
+5 references references 4
+6 stats stats 4
+7 players statstab 4
+8 teams teams 4'
+echo "$shots" | while read -r n name screen wait extra; do
   case $want in *" $n "*) ;; *) continue ;; esac
+  # -PitchsideStoreShot: a fixed start date and no version or build line (Demo.swift).
+  # shellcheck disable=SC2086
   xcrun simctl launch --terminate-running-process "$device" com.throwingwood.pitchside \
-    -PitchsideDemo -PitchsideScreen "$screen" >/dev/null
+    -PitchsideDemo -PitchsideStoreShot -PitchsideScreen "$screen" $extra >/dev/null
   sleep "$wait"
   file=$out/iphone-69-$n-$name.png
   xcrun simctl io "$device" screenshot "$file" >/dev/null 2>&1

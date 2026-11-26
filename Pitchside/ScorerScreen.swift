@@ -684,7 +684,6 @@ final class ScorerScreen {
     case "punish":
       history[turn, default: TurnHistory()].entries.append("Placement")
       return
-      return
     default: return
     }
     let word = scorecardNames.word(mark, by: by)

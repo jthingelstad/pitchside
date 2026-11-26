@@ -558,6 +558,13 @@ generated team names, the rules choice).
   `scripts/asc.swift` (GET only without `ASC_WRITE=1`) are for Jamie's go: every
   upload and every change at Apple is Jamie's call. What a submission needs is in
   `docs/DISTRIBUTION.md`; the store pictures come from `scripts/store-shots.sh`.
+- **Status (2026-11-26).** Four merges since: the iCloud Drive copy of each finished
+  game (pull request 15), the 14 reference games (16), App Store readiness (17) and the
+  scorer that frames the active half (18). No TestFlight build has them yet. A refresh
+  the same day retook the store pictures (eight, with no version line, `-PitchsideStoreShot`),
+  checked the app on an iPad simulator and moved the page headers clear of iPadOS's
+  window buttons (`clearsWindowControls`). What is left before submission is the
+  checklist at the end of `docs/DISTRIBUTION.md`.
 - **Navigation and appearance.** The live pitch uses the full screen. Leaving it for Games,
   the timeline, play by play or a finished score sheet restores the section bar.
   Games, Roster and Stats are available during setup and browsing. Switching sections preserves drafts and
@@ -662,7 +669,8 @@ generated team names, the rules choice).
     is inferred to be the simulator on this host, not the app (docs/DISTRIBUTION.md
     "The iOS 26.2 simulator crash").
   - `scripts/vendor-engine.sh check` and `scripts/vendor-notation.sh check` check
-    the tagged copies. Finish simulator work with `xcrun simctl shutdown all`.
+    the tagged copies. Finish simulator work by shutting down the simulators you
+    booted, by UUID; other sessions may be using the rest.
 - **The engine is never edited here.** Not the vendored copy, not the kubb-engine checkout
   from here. A change to the rules, record mode or the writer is a kubb-engine pull
   request and a tag, then a sync here. The same for the notation: a pk-kubb-score pull
