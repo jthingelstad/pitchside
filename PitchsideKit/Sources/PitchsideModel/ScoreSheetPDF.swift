@@ -200,12 +200,15 @@ final class ReportPage {
       let typesetter = CTTypesetterCreateWithAttributedString(string)
       var at = 0
       var result: [CTLine] = []
-      repeat {
-        let count = CTTypesetterSuggestLineBreak(typesetter, at, Double(width))
+      if string.length == 0 { return [CTLineCreateWithAttributedString(string)] }
+      while at < string.length {
+        var count = CTTypesetterSuggestLineBreak(typesetter, at, Double(width))
+        if count == 0 {
+          count = (part as NSString).rangeOfComposedCharacterSequence(at: at).length
+        }
         result.append(CTTypesetterCreateLine(typesetter, CFRange(location: at, length: count)))
         at += count
-        if count == 0 { break }
-      } while at < string.length
+      }
       return result
     }
   }
