@@ -11,6 +11,7 @@ struct ScorerView: View {
   @State private var timeline = false
   @State private var viewport = PitchFrame.Viewport()
   @State private var controlsHeight: CGFloat?
+  @State private var expandedTurn: Int?
   let initialTurn: Int?
   let close: () -> Void
 
@@ -44,7 +45,10 @@ struct ScorerView: View {
             .frame(width: area.size.width * 0.46)
             Divider()
             VStack(spacing: 0) {
-              if additionalPanel {
+              if let turn = screen.noteTurn {
+                LiveTurnNote(turn: turn, screen: screen)
+                  .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+              } else if additionalPanel {
                 HStack {
                   ScrollView(.horizontal) {
                     Text("Turn \(screen.state.turn)  \(screen.tokens)").font(PSFont.mono())
@@ -54,7 +58,7 @@ struct ScorerView: View {
                 }.padding(.horizontal, 12)
                 ScrollView { panel.padding(12) }
               } else {
-                TurnHistoryView(screen: screen)
+                TurnHistoryView(screen: screen, expanded: $expandedTurn)
                 Divider()
                 ScrollView {
                   scoringControls
@@ -64,16 +68,11 @@ struct ScorerView: View {
                 .frame(height: min(controlsHeight ?? area.size.height, area.size.height * 0.70))
               }
             }
-            .accessibilityHidden(screen.noteTurn != nil)
-            .overlay {
-              if let turn = screen.noteTurn {
-                LiveTurnNote(turn: turn, screen: screen)
-                  .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                  .background(Color.psGround)
-              }
-            }
           }
         }
+        // Landscape leaves very little height above the keyboard. The editor
+        // sits at the top; keep the pitch and scoring layout at their normal size.
+        .ignoresSafeArea(.keyboard, edges: .bottom)
         .preference(key: LivePitchVisible.self, value: !screen.over)
         .foregroundStyle(Color.psText)
         .background(Color.psGround)
@@ -372,7 +371,7 @@ struct ScorerView: View {
 private struct TurnHistoryView: View {
   @Environment(\.dynamicTypeSize) private var typeSize
   let screen: ScorerScreen
-  @State private var expanded: Int?
+  @Binding var expanded: Int?
   @State private var scrolledFromLatest = false
 
   var body: some View {
@@ -488,6 +487,7 @@ private struct LiveTurnNote: View {
     let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !text.isEmpty else { return }
     do {
+      editing = false
       try screen.annotate(turn: turn, text: text)
       screen.noteTurn = nil
     } catch { problem = error.localizedDescription }
