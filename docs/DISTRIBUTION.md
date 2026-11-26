@@ -1,71 +1,91 @@
 # Distribution
 
-Pitchside is in TestFlight for the Dev (internal) group only. It is not yet submitted to
-the App Store. This file lists what a submission needs, what is done, and what is left.
-Every upload, every tester group and the App Store are Jamie's call. Nothing here has
-been sent to Apple: `scripts/testflight.sh` and `scripts/asc.swift` are here for that
-day.
+Pitchside 1.0.0 (build 73) is uploaded for outside testers and the App Store, and its
+App Store version page is filled in. It is not submitted: Add for Review and Submit are
+Jamie's. This file lists what a submission needs, what is done, and what is left. Every
+upload, every tester group and the App Store are Jamie's call.
 
-Read on 2026-11-26, after pull requests 15 to 18. "Ours" means work in this repository.
-"Jamie" means a step in App Store Connect or the developer portal.
+Updated on 2026-11-26, after the record was filled in (pull request 21). "Ours" means
+work in this repository. "Jamie" means a step in App Store Connect or the developer
+portal.
 
 **What is left, in order, is the [submission checklist](#submission-checklist) at the
 end.**
 
-## Where the record stands (read 2026-11-26)
+## Where the record stands (2026-11-26, evening)
 
-These came from GET calls to the App Store Connect API (`scripts/asc.swift`), with no
-writes:
+Read back with GET calls (`scripts/asc.swift`) and on the App Store Connect pages, after
+the writes below. Times are US Central.
 
-- **The app** exists: "Kubb: Pitchside", bundle id `com.throwingwood.pitchside`, primary
-  language English (U.S.), not made for kids. The content rights declaration is not
-  answered.
-- **One App Store version, "1.0"**, in Prepare for Submission. It is set to release after
-  approval. It has no build, no copyright, no screenshots, no review details and no
-  review submission.
-- **App information**: no subtitle, no privacy policy URL, no primary or secondary
-  category, and no age rating answers.
-- **Price and availability**: neither is set. The price schedule has the United States
-  as its base, but no price, and no territories are chosen.
-- **TestFlight**: Dev (internal, every build) has one tester. Beta (external) has none
-  and its public link is off. Beta App Review details and the beta description are
-  empty.
-- **Builds**: nine (17 to 59, all `0.1`), all valid, all minimum iOS 26.0, all
-  **internal only**. An internal-only build can never be added to the Beta group or to
-  an App Store version. **Submission needs a new build uploaded with `--external`.**
-  None of the nine has the iCloud folder, the reference games or the active-half scorer.
-- Build 59 says Apple will also offer it on Apple silicon Macs and Apple Vision Pro
-  (iPhone apps run there unless the developer turns that off).
+- **The app**: "Kubb: Pitchside", bundle id `com.throwingwood.pitchside`, primary
+  language English (U.S.), not made for kids.
+- **Developer portal**: the iCloud container `iCloud.com.throwingwood.pitchside`
+  ("Kubb Pitchside") is registered, and the App ID has iCloud on (CloudKit support) with
+  that one container. The App ID's other capabilities are as they were (In-App Purchase,
+  Apple's default).
+- **Build 73** (1.0.0, commit `53b4d38`) was uploaded with `--external` at 4:03 PM and
+  is valid: minimum iOS 26.0, iPhone only (`UIDeviceFamily` 1), no non-exempt
+  encryption. Builds 17 to 59 stay internal only.
+- **App information**: subtitle "Tap the kubbs. Keep the score.", Sports then Utilities,
+  content rights "Yes, it contains, shows, or accesses third-party content, and I have
+  the necessary rights", age rating 4+ (Brazil shows "ALL", Korea and Vietnam "00+"),
+  privacy policy URL. The App Compliance page answers No to the China mainland security
+  assessment and No to AI-generated content, both Active.
+- **App Privacy**: "Data Not Collected", published.
+- **Pricing and Availability**: free ($0.00, United States base), available in all 175
+  countries or regions, and in future ones. Apple silicon Mac and Apple Vision Pro are
+  off. Public distribution, as it was.
+- **The version**: "1.0.0" (was "1.0"), still Prepare for Submission and set to release
+  automatically after approval, as it was. Promotional text, description, keywords,
+  copyright, the support and marketing URLs, and build 73 are on it.
+- **App Review Information**: the same contact as Throwing Wood's App Review details, no
+  sign-in needed, and the review notes below.
+- **Screenshots**: the eight pictures in `docs/store/`, in their numbered order, in the
+  6.9-inch iPhone set (`APP_IPHONE_67`). Apple took the mix of picture 1 (landscape) and
+  the seven portrait ones: all eight processed. The 6.3-inch set, which App Store Connect
+  now lists as required, says "Using Existing Assets", the 6.9-inch pictures scaled.
+- **TestFlight**: unchanged. Dev (internal) has one tester. Beta (external) has none, its
+  public link is off, and its Beta App Review details are empty.
+
+What App Store Connect still shows as open, short of Add for Review:
+
+- **iPad 13-inch screenshots: "Required", 0 of 10**, in the Media Manager's iPad tab.
+  Build 73 is iPhone only, and App Store Connect seems to list iPad on every iOS record
+  (inferred). Throwing Wood had an iPad set because it runs on iPad. Add for Review is
+  the check that says whether this one is really asked for. If it is, take 2064 x 2752
+  pictures on the iPad 13-inch simulator (the app in its iPhone window, "On an iPad").
+- **Header asset: 0 of 1** (Header and Search Results, new on the version page; 5244 x
+  2950 or 3840 x 1646). Not marked required on the page. None is planned for 1.0.
 
 ## Readiness
 
 | Item | State | What is left, and whose |
 | --- | --- | --- |
 | App record and bundle id | Done | Nothing. |
-| Signing | Done (automatic, team in a git-ignored file) | Ours: copy Throwing Wood's `Config/Signing.local.xcconfig` and `Config/AppStoreConnect.local` into the checkout that uploads. Jamie: the iCloud container below. |
-| iCloud Drive folder | Done in the code (pull request 15) | Jamie: register `iCloud.com.throwingwood.pitchside` and turn on iCloud (Documents) for the App ID before the first signed build. Xcode with Jamie signed in can do it, or the portal. The API key cannot. |
-| Reference games | Done (pull request 16) | Jamie: the content rights answer ("Third-party content"). |
+| Signing | Done (automatic, team in a git-ignored file) | Nothing. The checkout that uploads needs Throwing Wood's `Config/Signing.local.xcconfig` and `Config/AppStoreConnect.local` copied in. |
+| iCloud Drive folder | Done (pull request 15; container and App ID, 2026-11-26) | Nothing. |
+| Reference games | Done (pull request 16) | Nothing. Content rights answered "Yes, I have the necessary rights". |
 | App icon | Done for submission | A single 1024 master with no alpha is enough. iOS makes the dark and tinted looks from it. The final icon is Jamie's call. |
 | Launch screen | Done | `UILaunchScreen` (an empty one: the system background, then the app). |
 | Display name | Done | "Kubb: Pitchside", 15 characters, shows in full under the icon. |
-| Category | Done in the build (Sports) | Jamie: Sports, then Utilities, in App Store Connect. |
+| Category | Done | Sports, then Utilities, in the build and in App Store Connect. |
 | Privacy manifest | Done, checked again 2026-11-26 | `Pitchside/PrivacyInfo.xcprivacy` ("Required reasons"). |
-| Export compliance | Done | `ITSAppUsesNonExemptEncryption` is false, so App Store Connect asks nothing. |
+| Export compliance | Done | `ITSAppUsesNonExemptEncryption` is false; build 73 shows no non-exempt encryption. |
 | Usage strings | Done (none needed) | No camera, photos, contacts, location or microphone. The file picker, share sheet, print and iCloud Drive need none. |
 | Orientations | Done | iPhone only: portrait, and landscape for the scorer. |
-| On an iPad | Checked 2026-11-26 | App Review may run it on an iPad. It works there; see "On an iPad". Fixed in this pull request: the window buttons covered the back buttons. |
+| On an iPad | Checked 2026-11-26 | App Review may run it on an iPad. It works there; see "On an iPad". |
 | Accessibility | Done for submission | VoiceOver labels every piece on the pitch, the turn history and the counts. Text uses Dynamic Type. Jamie may fill in Accessibility Nutrition Labels: optional, and only claim what was checked on a phone. |
-| App Privacy | Ready to enter | Jamie: "Data Not Collected" ("App Privacy worksheet"). Web only. |
-| Age rating | Ready to enter | Jamie: the worksheet below. Expect 4+. |
-| Price and territories | Not set | Jamie: free, in every territory (as Throwing Wood). |
-| Mac and Vision Pro | On by default | Jamie: turn both off for 1.0 (Pricing and Availability). Nobody has tried it there. |
-| App Compliance (China mainland) | Not answered | Jamie: no feature that needs a security assessment, and no AI-generated or synthetic content service. A new app cannot be submitted until both are answered. Web only. |
-| Listing words and URLs | Drafted below | Jamie: approve them. The three pages at throwingwood.com/pitchside are live. |
-| Screenshots | Done (`docs/store/`, eight, 2026-11-26) | Nothing, unless a screen changes ("Screenshots"). |
-| Review notes | Drafted below | Jamie: a contact name, phone and email in App Review Information. |
-| The version | `1.0.0` (Jamie, 2026-11-26) | Ours, with the version page: change the record's "1.0" to match ("The version"). |
-| A build for the App Store | None yet | Jamie's go, then `scripts/testflight.sh --external` from a new commit on main. |
-| iOS 26.2 | Unverified on a phone | See "The iOS 26.2 simulator crash". One run on a phone with iOS 26 settles it. |
+| App Privacy | Done (published 2026-11-26) | Nothing. "Data Not Collected". |
+| Age rating | Done | 4+ ("Age-rating worksheet"). |
+| Price and territories | Done | Free, all 175 countries or regions. |
+| Mac and Vision Pro | Done (off) | Nothing. |
+| App Compliance (China mainland) | Done | No and no, both Active. |
+| Listing words and URLs | Done (on the version page) | Nothing. Written as drafted below. |
+| Screenshots | Done for iPhone (eight, 6.9-inch) | Jamie: see whether Add for Review asks for an iPad set ("Where the record stands"). |
+| Review notes | Done | Nothing. Contact as Throwing Wood's. |
+| The version | Done (`1.0.0` on the record and the build) | Nothing. |
+| A build for the App Store | Done (build 73, attached) | Nothing. |
+| iOS 26.2 | Unverified on a phone | See "The iOS 26.2 simulator crash". One run on a phone with iOS 26 settles it; build 73 does too. |
 
 ## Internal testers
 
@@ -331,9 +351,11 @@ Apple's specification (read 2026-11-26): the store needs at least one iPhone set
 6.9-inch sizes are 1320 x 2868 (or 1290 x 2796, 1260 x 2736) and their landscape
 sizes. Smaller iPhones use scaled 6.9-inch pictures when they have none of their own.
 One to ten a set, PNG or JPEG, no transparency. The app is iPhone only, so no iPad set.
-Portrait and landscape can share a set; the store shows them as they are. Throwing Wood
-was approved with one 6.9-inch set. If App Store Connect asks for a 6.3-inch set too,
-run the script on a 6.3-inch simulator.
+Portrait and landscape can share a set; the store shows them as they are (App Store
+Connect took this set's mix on 2026-11-26). App Store Connect lists the 6.3-inch set as
+required, and fills it with the 6.9-inch pictures scaled ("Using Existing Assets"). If it
+ever asks for its own, run the script on a 6.3-inch simulator. (Throwing Wood runs on
+iPad, so it also has an iPad set; it is no guide to whether an iPhone-only app needs one.)
 
 `scripts/store-shots.sh` takes the set from the DEBUG demo games (invented names only)
 on the newest iPhone Pro Max simulator. It writes `docs/store/iphone-69-<n>-<name>.png`:
@@ -369,47 +391,36 @@ it.
 ## The version
 
 `VERSION` is `1.0.0`, named by Jamie on 2026-11-26, as Throwing Wood and its engine
-shipped. The record's version still says "1.0". Its version string can change before
-submission, and it changes to `1.0.0` when the version page is filled in (step 11), so
-the build and the page match.
+shipped. The record's version string was changed from "1.0" to `1.0.0` on 2026-11-26,
+so the build and the page match.
 
 ## Submission checklist
 
 What is left, in order. Each line is one thing to do.
 
-**Jamie, before the build**
+**Done on 2026-11-26** (on Jamie's go)
 
-1. Approve the listing words above. (The version is named: `1.0.0`, 2026-11-26.)
-2. Register the iCloud container `iCloud.com.throwingwood.pitchside` and turn on iCloud
-   (Documents) for the App ID: in Xcode signed in (Signing & Capabilities lets
-   automatic signing do it on the next build), or in the developer portal. The API key
-   cannot.
-3. On a real phone with iOS 26: open TestFlight build 59, launch it and score one turn.
-   That settles the iOS 26.2 simulator crash ("The iOS 26.2 simulator crash").
+1. The listing words, approved as drafted, and the version named `1.0.0`.
+2. The iCloud container registered and iCloud turned on for the App ID, in the developer
+   portal.
+3. Throwing Wood's two local files copied into the checkout, then
+   `scripts/testflight.sh --dry-run --external` and `scripts/testflight.sh --external`:
+   1.0.0 build 73, valid.
+4. App Information: subtitle, Sports then Utilities, content rights, age rating (4+),
+   privacy policy URL, and App Compliance for China mainland (no and no).
+5. App Privacy: "Data Not Collected", published.
+6. Pricing and Availability: free, every territory, Mac and Vision Pro off.
+7. App Review Information: contact (as Throwing Wood's), no sign-in, the review notes.
+8. The version page: "1.0.0", promotional text, description, keywords, copyright, the
+   marketing and support URLs (`scripts/asc.swift` with `ASC_WRITE=1`), the eight
+   pictures in order (the same way), and build 73.
 
-**Ours, after step 1** (small, under an hour, one pull request)
+**Left**
 
-4. Set `VERSION` to the chosen number. (Done: `1.0.0`.)
-5. Copy Throwing Wood's `Config/Signing.local.xcconfig` and `Config/AppStoreConnect.local`
-   into the checkout that uploads, then run `scripts/testflight.sh --dry-run --external`.
-
-**Jamie, in App Store Connect** (web only, about half an hour)
-
-6. App Information: Sports, then Utilities; content rights "Yes" and "Yes, I have the
-   necessary rights" ("Third-party content"); the age-rating worksheet (4+); App
-   Compliance for China mainland (no and no).
-7. App Privacy: "Data Not Collected", then Publish.
-8. Pricing and Availability: free, every territory. Turn off Mac and Vision Pro.
-9. App Review Information: a contact name, phone and email.
-
-**The build**
-
-10. Jamie's go for an external upload. Ours: `scripts/testflight.sh --external` from a
-    new commit on main (small, about 20 minutes).
-
-**The version page**
-
-11. Ours, on Jamie's go (`ASC_WRITE=1`): the listing words, the three URLs, the eight
-    pictures in `docs/store/`, the review notes and the build, with `scripts/asc.swift`
-    (medium, an hour or two; or Jamie pastes them in by hand).
-12. Jamie: look over the page, then Add for Review and Submit.
+9. Jamie, on a real phone with iOS 26: open TestFlight build 73 (or 59), launch it and
+   score one turn. That settles the iOS 26.2 simulator crash ("The iOS 26.2 simulator
+   crash").
+10. Jamie: look over the version page, then Add for Review. If it asks for iPad
+    screenshots, stop there; ours is a set from the iPad 13-inch simulator (small,
+    under an hour, one pull request).
+11. Jamie: Submit.
