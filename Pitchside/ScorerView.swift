@@ -40,7 +40,7 @@ struct ScorerView: View {
         GeometryReader { area in
           HStack(spacing: 0) {
             VStack(spacing: 0) {
-              header.padding(.horizontal, 8)
+              header.clearsWindowControls(plate: false).padding(.horizontal, 8)
               pitch
             }
             .frame(width: area.size.width * 0.46)

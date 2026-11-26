@@ -13,11 +13,15 @@ struct ReplayView: View {
   @State private var view = PitchFrame.View.behindA
   @State private var viewport = PitchFrame.Viewport()
 
-  init(replay: GameReplay, back: String = "Score sheet", startAtLast: Bool = false, close: (() -> Void)? = nil) {
+  init(
+    replay: GameReplay, back: String = "Score sheet", startAtLast: Bool = false, startAt: Int? = nil,
+    close: (() -> Void)? = nil
+  ) {
     self.replay = replay
     self.back = back
     self.close = close
-    _index = State(initialValue: startAtLast ? max(0, replay.steps.count - 1) : 0)
+    let last = max(0, replay.steps.count - 1)
+    _index = State(initialValue: startAt.map { min(max(0, $0), last) } ?? (startAtLast ? last : 0))
   }
 
   private var step: GameReplay.Step { replay.steps[index] }
@@ -36,6 +40,7 @@ struct ReplayView: View {
   var body: some View {
     VStack(spacing: 0) {
       ScreenHeader("Play by play", back: back) { if let close { close() } else { dismiss() } }
+        .clearsWindowControls()
       HStack(spacing: 8) {
         Menu {
           ForEach(replay.turnStarts, id: \.self) { i in

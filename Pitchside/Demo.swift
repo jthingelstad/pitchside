@@ -6,6 +6,18 @@
   /// Invented games for screenshots and trying the app (`-PitchsideDemo`, debug builds
   /// only): a separate folder, refilled at each launch. Every name is made up.
   enum Demo {
+    /// `-PitchsideStoreShot` (scripts/store-shots.sh): what a store picture shows. The
+    /// in-progress game keeps a fixed start rather than today's, and the Games footer
+    /// leaves out the version and build, which change with every upload, and names the
+    /// iCloud Drive folder a signed-in phone shows.
+    static var storeShot: Bool { ProcessInfo.processInfo.arguments.contains("-PitchsideStoreShot") }
+
+    /// `-PitchsideReplayStep <n>`: the step a demo play by play opens at.
+    static var replayStep: Int? {
+      let args = ProcessInfo.processInfo.arguments
+      return args.firstIndex(of: "-PitchsideReplayStep").flatMap { args.dropFirst($0 + 1).first }.flatMap(Int.init)
+    }
+
     static func scratchStore() -> GameStore {
       try! GameStore(root: FileManager.default.temporaryDirectory.appending(path: "PitchsideScratch"))
     }
@@ -61,7 +73,7 @@
       // Still on the pitch: the canvas's game (the worked example of kubb-engine's
       // RECORD.md, renamed), stopped where `-PitchsideDemoAt <n>` says.
       let four = Game(
-        created: Date.now.addingTimeInterval(-25 * 60), status: .setup,
+        created: storeShot ? day(21, 16) : Date.now.addingTimeInterval(-25 * 60), status: .setup,
         teams: [.A: Team(name: "Wobbly Towers", players: [p("Kim"), p("Dana"), p("Ole")]),
                 .B: Team(name: "Birch Batons", players: [p("Sam"), p("Lee")])],
         options: GameOptions(wind: .light, first: .A), capture: Capture(who: true, stand: true, stance: true),
@@ -71,6 +83,19 @@
       let args = ProcessInfo.processInfo.arguments
       let at = args.firstIndex(of: "-PitchsideDemoAt").flatMap { args.dropFirst($0 + 1).first }.flatMap(Int.init) ?? 28
       for e in canvasGame.prefix(max(0, at)) { try! scorer.add(e) }
+
+      // The store picture of the play by play: the same worked game, played to the king
+      // the day before, so its replay has every recorded spot. Only for that picture, so
+      // the Games picture keeps its footer in view.
+      if storeShot, args.firstIndex(of: "-PitchsideScreen").flatMap({ args.dropFirst($0 + 1).first }) == "replay" {
+        let five = Game(
+          created: day(20, 10), status: .setup,
+          teams: four.teams, options: four.options, capture: four.capture,
+          event: four.event, location: four.location)
+        try! store.save(five)
+        let played = try! RecordScorer(game: five, store: store, appVersion: "0.1")
+        for e in canvasGame { try! played.add(e) }
+      }
       return store
     }
 
