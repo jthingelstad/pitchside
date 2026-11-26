@@ -1,0 +1,30 @@
+[Event "Rockford Swedish Historical Society Tournament 2012"]
+[Location "Rockford, IL"]
+[Start "2012-05-09 16:00"]
+[End "2012-05-09 16:08"]
+[Duration "8m"]
+[Team A "Tad Kubbler"]
+[Team A Players "Eric Goplin (e), Cole Vryens (c)"]
+[Team B "Head Slap"]
+[Team B Players "Josh Feathers (d), Tony Hansenite (t)"]
+[First "Team A"]
+[Win "Team B"]
+[Stats "No"]
+[Source "https://wiki.planetkubb.com/wiki/Game:Rockford_2012_Championship_Head_Slap_v._Tad_Kubbler/Game_2"]
+
+1. 0I c:- c:- c:- e:- e:B e:-
+2. 1I d:- d:F d:- t:B t:B t:-
+3. 3I c:- c:- e:F e:F e:F c:B
+4. 4I d:- d:F d:F t:F t:F t:-
+5. 4I c:2F c:F c:F e:- e:B e:-
+6. 5I t:3F t:F t:- d:F d:- d:B
+7. 6I c:2F c:F c:F e:F e:F e:-
+8. 6I t:F d:2F d:- t:F t:- d:-
+9. 4I A c:F c:2F c:F e:B e:B e:= # Eric misses King shot in throw 6 that would have won the entire match and tournament.
+10. 6I d:2F d:2F d:2F t:2F t:- t:-
+11. 8I c:F c:2F c:- e:F e:- e:-
+12. 4I A d:2F d:F d:F t:B t:- t:-
+13. 5I e:2F e:2F c:2F c:- e:F c:F
+14. 8I A d:6F t:F t:F d:- d:- t:- # Amazing drill cluster by Dobbie.
+15. 8I c:F c:2F c:F e:F e:F e:- # Eric threw penalty Kubb.
+16. 6I A d:5F d:- d:F t:B t:K X

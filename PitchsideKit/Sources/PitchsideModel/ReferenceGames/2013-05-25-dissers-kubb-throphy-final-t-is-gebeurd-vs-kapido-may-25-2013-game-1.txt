@@ -1,0 +1,16 @@
+[Event "Dissers Kubb Trophy"]
+[Location "Itegem, Belgium"]
+[Start "2013-05-25"]
+[Surface "Grass"]
+[Team A "Kapido"]
+[Team B "'T is gebeurd"]
+[First "Team A"]
+[Win "Team B"]
+[Scored by "Fre Timmerman"]
+[Stats "No"]
+[Source "https://wiki.planetkubb.com/wiki/Game:Dissers_Kubb_Throphy_final,_'T_is_gebeurd_vs._Kapido,_may_25_2013_(Game_1)"]
+
+1. 0I - - B B - B
+2. 3I 2F F - B - -
+3. 4IR - - F F - -
+4. 2I A 2F B B B B K

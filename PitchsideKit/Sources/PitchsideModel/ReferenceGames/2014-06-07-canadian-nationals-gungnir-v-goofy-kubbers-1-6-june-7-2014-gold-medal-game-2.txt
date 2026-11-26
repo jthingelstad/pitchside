@@ -1,0 +1,27 @@
+[Event "Canadian National Kubb Championship 2014"]
+[Location "Ottawa, ON, Canada"]
+[Start "2014-06-07"]
+[Surface "Grass"]
+[Team A "Gungnir"]
+[Team A Players "Dan Pritchard (d), Eric Yettru (y)"]
+[Team B "Goofy Kubbers 1.6"]
+[Team B Players "Evan Fitzgerald (e), Michelle Fitzgerald (m)"]
+[First "Team B"]
+[Win "Team B"]
+[Scored by "Shane Hultquist"]
+[Stats "Yes"]
+[Source "https://wiki.planetkubb.com/wiki/Game:Canadian_Nationals,_Gungnir_v._Goofy_Kubbers_1.6,_June_7_2014_Gold_Medal_Game_2"]
+
+1. e:0I e:B e:- e:- m:B m:- m:-
+2. d:2I1R1P y:- y:- y:F d:F d:- d:-
+3. e:2I1R m:- m:- e:F e:- e:F m:-
+4. d:2I d:F d:F y:- y:- y:- d:B
+5. e:3I e:F m:F m:- m:F e:- e:-
+6. d:3I1R d:- d:2F d:F y:- y:- y:-
+7. e:3I m:F m:F m:F e:- e:- e:B
+8. d:4I1R1P d:2F d:F d:- y:- y:- y:F
+9. e:4I m:3F m:F e:- e:- e:B m:-
+10. d:5I y:- y:- y:- d:F d:F d:F
+11. e:3I A e:2F m:- m:F e:- e:B m:= # Missed the king leaving an opening for Gungnir to come back!
+12. d:4I d:2F d:F d:- y:F y:- y:F
+13. e:5I A e:2F e:F m:F m:F m:= e:K

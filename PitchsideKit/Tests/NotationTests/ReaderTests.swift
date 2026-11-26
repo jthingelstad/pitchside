@@ -10,8 +10,9 @@ func fixture(_ name: String) throws -> String {
   return try String(contentsOf: url, encoding: .utf8)
 }
 
-/// The pk-kubb-score checkout beside this repo (its archived games are real people's
-/// games and stay out of this repository: tests read them in place, and skip without it).
+/// The pk-kubb-score checkout beside this repo. Tests read its 150 archived games in place
+/// and skip without it. Only the reference games CATALOG.tsv lists are copied here
+/// (published games, shipped unmodified; scripts/vendor-notation.sh).
 let pkScore = URL(fileURLWithPath: #filePath)
   .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
   .deletingLastPathComponent().deletingLastPathComponent().appending(path: "pk-kubb-score")
@@ -138,7 +139,7 @@ func object(_ json: String) throws -> NSDictionary {
 
   /// The reader in JavaScriptCore gives exactly what kubb.js gives under node, for the
   /// engine's file and for every 25th archived real game (read in place from the
-  /// pk-kubb-score checkout, never copied here).
+  /// pk-kubb-score checkout).
   @Test func javaScriptCoreAgreesWithNode() throws {
     guard which("node") != nil else { return }
     let reader = try NotationReader()

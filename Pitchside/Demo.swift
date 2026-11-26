@@ -10,6 +10,13 @@
       try! GameStore(root: FileManager.default.temporaryDirectory.appending(path: "PitchsideScratch"))
     }
 
+    /// An empty store, emptied at each launch: what a new install sees.
+    static func freshStore() -> GameStore {
+      let root = FileManager.default.temporaryDirectory.appending(path: "PitchsideFresh")
+      try? FileManager.default.removeItem(at: root)
+      return try! GameStore(root: root)
+    }
+
     static func store(reopen: Bool = false) -> GameStore {
       let root = FileManager.default.temporaryDirectory.appending(path: "PitchsideDemo")
       if reopen { return try! GameStore(root: root) }

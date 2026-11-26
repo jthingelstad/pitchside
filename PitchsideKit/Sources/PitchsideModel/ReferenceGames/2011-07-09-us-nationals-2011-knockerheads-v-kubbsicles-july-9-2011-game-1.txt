@@ -1,0 +1,23 @@
+[Event "US National Kubb Championship 2011"]
+[Location "Eau Claire Soccer park"]
+[Start "2011-07-09"]
+[Team A "Kubbsicles"]
+[Team A Players "Mark Blazel (m), Max Sebesta (x)"]
+[Team B "Team Knockerheads"]
+[Team B Players "Josh Feathers (f), Dwayne Ballmer (d)"]
+[First "Team A"]
+[Win "Team B"]
+[Scored by "ChrisHodges"]
+[Entered by "ChrisHodges"]
+[Video "http://www.youtube.com/watch?v=kt13sGJPywA"]
+[Stats "Yes"]
+[Source "https://wiki.planetkubb.com/wiki/Game:US_Nationals_2011,_Knockerheads_v._Kubbsicles,_July_9_2011/Game_1"]
+
+1. 0I m:- m:- m:- x:- x:- x:- # 0-fer on the open.
+2. 0I f:- f:- f:- d:B d:B d:-
+3. m:2I m:F m:F m:- x:B x:B x:B # Max goes 3-for-3
+4. f:5I1R f:F f:F f:2F d:F d:B d:-
+5. m:6I m:2F m:F m:F x:F x:- x:F
+6. f:6I f:3F f:3F f:B d:- d:B d:=
+7. m:8I m:4F m:2F m:F x:F x:- x:B # Fantastic come-back round after the king miss!
+8. f:9I1R f:3F f:3F f:2F d:- d:F d:K

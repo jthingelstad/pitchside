@@ -1,0 +1,20 @@
+[Event "Loppet 2012"]
+[Location "Theodore Wirth Park"]
+[Start "2012-02-05"]
+[Surface "Snow"]
+[Team A "Sweden's Sons"]
+[Team B "Kubb Snipers"]
+[First "Team A"]
+[Win "Team B"]
+[Scored by "Garrickvanburen"]
+[Entered by "Garrickvanburen"]
+[Video "https://www.youtube.com/watch?v=2Ak_TLeUxHQ&feature=youtube_gdata"]
+[Stats "Yes"]
+[Source "https://wiki.planetkubb.com/wiki/Game:Loppet_2012_Semi-Finals,_Kubb_Snipers_vs._Sweden's_Sons/Game_1"]
+
+1. 0I - B - - - - # a guess on the opening turn from Sweden's Sons - as it wasn't included in the video.
+2. I F B B B B - # a guess on the answer from Kubb Snipers - as it wasn't included in the video.
+3. 5I 2F F F F - - # a guess on the 3rd turn from Sweden's Sons - as it wasn't included in the video
+4. 5I 2F 2F - F - - # this is where the video starts - with the Kubb Snipers inkasting 5.
+5. 5IR F F - F F -
+6. 4I A 2F F F B = K

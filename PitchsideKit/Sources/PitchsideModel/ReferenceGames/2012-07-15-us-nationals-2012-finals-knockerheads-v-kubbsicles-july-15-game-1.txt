@@ -1,0 +1,35 @@
+[Event "U.S National Kubb Championship 2012"]
+[Location "Eau Claire Soccer Park, Eldorado Boulevard, Eau Claire, WI"]
+[Start "2012-07-15 11:45"]
+[End "2012-07-15 12:28"]
+[Duration "43m"]
+[Surface "Grass"]
+[Team A "Team Knockerheads"]
+[Team A Players "Josh Feathers (j), Grant Scott (g), Dwayne Ballmer (d)"]
+[Team B "Kubbsicles"]
+[Team B Players "Zach Brown (z), Mark Blazel (k), Max Sebesta (x)"]
+[First "Team A"]
+[Win "Team B"]
+[Scored by "Thingles"]
+[Entered by "garrickvanburen"]
+[Video "http://www.youtube.com/watch?v=Ien_RS9bvYY"]
+[Stats "Yes"]
+[Scoresheet "scoresheets/Us2012-kubbsicles-knockerheads-game1.pdf"]
+[Source "https://wiki.planetkubb.com/wiki/Game:US_Nationals_2012,_Finals,_Knockerheads_v._Kubbsicles,_July_15/Game_1"]
+
+1. 0I j:B j:- g:- g:- d:B d:-
+2. k:2I z:2F z:- x:- x:B k:- k:-
+3. j:3I j:- j:F g:F g:F d:- d:-
+4. k:3IR z:2F z:F k:- k:- x:- x:B
+5. j:4I j:2F j:- g:F g:F d:B d:B
+6. k:6IRP z:3F z:F k:F k:F x:- x:- # penalty kubb placed on left baseline 1 baton in on opposite side of remaining baseline kubbs
+7. j:6IR j:F j:4F g:F g:- d:- d:-
+8. k:6I2R z:3F z:2F k:F k:- x:- x:-
+9. j:6I2R j:3F j:2F g:F g:- d:- d:-
+10. k:6IR z:2F z:F k:F k:F x:F x:-
+11. j:6IR g:F j:F j:2F g:F d:- d:F
+12. k:6I z:4F z:F k:F k:B x:B x:B # Stunning turn, every baton productive. Incredible baseline attack.
+13. j:9I3RP j:- j:6F g:2F g:F d:- d:B # penalty placed on baseline 1 baton from right sideline away from remaining baseline kubbs
+14. k:10I3RP z:- z:- k:5F k:2F x:F x:F
+15. j:9I3R A g:4F j:F g:- j:- d:F d:2F
+16. k:8I2R A z:5F z:2F k:F x:F k:K X

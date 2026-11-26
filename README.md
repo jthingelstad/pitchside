@@ -27,6 +27,11 @@ or jump to a turn, including games imported from Throwing Wood.
 Tap a turn on a locally scored sheet to correct a throw. Pitchside previews changes
 to later turns. Undo and redo work for both throws and corrections, even after reopening a game.
 
+**Games → Reference games** holds 14 real games from the Planet Kubb archive
+(2011 to 2015), each with its event, date, teams and scorer. They open like any
+score sheet, read only, and never count in Roster or Stats. A new install's Games
+list starts with them.
+
 Each game produces a plain-text Planet Kubb Notation file, a printable PDF score sheet
 and player stats. Games are kept on the phone. Each finished game's file, with its
 team and player names, is also in the Files app under iCloud Drive › Pitchside, in
@@ -77,3 +82,11 @@ and the command-line build. Changes are welcome through pull requests.
 Pitchside uses the [MIT License](LICENSE). The bundled engine, Lua, musl, Planet Kubb
 reader and fonts carry their respective notices in [PitchsideKit/Sources](PitchsideKit/Sources)
 and [Pitchside/Fonts](Pitchside/Fonts).
+
+The reference games in
+[PitchsideKit/Sources/PitchsideModel/ReferenceGames](PitchsideKit/Sources/PitchsideModel/ReferenceGames)
+are files from [pk-kubb-score](https://github.com/Planet-Kubb/pk-kubb-score) at tag
+`v2-2026.11`, shipped unmodified. They were scored by Planet Kubb wiki members, who are
+credited in each file and on its sheet. Planet Kubb published its content under Creative
+Commons BY-SA (its 2012 scoring post, kept in pk-kubb-score under `sources/planetkubb.com/`);
+no version is stated, and pk-kubb-score has no licence file of its own.

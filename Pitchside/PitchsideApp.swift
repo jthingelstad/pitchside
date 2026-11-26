@@ -12,7 +12,10 @@ struct PitchsideApp: App {
     var mirrored = false
     #if DEBUG
       // `-PitchsideDemo`: a separate folder filled with invented games, for screenshots.
-      if ProcessInfo.processInfo.arguments.contains("-PitchsideDemo") {
+      if ProcessInfo.processInfo.arguments.contains("-PitchsideFresh") {
+        // `-PitchsideFresh`: an empty folder, as on a new install.
+        store = Demo.freshStore()
+      } else if ProcessInfo.processInfo.arguments.contains("-PitchsideDemo") {
         store = Demo.store(reopen: ProcessInfo.processInfo.arguments.contains("-PitchsideReopenDemo"))
       } else {
         if let standard = try? GameStore.standard() {
@@ -103,6 +106,9 @@ enum AppSection: String, CaseIterable {
 enum Route: Hashable {
   case sheet(UUID)
   case stats(UUID)
+  /// The reference games, and one of them opened from that list.
+  case references
+  case reference(UUID)
 }
 
 /// Each section keeps its navigation and unfinished work when the scorer switches tabs.
@@ -190,6 +196,14 @@ struct RootView: View {
       case "sheet": if let game { gamesPath = [.sheet(game.id)] }
       case "stats": if let game { gamesPath = [.sheet(game.id), .stats(game.id)] }
       case "imported": if let g = model.finished.first(where: \.isImported) { gamesPath = [.sheet(g.id)] }
+      case "references": gamesPath = [.references]
+      case "reference":
+        if let i = args.firstIndex(of: "-PitchsideReference"), i + 1 < args.count,
+          let entry = model.references.first(where: { $0.reference.file.contains(args[i + 1]) }) {
+          gamesPath = [.references, .reference(entry.id)]
+        } else if let entry = model.references.first {
+          gamesPath = [.references, .reference(entry.id)]
+        }
       case "roster": tab = .roster
       case "statstab": tab = .stats
       case "teams", "thisgame": newGame = true
@@ -208,6 +222,8 @@ struct RootView: View {
         scoring = session
       }
     case .stats(let id): GameStatsView(id: id, back: back)
+    case .references: ReferenceGamesView()
+    case .reference(let id): ScoreSheetView(id: id, back: "Reference games")
     }
   }
 }

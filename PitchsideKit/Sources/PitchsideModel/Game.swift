@@ -200,6 +200,9 @@ public struct Game: Codable, Sendable, Hashable, Identifiable {
     case pitchside
     /// Opened from a file (its name).
     case file(String)
+    /// One of the reference games bundled with the app (its file name in
+    /// ReferenceGames/). Never saved in the store.
+    case reference(String)
   }
   public enum Status: String, Codable, Sendable {
     /// Teams and options being chosen.
@@ -251,8 +254,18 @@ public struct Game: Codable, Sendable, Hashable, Identifiable {
 
   public var isReady: Bool { team(.A).isReady && team(.B).isReady }
 
+  /// A game file from elsewhere: opened by the scorer, or a bundled reference game. Its
+  /// numbers count in its own stats only, never under a saved name.
   public var isImported: Bool {
-    if case .file = origin { return true }
+    switch origin {
+    case .file, .reference: true
+    case .pitchside: false
+    }
+  }
+
+  /// A bundled reference game: read only, and not one of the scorer's own games.
+  public var isReference: Bool {
+    if case .reference = origin { return true }
     return false
   }
 }

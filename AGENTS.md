@@ -673,6 +673,11 @@ generated team names, the rules choice).
   relying on it; they change often.
 - **Say when you infer.** Mark a claim not read from code as inferred, as this file does.
 - **Never verify with a write to live data.** Recorded games are personal data: none in
-  the repository, no names or places of real people in fixtures, only invented ones.
+  the repository, no names or places of real people in fixtures or demo data, only
+  invented ones. One exception, Jamie's on 2026-11-26: the reference games in
+  `PitchsideKit/Sources/PitchsideModel/ReferenceGames/` are files from the published
+  Planet Kubb archive (pk-kubb-score `games/` at the pinned tag), already public on the
+  wiki and GitHub with their names, and ship unmodified. Nothing else from the archive is
+  copied here, and no privately recorded game ever is.
 - The workstream's own rules (pull requests only, Codex reviews, worktrees for side work,
   times in US Central, clean up simulators) are in `../AGENTS.md` and `~/Projects/AGENTS.md`.

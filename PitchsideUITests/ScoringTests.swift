@@ -845,6 +845,58 @@ final class ScoringTests: XCTestCase {
     XCTAssertTrue(app.buttons["Game stats"].exists)
   }
 
+  /// A new install leads with the reference games: one opens its credit, sheet, play by
+  /// play and stats, read only, and none of it reaches the Stats tab. With games of the
+  /// scorer's own, the collection is one row under them.
+  func testOpenAReferenceGameFromAFreshInstall() {
+    app.launchArguments = ["-PitchsideFresh"]
+    app.launch()
+    XCTAssertTrue(app.staticTexts["Reference games"].waitForExistence(timeout: 8), app.debugDescription)
+    shot("Games-fresh")
+    let rich = app.buttons.matching(NSPredicate(format: "label CONTAINS 'The richest record'")).firstMatch
+    for _ in 0..<6 where !rich.isHittable { app.swipeUp() }
+    rich.tap()
+    XCTAssertTrue(app.staticTexts["Reference game"].waitForExistence(timeout: 4), app.debugDescription)
+    XCTAssertTrue(app.staticTexts["Team Knockerheads beat Tad Kubbler"].exists)
+    XCTAssertTrue(app.staticTexts["Thingles"].exists, "credits the scorer the file names")
+    XCTAssertFalse(app.buttons["Edit timeline"].exists)
+    XCTAssertFalse(app.buttons["editTurn1"].exists)
+    XCTAssertFalse(app.buttons["annotateTurn1"].exists, "read only: no turn notes")
+    shot("Reference-sheet")
+    tap("Play by play")
+    tap("Next")
+    tap("Back to Score sheet")
+    tap("Game stats")
+    XCTAssertTrue(app.staticTexts["Hit % by player · needs who threw"].waitForExistence(timeout: 4))
+    tap("Back to Score sheet")
+    tap("Back to Games")
+    tap("section-Stats")
+    XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Score a game with who threw on'")).firstMatch
+      .waitForExistence(timeout: 4), "reference games never count under a saved name")
+    XCTAssertFalse(app.staticTexts["Josh Feathers"].exists)
+    tap("section-Roster")
+    XCTAssertFalse(app.staticTexts["Josh Feathers"].exists, "reference players never join the roster")
+
+    app.terminate()
+    app.launchArguments = ["-PitchsideDemo"]
+    app.launch()
+    let link = app.buttons["referenceGames"]
+    for _ in 0..<6 where !link.isHittable { app.swipeUp() }
+    XCTAssertTrue(link.exists, app.debugDescription)
+    shot("Games-with-reference-row")
+    link.tap()
+    XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Real games scored at tournaments'")).firstMatch
+      .waitForExistence(timeout: 4))
+    shot("Reference-games")
+    let snow = app.buttons.matching(NSPredicate(format: "label CONTAINS 'On a frozen lake'")).firstMatch
+    for _ in 0..<6 where !snow.isHittable { app.swipeUp() }
+    snow.tap()
+    XCTAssertTrue(app.staticTexts["Reference game"].waitForExistence(timeout: 4))
+    tap("Back to Reference games")
+    tap("Back to Games")
+    XCTAssertTrue(link.waitForExistence(timeout: 4))
+  }
+
   func testPrintableScoreSheet() {
     launch("imported", after: 0)
     let turn = app.buttons["annotateTurn2"]

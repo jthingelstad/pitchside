@@ -1,0 +1,36 @@
+[Event "Kalamazoo KUBBQ 2014"]
+[Location "Kalamazoo, MI"]
+[Start "2014-10-11"]
+[Surface "Grass"]
+[Team A "Phil Dickinson"]
+[Team A Players "Phil Dickinson (p)"]
+[Team B "Joey Wood"]
+[Team B Players "Joey Wood (j)"]
+[First "Team B"]
+[Win "Team B"]
+[Stats "No"]
+[Source "https://wiki.planetkubb.com/wiki/Game:Kalamazoo_KUBBQ,_Friendly,_Phil_Dickinson_v._Joey_Wood,_October_11_2014"]
+
+1. j:0I j:- j:- j:- j:- j:- j:B
+2. p:1I p:- p:F p:- p:- p:- p:B
+3. j:2I j:F j:- j:F j:- j:- j:-
+4. p:2I p:F p:F p:- p:- p:B p:-
+5. j:3I j:2F j:F j:- j:- j:- j:-
+6. p:3I1R p:F p:F p:F p:- p:- p:-
+7. j:3I j:F j:- j:F j:- j:F j:-
+8. p:3I1R p:F p:F p:F p:- p:- p:-
+9. j:3I j:- j:F j:- j:- j:F j:F
+10. p:3I2R p:F p:F p:F p:- p:B p:B
+11. j:5I j:2F j:- j:- j:F j:2F j:-
+12. p:5I p:F p:2F p:F p:F p:- p:B
+13. j:6I1R j:2F j:F j:- j:2F j:- j:F
+14. p:6I2R1P p:F p:F p:F p:- p:F p:-
+15. j:4I1R A j:2F j:F j:F j:B j:- j:-
+16. p:5I2R p:2F p:F p:F p:- p:F p:F
+17. j:6I1R A j:F j:F j:4F j:B j:- j:B
+18. p:8I2R p:2F p:2F p:F p:- p:- p:2F
+19. j:7I2R A j:4F j:2F j:- j:F j:- j:B
+20. p:8I1R p:F p:2F p:2F p:3F p:F p:F # Awesome turn! 10 in play!
+21. j:10I2R j:F j:3F j:- j:2F j:2F j:F # How the tables have turned!
+22. p:9I1R A p:4F p:2F p:- p:2F p:- p:- # Phil forgets/over looks he has an advantage line and takes his throws from the baseline.
+23. j:8I A j:4F j:3F j:F j:F j:K X # Joey takes advantage of his fourth turn at the advantage line and wins the game.
