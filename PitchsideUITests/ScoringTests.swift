@@ -102,7 +102,7 @@ final class ScoringTests: XCTestCase {
     XCTAssertFalse(app.staticTexts["Inkast complete"].exists)
     tap("bB1")
     tap("1 down")
-    XCTAssertTrue(app.staticTexts["B  Baton 1 · Kim · 1 down"].exists)
+    XCTAssertTrue(app.buttons["history-turn-1"].label.hasSuffix("Kim:B"))
     XCTAssertEqual(turn.label, "Turn 1")
     XCTAssertEqual(player.value as? String, "Dana")
     tap("bB3")
@@ -273,12 +273,13 @@ final class ScoringTests: XCTestCase {
     let point = CGVector(dx: frame.midX - 2 * unit, dy: frame.midY - unit)
     let landing = app.coordinate(withNormalizedOffset: .zero).withOffset(point)
     for _ in 0..<2 { landing.tap() }
-    XCTAssertTrue(app.staticTexts["2I  Inkast · Dana · a kubb in"].exists)
+    XCTAssertTrue(app.buttons["history-turn-5"].label.contains("Dana:2I"))
     XCTAssertEqual(action.label, "Inkast · 1 left")
     XCTAssertEqual(thrower.value as? String, "Dana")
     landing.tap()
-    let lastToss = app.staticTexts["3I  Inkast · Dana · a kubb in"]
-    XCTAssertTrue(lastToss.exists)
+    let turnLine = app.buttons["history-turn-5"]
+    let afterInkast = turnLine.label
+    XCTAssertTrue(afterInkast.contains("Dana:3I"))
     XCTAssertEqual(action.label, "Baton 1 of 6")
     XCTAssertTrue(app.staticTexts["Inkast complete"].exists)
     XCTAssertEqual(thrower.value as? String, "Kim")
@@ -287,13 +288,13 @@ final class ScoringTests: XCTestCase {
       XCTAssertTrue(app.buttons["fB" + String(i)].label.contains("across 1, depth 2"))
     }
     tap("Miss")
-    XCTAssertTrue(app.staticTexts["-  Baton 1 · Kim · a miss"].exists)
+    XCTAssertTrue(turnLine.label.hasSuffix("Kim:-"))
     XCTAssertFalse(app.staticTexts["Inkast complete"].exists)
     XCTAssertEqual(turn.label, "Turn 5")
     XCTAssertEqual(thrower.value as? String, "Dana")
     tap("Undo")
     XCTAssertTrue(app.staticTexts["Inkast complete"].exists)
-    XCTAssertTrue(lastToss.exists)
+    XCTAssertEqual(turnLine.label, afterInkast)
   }
 
   func testMiddleOfClusterSurvivesReopenAndReplay() {
@@ -515,6 +516,7 @@ final class ScoringTests: XCTestCase {
     tap("Count field kubbs")
     tap("Count field kubbs")
     tap("3 down")
+    XCTAssertTrue(app.buttons["history-turn-5"].label.hasSuffix("3I A 3F"))
     tap("More")
     tap("Advantage line")
     tap("Baseline")
@@ -629,8 +631,9 @@ final class ScoringTests: XCTestCase {
     XCTAssertFalse(app.buttons["Show latest turn"].exists)
     let older = app.buttons["history-turn-2"]
     for _ in 0..<8 where !older.isHittable { history.swipeUp() }
+    XCTAssertTrue(older.label.hasSuffix("Sam:2I Sam:2F Lee:B Sam:B Lee:-"), older.label)
     older.tap()
-    let firstBaton = app.staticTexts["2F  Baton 1 · Sam · 2 down"]
+    let firstBaton = app.staticTexts["Sam:2F"]
     for _ in 0..<4 where !firstBaton.isHittable { history.swipeUp() }
     XCTAssertTrue(firstBaton.isHittable)
     let record = app.buttons["1 down"]
@@ -638,14 +641,14 @@ final class ScoringTests: XCTestCase {
     XCTAssertLessThanOrEqual(record.frame.maxY, app.windows.firstMatch.frame.maxY)
     shot("Landscape-turn-history")
     tap("1 down")
-    XCTAssertEqual(app.buttons["Show latest turn"].value as? String, "F")
+    XCTAssertEqual(app.buttons["Show latest turn"].value as? String, "Ole:F")
     tap("Show latest turn")
-    let latest = app.staticTexts["F  Baton 1 · Ole · 1 down"]
-    XCTAssertTrue(latest.waitForExistence(timeout: 4))
+    let latest = app.buttons["history-turn-5"]
+    XCTAssertTrue(latest.label.hasSuffix("Ole:F"), latest.label)
     tap("Undo")
-    XCTAssertFalse(latest.exists)
+    XCTAssertFalse(latest.label.hasSuffix("Ole:F"))
     tap("Redo")
-    XCTAssertTrue(latest.exists)
+    XCTAssertTrue(latest.label.hasSuffix("Ole:F"))
     XCUIDevice.shared.orientation = .landscapeRight
     expectLandscape(true)
     XCUIDevice.shared.orientation = .portrait

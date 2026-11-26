@@ -165,6 +165,7 @@ public struct RecordRow: Decodable, Sendable, Equatable {
   /// Its position lines (`@a`, `^a`, `*b`).
   public let lines: [String]
   public let inkastRecorded: Bool
+  public let capture: RecordState.Switches?
   public let advantage: Bool
   public let batons: [Baton]
   public let notes: [String]
@@ -172,6 +173,30 @@ public struct RecordRow: Decodable, Sendable, Equatable {
   /// The score as written by the engine, without the turn number or trailing notes.
   public var scoreWords: [Substring] {
     Array(line.prefix { $0 != "#" }.split(separator: " ").dropFirst())
+  }
+
+  /// Expand the writer's prefixes for the live scorecard. A solo player has no
+  /// file prefix, so use the recorded attribution for those words as well.
+  public func displayLine(players: [RecordState.Player], inkasters: [String?]) -> String {
+    let words = scoreWords
+    guard capture?.players != false else { return words.joined(separator: " ") }
+    let firstBaton = words.count - batons.count
+    return words.enumerated().map { index, word in
+      if let colon = word.firstIndex(of: ":") {
+        guard let player = players.first(where: { $0.file == String(word[..<colon]) }) else { return String(word) }
+        return player.name + String(word[colon...])
+      }
+      let by: String?
+      if index >= firstBaton {
+        by = batons[index - firstBaton].by
+      } else if word != "A", inkasters.indices.contains(index) {
+        by = inkasters[index]
+      } else {
+        by = nil
+      }
+      guard let by, let player = players.first(where: { $0.id == by }) else { return String(word) }
+      return "\(player.name):\(word)"
+    }.joined(separator: " ")
   }
 
   /// A toss revises one thrower's inkast word in place (I, 2I, 3I, …).
