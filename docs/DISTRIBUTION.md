@@ -1,11 +1,11 @@
 # Distribution
 
-Pitchside 1.0.0 (build 73) is uploaded for outside testers and the App Store, and its
-App Store version page is filled in. It is not submitted: Add for Review and Submit are
-Jamie's. This file lists what a submission needs, what is done, and what is left. Every
-upload, every tester group and the App Store are Jamie's call.
+Pitchside 1.0.0 (build 73) was submitted to App Review on 2026-11-26 at 7:34 PM Central,
+on Jamie's word ("I've run it. Submit."), and is Waiting for Review. It is set to
+release by itself once Apple approves it. This file lists what a submission needs and
+what was done. Every upload, every tester group and the App Store are Jamie's call.
 
-Updated on 2026-11-26, after the record was filled in (pull request 21). "Ours" means
+Updated on 2026-11-26, after the submission. "Ours" means
 work in this repository. "Jamie" means a step in App Store Connect or the developer
 portal.
 
@@ -47,13 +47,16 @@ the writes below. Times are US Central.
 - **TestFlight**: unchanged. Dev (internal) has one tester. Beta (external) has none, its
   public link is off, and its Beta App Review details are empty.
 
-What App Store Connect still shows as open, short of Add for Review:
+- **Review submission**: one, with the 1.0.0 version as its only item, made and
+  submitted through the API (`reviewSubmissions`, `reviewSubmissionItems`, then
+  `submitted: true`). The version went from Prepare for Submission to Waiting for
+  Review.
+
+What App Store Connect showed as open and did not ask for:
 
 - **iPad 13-inch screenshots: "Required", 0 of 10**, in the Media Manager's iPad tab.
-  Build 73 is iPhone only, and App Store Connect seems to list iPad on every iOS record
-  (inferred). Throwing Wood had an iPad set because it runs on iPad. Add for Review is
-  the check that says whether this one is really asked for. If it is, take 2064 x 2752
-  pictures on the iPad 13-inch simulator (the app in its iPhone window, "On an iPad").
+  Build 73 is iPhone only, and the submission went through with no iPad set. The label
+  is on every iOS record; an iPhone-only build does not need one.
 - **Header asset: 0 of 1** (Header and Search Results, new on the version page; 5244 x
   2950 or 3840 x 1646). Not marked required on the page. None is planned for 1.0.
 
@@ -81,11 +84,11 @@ What App Store Connect still shows as open, short of Add for Review:
 | Mac and Vision Pro | Done (off) | Nothing. |
 | App Compliance (China mainland) | Done | No and no, both Active. |
 | Listing words and URLs | Done (on the version page) | Nothing. Written as drafted below. |
-| Screenshots | Done for iPhone (eight, 6.9-inch) | Jamie: see whether Add for Review asks for an iPad set ("Where the record stands"). |
+| Screenshots | Done for iPhone (eight, 6.9-inch) | Nothing. The submission did not ask for an iPad set. |
 | Review notes | Done | Nothing. Contact as Throwing Wood's. |
 | The version | Done (`1.0.0` on the record and the build) | Nothing. |
 | A build for the App Store | Done (build 73, attached) | Nothing. |
-| iOS 26.2 | Unverified on a phone | See "The iOS 26.2 simulator crash". One run on a phone with iOS 26 settles it; build 73 does too. |
+| iOS 26.2 | Run on a phone | Jamie ran build 73 on a phone on 2026-11-26 before the submission. Which iOS it had was not written down ("The iOS 26.2 simulator crash"). |
 
 ## Internal testers
 
@@ -415,12 +418,12 @@ What is left, in order. Each line is one thing to do.
    marketing and support URLs (`scripts/asc.swift` with `ASC_WRITE=1`), the eight
    pictures in order (the same way), and build 73.
 
+9. Jamie ran the build on a phone ("I've run it").
+10. Submitted to App Review at 7:34 PM Central, through the API, on Jamie's word. No
+    iPad screenshots were asked for.
+
 **Left**
 
-9. Jamie, on a real phone with iOS 26: open TestFlight build 73 (or 59), launch it and
-   score one turn. That settles the iOS 26.2 simulator crash ("The iOS 26.2 simulator
-   crash").
-10. Jamie: look over the version page, then Add for Review. If it asks for iPad
-    screenshots, stop there; ours is a set from the iPad 13-inch simulator (small,
-    under an hour, one pull request).
-11. Jamie: Submit.
+11. Apple's review. On approval the version releases by itself (release type "after
+    approval"). Then set `PITCHSIDE_APP_STORE_URL` in the web repo's `src/site/site.mjs`
+    so throwingwood.com/pitchside shows the store badge.
