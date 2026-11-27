@@ -563,8 +563,9 @@ generated team names, the rules choice).
   scorer that frames the active half (18). No TestFlight build has them yet. A refresh
   the same day retook the store pictures (eight, with no version line, `-PitchsideStoreShot`),
   checked the app on an iPad simulator and moved the page headers clear of iPadOS's
-  window buttons (`clearsWindowControls`). What is left before submission is the
-  checklist at the end of `docs/DISTRIBUTION.md`.
+  window buttons (`clearsWindowControls`). Version 1.0.0, build 73, has all of it and
+  was submitted to App Review that evening on Jamie's word; it releases by itself on
+  approval (`docs/DISTRIBUTION.md`).
 - **Navigation and appearance.** The live pitch uses the full screen. Leaving it for Games,
   the timeline, play by play or a finished score sheet restores the section bar.
   Games, Roster and Stats are available during setup and browsing. Switching sections preserves drafts and
